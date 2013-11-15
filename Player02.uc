@@ -8,7 +8,7 @@ simulated event PostBeginPlay()
 
   `log("PlayerName: "   @ PlayerName); 
   `log("PawnName: "     @ PawnName); 
-  `log("School: "       @ School); 
+  //`log("School: "       @ School); 
   `log("FirePoints: "   @ FirePoints); 
   `log("IcePoints: "    @ IcePoints); 
   `log("EarthPoints: "  @ EarthPoints); 

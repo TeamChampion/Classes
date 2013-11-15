@@ -34,14 +34,15 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	// Using KActor in here
 
 	super.Touch(Other,OtherComp,HitLocation,HitNormal);
-	MyKActorComponent.SetMaterial(1,TurnGreen);
+	//MyKActorComponent.SetMaterial(1,TurnGreen);
 	`log( "Touched so GoGreen TOUCH!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
 }
 
 event UnTouch (Actor Other)
 {
-	MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);	
+	// need 
+	//MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);	
 	`log( "Return to sender UNTOUCH!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 }
 
@@ -140,7 +141,7 @@ defaultproperties
 	End Object 
 
 	CollisionComponent = tile01
-	MyKActorComponent = tile01
+	//MyKActorComponent = tile01
 	Components.Add(tile01)
 
 	//TurnGreen=Material'Main.Materials.Brick'

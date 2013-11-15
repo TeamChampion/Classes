@@ -1,4 +1,4 @@
-class MCPawn extends MouseInterfacePawn
+class MCPawn extends UDKPawn
     config(MystrasConfig);
 
 var float APf;
@@ -9,7 +9,8 @@ var(Inventory) array<MCWeapon> OwnedWeapons;
 var config string PlayerName;
 var config string PawnName;
 var config bool bSetLevelLoadChar;
-var(MystStats) config ESchool School;
+// Need to make another enum
+//var(MystStats) config ESchool School;
 
 var config int FirePoints;
 var config int IcePoints;
@@ -56,8 +57,8 @@ function GFxResetChar()
 }
 
 
-
-
+// Is not using anymore since I removed big file
+/*
 function GfxGetSet(SeqAct_createGetSet GFxSG)
 {
   PlayerName    = GFxSG.GfxName;
@@ -103,7 +104,7 @@ function GfxGetSet(SeqAct_createGetSet GFxSG)
 
   SaveConfig();
 }
-
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

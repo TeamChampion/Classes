@@ -46,13 +46,15 @@ GFxInventory.SetUpWeaponShop(WeaponShop);
 	super.PostBeginPlay();
 }
 
+// Not using this function anymore since I deleted the file
+/*
 function GfxSelectedChar(SeqAct_SelectChar GFxSC)
 {
   selectedPawn  = GFxSC.selectedChar;
 
   SaveConfig();
 }
-
+*/
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
