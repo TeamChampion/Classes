@@ -1,5 +1,6 @@
 class Player04 extends MCPawn;
 
+
 simulated event PostBeginPlay()
 {
     `log("Player 04 is active");
