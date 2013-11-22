@@ -31,5 +31,5 @@ DefaultProperties
     bDisplayWithHudOff=false
     TimingMode=TM_Game
 	//MovieInfo=SwfMovie'UDNHud.array_test'
-    MovieInfo=SwfMovie'MouseInterfaceContent.WeaponShop'
+    MovieInfo=SwfMovie'MystrasChampionFlash.shops.ShopWeapon'
 }
