@@ -1,4 +1,4 @@
-class MCPawn extends UDKPawn
+class MCPawn extends UTPawn
     config(MystrasConfig);
 
 var float APf;
@@ -22,6 +22,22 @@ var config int currentSpells01;
 var config int currentSpells02;
 var config int currentSpells03;
 var config int currentSpells04;
+
+enum ESchool
+{
+  SCHOOL_Volcano,
+  SCHOOL_FrozenLake,
+  SCHOOL_IronTower,
+  SCHOOL_HeavensGate,
+  SCHOOL_CrystalMist,
+  SCHOOL_None
+};
+
+var float Modifier;
+
+var(MystStats) array <Sequence> SpellList;
+var(MystStats) int AP;
+var(MystStats) int MaxAP;
 
 simulated event PostBeginPlay()
 {
@@ -116,6 +132,11 @@ function GfxGetSet(SeqAct_createGetSet GFxSG)
 
 defaultproperties
 {
-	APf=6.f
-	//ControllerClass=class'UTGame.UTBot'
+	APf=6.0f
+
+  // sets what state the Pawn should start with
+  // Locomotion
+  WalkingPhysics=PHYS_Walking
+  LandMovementState=PlayerWalking
+  WaterMovementState=PlayerSwimming
 }

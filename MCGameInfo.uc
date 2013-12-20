@@ -2,7 +2,7 @@ class MCGameInfo extends MouseInterfaceGameInfo
     config(MystrasConfig);
 
 var MCPawn Wizard;
-var archetype MCPawn WizardArhetype;
+var archetype Player01 WizardArhetype;
 var archetype MCShop WeaponShop;
 
 // ScaleForm Movies
@@ -14,23 +14,37 @@ var GFxAccessoriesShop GFxAccessoriesShop;
 var GFxEnchantmentShop GFxEnchantmentShop;
 var GFxResearchMaterialShop GFxResearchMaterialShop;
 
-
 var config string selectedPawn;
 
 function PostBeginPlay()
 {
+	
+/*
+	foreach AllActors(Class'Prefab', MCPrefab)
+	{
+		`log("Found Prefab " @ MCPrefab);
+		break;
+	}
+*/
+/*
 	local PlayerStart MySpawnPoint;
 
 	`log("------------------------ Starting PostBeginPlay ");
 	foreach AllActors(class'PlayerStart', MySpawnPoint)
 		if (MySpawnPoint.tag == 'PlayerSpawn')
 		{
+			`log("--------------------------------------------------------");
+			`log("Char here" @ MySpawnPoint);
 			break;
 		}
 
 // Spawn char	
-WizardArhetype = spawn(class'MCPawn',,,MySpawnPoint.Location,,WizardArhetype);
+WizardArhetype = spawn(class'Player01',,,MySpawnPoint.Location,,WizardArhetype);
+
 `log("spawnpoint " @ MySpawnPoint.Name @ "char spawn" @ WizardArhetype);
+*/
+
+
 
 // Scaleform video clip gogo
 
@@ -55,6 +69,33 @@ function GfxSelectedChar(SeqAct_SelectChar GFxSC)
   SaveConfig();
 }
 */
+
+
+/**
+ * Returns a pawn of the default pawn class, "and spawns him somewhere"
+ *
+ * @param		NewPlayer		Controller for whom this pawn is spawned
+ * @param		StartSpot		PlayerStart at which to spawn pawn
+ * @return						Returns the spawned pawn
+ */
+ 
+function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpot)
+{
+	// Abort if the default pawn archetype is none
+	if (WizardArhetype == None)
+	{
+		return None;
+	}
+	// Spawn and return the pawn
+	`log("--------------------------");
+	`log(GetALocalPlayerController());
+	`log(GetALocalPlayerController().Pawn);
+	`log("--------------------------");
+
+	return Spawn(WizardArhetype.Class,,, StartSpot.Location,, WizardArhetype);
+}
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,14 +201,18 @@ exec function closeResearchMaterialShop()
 
 defaultproperties
 {
-	WizardArhetype=MCPawn'Main.Archetype.testPawn'
-	WeaponShop=MCShop'Main.Shops.WeaponShop'
+	bDelayedStart=false
+
+	WizardArhetype=Player01'mystraschampionsettings.Character.P01'
+	WeaponShop=MCShop'MystrasChampionContent.TownShops.MCShop'
 
 
 	// Set the HUD
-		//HUDType=class'MystrasChampion.MouseInterfaceHUD'
+	HUDType=class'MystrasChampion.MCHud'
 	// Set PlayerController
 	PlayerControllerClass=class'MystrasChampion.MCPlayerController'
 	// Set Pawn
 	DefaultPawnClass=class'MystrasChampion.MCPawn'
+	// Set Replication
+	GameReplicationInfoClass=class'MystrasChampion.MCPlayerReplication'
 }
