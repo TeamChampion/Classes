@@ -2,7 +2,8 @@ class MCGameInfo extends MouseInterfaceGameInfo
     config(MystrasConfig);
 
 var MCPawn Wizard;
-var archetype Player01 WizardArhetype;
+var archetype Player01 WizardArhetype01;
+var archetype Player02 WizardArhetype02;
 var archetype MCShop WeaponShop;
 
 // ScaleForm Movies
@@ -14,11 +15,15 @@ var GFxAccessoriesShop GFxAccessoriesShop;
 var GFxEnchantmentShop GFxEnchantmentShop;
 var GFxResearchMaterialShop GFxResearchMaterialShop;
 
+var int GameRound;
+
 var config string selectedPawn;
+
+
+//
 
 function PostBeginPlay()
 {
-	
 /*
 	foreach AllActors(Class'Prefab', MCPrefab)
 	{
@@ -56,9 +61,15 @@ WizardArhetype = spawn(class'Player01',,,MySpawnPoint.Location,,WizardArhetype);
 GFxInventory.SetUpInventory(WizardArhetype);
 GFxInventory.SetUpWeaponShop(WeaponShop);
 */
+	// Sets replications client Enemies left equal to servers Enemiesleft
+	if (MCPlayerReplication(GameReplicationInfo) != none)
+	{
+		MCPlayerReplication(GameReplicationInfo).GameRound = GameRound;
+	}
 
 	super.PostBeginPlay();
 }
+
 
 // Not using this function anymore since I deleted the file
 /*
@@ -81,18 +92,78 @@ function GfxSelectedChar(SeqAct_SelectChar GFxSC)
  
 function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpot)
 {
+	local MCPawn FindPawn;
+	local NavigationPoint StartSpot2;
+	local int goPlus;
+
 	// Abort if the default pawn archetype is none
-	if (WizardArhetype == None)
+	if (WizardArhetype01 == None || WizardArhetype02 == None)
 	{
+		`log("Couldn't spawn player of type ??? at "$StartSpot);
 		return None;
 	}
 	// Spawn and return the pawn
-	`log("--------------------------");
 	`log(GetALocalPlayerController());
 	`log(GetALocalPlayerController().Pawn);
-	`log("--------------------------");
 
-	return Spawn(WizardArhetype.Class,,, StartSpot.Location,, WizardArhetype);
+
+	foreach AllActors(Class'MCPawn', FindPawn)
+	{
+
+
+		if (FindPawn != none)
+		{
+			`log("FindPawn" @ FindPawn);
+			break;
+		}
+	}
+
+
+	//goPlus=0;
+	foreach AllActors(Class'NavigationPoint', StartSpot2)
+	{
+		/*
+		if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f)
+		{
+			`log("he be here bitch!!!");
+			
+		}else
+		{
+			//return Spawn(WizardArhetype02.Class,,, StartSpot2.Location,, WizardArhetype02);
+		}
+		*/
+
+
+
+		if (StartSpot2.Tag == 'PlayerSpawn01')
+		{
+			if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f)
+			{
+				`log("he be here bitch!!!");
+				
+			}else
+			{
+				return Spawn(WizardArhetype01.Class,,, StartSpot2.Location,, WizardArhetype01);
+			}
+		}
+		
+		if (StartSpot2.Tag == 'PlayerSpawn02')
+		{
+			if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f)
+			{
+				`log("he be here bitch!!!");
+				
+			}else
+			{
+				return Spawn(WizardArhetype02.Class,,, StartSpot2.Location,, WizardArhetype02);
+			}
+			
+		}
+		goPlus++;
+		continue;
+	}
+
+//	return Spawn(WizardArhetype.Class,,, StartSpot.Location,, WizardArhetype);
 }
 
 
@@ -113,7 +184,7 @@ exec function startWeaponShop()
 		}
 	}
 	//Set up weapons
-	GFxWeaponShop.SetUpInventory(WizardArhetype);
+	GFxWeaponShop.SetUpInventory(WizardArhetype01);
 	GFxWeaponShop.SetUpWeaponShop(WeaponShop);
 }
 exec function closeWeaponShop()
@@ -137,7 +208,7 @@ exec function startAccessoriesShop()
 		}
 	}
 	//Set up weapons
-	GFxAccessoriesShop.SetUpInventory(WizardArhetype);
+	GFxAccessoriesShop.SetUpInventory(WizardArhetype01);
 	GFxAccessoriesShop.SetUpWeaponShop(WeaponShop);
 }
 exec function closeAccessoriesShop()
@@ -160,7 +231,7 @@ exec function startEnchantmentShop()
 		}
 	}
 	//Set up weapons
-	GFxEnchantmentShop.SetUpInventory(WizardArhetype);
+	GFxEnchantmentShop.SetUpInventory(WizardArhetype01);
 	GFxEnchantmentShop.SetUpWeaponShop(WeaponShop);
 
 }
@@ -184,7 +255,7 @@ exec function startResearchMaterialShop()
 		}
 	}
 	//Set up weapons
-	GFxResearchMaterialShop.SetUpInventory(WizardArhetype);
+	GFxResearchMaterialShop.SetUpInventory(WizardArhetype01);
 	GFxResearchMaterialShop.SetUpWeaponShop(WeaponShop);
 
 }
@@ -203,7 +274,8 @@ defaultproperties
 {
 	bDelayedStart=false
 
-	WizardArhetype=Player01'mystraschampionsettings.Character.P01'
+	WizardArhetype01=Player01'mystraschampionsettings.Character.P01'
+	WizardArhetype02=Player02'mystraschampionsettings.Character.P02'
 	WeaponShop=MCShop'MystrasChampionContent.TownShops.MCShop'
 
 
@@ -215,4 +287,6 @@ defaultproperties
 	DefaultPawnClass=class'MystrasChampion.MCPawn'
 	// Set Replication
 	GameReplicationInfoClass=class'MystrasChampion.MCPlayerReplication'
+
+	GameRound = 0;
 }
