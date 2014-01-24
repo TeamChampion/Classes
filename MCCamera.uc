@@ -8,7 +8,8 @@ var ProtectedWrite Vector DesiredCameraLocation;
 var bool IsTrackingHeroPawn;
 // bool that just resets Camera Location & Rotation
 var bool bStartPosition;
-
+// bool that controls if we can not use the camera
+var bool bSetToMatch;
 /**
  * Sets the desired location for the camera
  *
@@ -41,7 +42,14 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 		return;
 	}
 
-	if (PCOwner != None)
+	// if this bool is false then we can't use the player camera
+	if (!bSetToMatch)
+	{
+		Super.UpdateViewTarget(OutVT, DeltaTime);
+		return;
+	}
+
+	if (PCOwner != None && bSetToMatch)
 	{
 
 		// Grab the mouse coordinates and check if they are on the egde of the screen
@@ -95,9 +103,9 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 		}
 
 		// Normalize the camera move direction based on the player input
-		CameraMoveDirection.X += PCOwner.PlayerInput.RawJoyRight;
-		CameraMoveDirection.Y += (PCOwner.PlayerInput.RawJoyUp * -1.f);
-		CameraMoveDirection = Normal(CameraMoveDirection);
+//		CameraMoveDirection.X += PCOwner.PlayerInput.RawJoyRight;
+//		CameraMoveDirection.Y += (PCOwner.PlayerInput.RawJoyUp * -1.f);
+//		CameraMoveDirection = Normal(CameraMoveDirection);
 
 		// Turn off hero tracking as soon as the player attempts to adjust the camera
 		// IsZero, if that vector is not 0 then camera won't track
@@ -150,4 +158,5 @@ defaultproperties
 	//FreeCamDistance = 256
 	CameraProperties=MCCameraProperties'mystraschampionsettings.Camera.CameraProperties'
 	bStartPosition = true
+	bSetToMatch = true
 }

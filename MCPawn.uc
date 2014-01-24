@@ -6,8 +6,8 @@ var float APf;
 // weapon array
 var(Inventory) array<MCWeapon> OwnedWeapons; 
 // config things for char creation
-var config string PlayerName;
-var config string PawnName;
+var() config string PlayerName;
+var() config string PawnName;
 var config bool bSetLevelLoadChar;
 // Need to make another enum
 //var(MystStats) config ESchool School;
@@ -39,10 +39,29 @@ var(MystStats) array <Sequence> SpellList;
 var(MystStats) int AP;
 var(MystStats) int MaxAP;
 
+
+// Replication block
+replication
+{
+  // Replicate only if the values are dirty, this replication info is owned by the player and from server to client
+  if (bNetDirty && bNetOwner)
+     APf;
+
+  // Replicate only if the values are dirty and from server to client
+//  if (bNetDirty)
+    
+}
+
 simulated event PostBeginPlay()
 {
     `log("Mystras Champion Pawn spawned");
     debugWeapon();
+}
+
+simulated function SetMeshVisibility(bool bVisible)
+{
+    super.SetMeshVisibility(bVisible);
+    Mesh.SetOwnerNoSee(false);
 }
 
 function debugWeapon()
@@ -137,6 +156,10 @@ defaultproperties
   // sets what state the Pawn should start with
   // Locomotion
   WalkingPhysics=PHYS_Walking
-  LandMovementState=PlayerWalking
-  WaterMovementState=PlayerSwimming
+//  LandMovementState=PlayerWalking
+//  LandMovementState=Idle
+//  WaterMovementState=PlayerSwimming
+
+  Role = ROLE_Authority
+  RemoteRole = ROLE_SimulatedProxy
 }
