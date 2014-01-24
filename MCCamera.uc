@@ -51,7 +51,8 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 
 	if (PCOwner != None && bSetToMatch)
 	{
-
+		
+/*
 		// Grab the mouse coordinates and check if they are on the egde of the screen
 		if (PCOwner.MyHUD != None)
 		{
@@ -90,7 +91,7 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 				}
 			}
 		}
-
+*/
 		// Main Zoom Out Distance
 		if (CameraProperties.MovementPlane.Z > CameraProperties.MaxZoom)
 		{

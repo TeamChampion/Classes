@@ -1,12 +1,18 @@
-class MCSpell extends Object
+class MCSpell extends Actor
 	abstract;
 
-var() string itemName;
-var() int Prize;
+var() string spellName;
 var() string Description;
+var() int AP;
+var() bool bFire, bEarth, bThunder, bAcid, bIce;
+//var() int slots;
 
 
 DefaultProperties
 {
-	//defaults
+	bFire=false
+	bEarth=false
+	bThunder=false
+	bAcid=false
+	bIce=false
 }
