@@ -1,20 +1,20 @@
 class MCPlayerReplication extends GameReplicationInfo;
 
-/*
-var bool bSpawnBoss;
-var float NextWaveTime;
-var int EnemiesLeft;
-var AwesomeEnemy TheBoss;
-*/
+var int GameRound;
 
-/*
-//stuff in GameInfo
+
+// Replication block
 replication
 {
-	if(bNetDirty)
-		bSpawnBoss, NextWaveTime, EnemiesLeft, TheBoss;
+	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
+	if (bNetDirty && bNetOwner)
+		 GameRound;
+
+	// Replicate only if the values are dirty and from server to client
+//	if (bNetDirty)
+		
 }
-*/
+
 
 defaultproperties
 {
