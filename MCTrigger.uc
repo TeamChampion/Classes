@@ -1,4 +1,5 @@
-class MCTrigger extends Trigger;
+class MCTrigger extends Trigger
+	hidecategories(Display, Attachment, Collision, Physics, Advanced, Debug, Mobile);
 
 var float TriggerCost;
 
