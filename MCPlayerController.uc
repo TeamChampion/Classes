@@ -617,7 +617,7 @@ auto state PlayerWalking
 			// What tile
 			HitActor = MouseInterfaceHUD.HitActor2;
 			
-
+			// This section lights up the tiles that the player can move to.
 			if (CurrentTurnPawn != none && bCanTurnBlue && addPlusThree == 0)
 			{
 				if (addPlusThree == 0)
@@ -779,7 +779,6 @@ auto state PlayerWalking
 					//`log("------------------------------");	
 				}
 			}
-	
 		}
 /*
 		`log("RCLen" @ RouteCache.length);
