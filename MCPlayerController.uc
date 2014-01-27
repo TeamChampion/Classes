@@ -1186,16 +1186,6 @@ exec function MCTrackHero()
 	}
 }
 
-// Test function to try out the projectiles
-// TODO: Add enemy reference
-exec function CastFireball()
-{
-	local MCFireball fireball;
-	fireball = Spawn(class'MCFireball');
-	fireball.Cast(self);
-}
-
-
 defaultproperties
 {
 	CameraClass=class'MystrasChampion.MCCamera'
