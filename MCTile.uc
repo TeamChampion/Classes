@@ -16,15 +16,22 @@ testing variables
 */
 var float addFloat;
 
+// Replication block
 replication
 {
-	if(bNetDirty)
-		MyKActorComponent, MatInst, WhiteCorner01, WhiteCorner02, WhiteCorner03;
+	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
+//	if (bNetDirty && bNetOwner)
+//		 ;
+
+	// Replicate only if the values are dirty and from server to client
+	if (bNetDirty)
+		PathNode;
 }
 
 
 simulated event PostBeginPlay()
 {
+	super.PostBeginPlay();
 	foreach AllActors(Class'MCPathNode', PathNode)
 	{
 		if (Location.X == PathNode.Location.X && Location.Y == PathNode.Location.Y)
@@ -87,26 +94,26 @@ simulated function TurnTileOff()
 
 
 
-
+simulated function SetBlockedONTimer()
+{
+	PathNode.bBlocked = true;
+	`log("WE ARE BLOCKED!!!!");
+}
 
 
 simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-//	local LinearColor MatColor;
-/*
-	MatInst = new class'MaterialInstanceConstant';
-//	MatInst.SetParent(MyKActorComponent.GetMaterial(1));
-	MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
-	MyKActorComponent.SetMaterial(1, MatInst);
-
-	MatColor = MakeLinearColor(0.0f, 1.0f, 0.0f, 1.0f);
-	MatInst.SetVectorParameterValue('SetColor', MatColor);
-	MatInst.SetTextureParameterValue('SetNumber', WhiteCorner01);
-*/
-
+	//PathNode.bBlocked = true;
+	//SetTimer(3.0f, false, 'SetBlockedONTimer');
 	super.Touch(Other,OtherComp,HitLocation,HitNormal);
 }
 
+simulated event UnTouch (Actor Other)
+{
+	ClearTimer('SetBlockedONTimer');
+	//PathNode.bBlocked = false;
+	super.UnTouch(Other);
+}
 
 /*
 Function that changes the alpha to go from 0 to 1 in 1 second.
@@ -129,26 +136,7 @@ simulated function ChangeAlphaUp()
 		}
 }
 
-simulated event UnTouch (Actor Other)
-{
-	/*
-	TurnTileOff();
-	if( Role < ROLE_Authority ) // then save this move and replicate it
-	{
-		SetTimer(0.4f, false, 'TurnTileOff');
-	}
-	else
-	{
-		SetTimer(0.4f, false, 'TurnTileOff');
-	}
-	*/
 
-
-
-//	MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);
-//	addFloat = 0.0f;
-//	`log( "Return to sender UNTOUCH!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-}
 
 simulated function TileTurnGreen()
 {
