@@ -32,8 +32,8 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 {
 	local MCPlayerController MCPC;
 	local Vector CameraDirectionX, CameraDirectionY, CameraDirectionZ, CameraMoveDirection, CameraIntersectionPoint;
-	local LocalPlayer LocalPlayer;	// Used for Mouse tracking
-	local Vector2D MousePosition;	// Used for Mouse Tracking
+//	local LocalPlayer LocalPlayer;	// Used for Mouse tracking
+//	local Vector2D MousePosition;	// Used for Mouse Tracking
 
 	// Return the default update camera target
 	if (CameraProperties == None)
@@ -51,7 +51,7 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 
 	if (PCOwner != None && bSetToMatch)
 	{
-		
+/*		
 		// Grab the mouse coordinates and check if they are on the egde of the screen
 		if (PCOwner.MyHUD != None)
 		{
@@ -90,7 +90,7 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 				}
 			}
 		}
-
+*/
 		// Main Zoom Out Distance
 		if (CameraProperties.MovementPlane.Z > CameraProperties.MaxZoom)
 		{
