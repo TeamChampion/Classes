@@ -62,9 +62,9 @@ GFxInventory.SetUpInventory(WizardArhetype);
 GFxInventory.SetUpWeaponShop(WeaponShop);
 */
 	// Sets replications client Enemies left equal to servers Enemiesleft
-	if (MCPlayerReplication(GameReplicationInfo) != none)
+	if (MCGameReplication(GameReplicationInfo) != none)
 	{
-		MCPlayerReplication(GameReplicationInfo).GameRound = GameRound;
+		MCGameReplication(GameReplicationInfo).GameRound = GameRound;
 	}
 
 	super.PostBeginPlay();
@@ -94,7 +94,6 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 {
 	local MCPawn FindPawn;
 	local NavigationPoint StartSpot2;
-	local int goPlus;
 
 	// Abort if the default pawn archetype is none
 	if (WizardArhetype01 == None || WizardArhetype02 == None)
@@ -159,7 +158,6 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 			}
 			
 		}
-		goPlus++;
 		continue;
 	}
 
@@ -285,8 +283,10 @@ defaultproperties
 	PlayerControllerClass=class'MystrasChampion.MCPlayerController'
 	// Set Pawn
 	DefaultPawnClass=class'MystrasChampion.MCPawn'
-	// Set Replication
-	GameReplicationInfoClass=class'MystrasChampion.MCPlayerReplication'
+	// Game Replication
+	GameReplicationInfoClass=class'MystrasChampion.MCGameReplication'
+	// Player Replication
+	PlayerReplicationInfoClass=class'MystrasChampion.MCPlayerReplication'
 
 	GameRound = 0;
 }

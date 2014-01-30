@@ -1,13 +1,12 @@
 class MCPawn extends UTPawn
     config(MystrasConfig);
 
-var float APf;
+
+
 
 // weapon array
 var(Inventory) array<MCWeapon> OwnedWeapons; 
 // config things for char creation
-var() config string PlayerName;
-var() config string PawnName;
 var config bool bSetLevelLoadChar;
 // Need to make another enum
 //var(MystStats) config ESchool School;
@@ -40,22 +39,138 @@ var(MystStats) int AP;
 var(MystStats) int MaxAP;
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+var MCPlayerController PC;
+
+var repnotify float APf;
+
+var() config string PlayerName;
+var() repnotify config string PawnName;
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Understanding Replication
+
+// copies/instances of this pawn exist on all clients
+
+// and start with vars set to default values
+
+// Only these variables will be constantly transferred
+
+// for those copied versions
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//================
+// Multiplayer
+//================
+
+//when this value changes ReplicatedEvent below is fired
+var repnotify int PlayerUniqueID;
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 // Replication block
 replication
 {
   // Replicate only if the values are dirty, this replication info is owned by the player and from server to client
-  if (bNetDirty && bNetOwner)
-     APf;
+//  if (bNetDirty && bNetOwner)
+//    APf;
 
   // Replicate only if the values are dirty and from server to client
-//  if (bNetDirty)
+  if (bNetDirty)
+    PawnName, PlayerUniqueID, APf;
     
+}
+
+simulated event ReplicatedEvent(name VarName)
+{
+  //very important line
+  super.ReplicatedEvent( VarName ); 
+        
+  //update mesh color, as color is based on ID value
+  if (varname == 'PlayerUniqueID')
+  {
+    changePlayerColor();
+  }
+  if (varname == 'APf')
+  {
+    //MCPlayerReplication(PlayerReplicationInfo).APf = APf;
+//    `log("Player" @ self.PawnName @ "just got" @ self.APf @ "AP");
+  }
+  if (varname == 'PawnName')
+  {
+    //MCPlayerReplication(PlayerReplicationInfo).PawnName = PawnName;
+  }
 }
 
 simulated event PostBeginPlay()
 {
     `log("Mystras Champion Pawn spawned");
     debugWeapon();
+}
+
+
+
+
+
+/*
+Functions that says what PlayerController this Pawn is using
+*/
+simulated function setYourPC(MCPlayerController pci)
+{
+  PC = pci;
+    
+  `log("~~~~~~~~~~> PC was set for"@self.name@ "to" @ PC.name);
+}
+
+simulated function changePlayerColor()
+{
+  local materialinterface mainMat;
+
+  PC.ClientMessage("ran with this id" @ PlayerUniqueID);
+
+  //Show player pawn dying if it was sent a default playerID value
+  //This indicates the YourUniqueID is NOT being replicated correctly.
+  if (PlayerUniqueID == 0)
+  {
+    PlayDying(none, vect(0,0,0));
+  }
+
+  // red
+  if (PlayerUniqueID == 1)
+  {
+    mainMat = Material'mystraschampionsettings.Materials.CharRed';
+  }
+
+  // black
+  else if (PlayerUniqueID == 2)
+  {
+    mainMat = Material'mystraschampionsettings.Materials.CharBlack';
+  }
+
+  // gold
+  else if (PlayerUniqueID == 3)
+  {
+    mainMat = Material'mystraschampionsettings.Materials.CharGold';
+  }
+
+  // silver
+  else
+  {
+    mainMat = Material'mystraschampionsettings.Materials.CharSilver';
+  }
+
+  //in my skeletal mesh case these are the correct indicies
+  //of the parts of skeletal mesh to change material for
+
+  mesh.SetMaterial(0, mainMat);   //chest
+  mesh.SetMaterial(1, mainMat);   //head
+  mesh.SetMaterial(3, mainMat);   //boots
+  mesh.SetMaterial(4, mainMat);   //legs
+  mesh.SetMaterial(5, mainMat);   //arms
+  mesh.SetMaterial(7, mainMat);   //arm guard
+  mesh.SetMaterial(8, mainMat);   //hands
+
 }
 
 simulated function SetMeshVisibility(bool bVisible)
@@ -151,7 +266,7 @@ function GfxGetSet(SeqAct_createGetSet GFxSG)
 
 defaultproperties
 {
-	APf=6.0f
+//	APf=2.0f
 
   // sets what state the Pawn should start with
   // Locomotion
