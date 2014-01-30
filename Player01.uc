@@ -28,7 +28,6 @@ simulated event PostBeginPlay()
 defaultproperties
 {
    Health=100 // Bots HP
-   APf=6.0f;
    Name=Player01_Pawn
 
 
