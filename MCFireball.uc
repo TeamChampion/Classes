@@ -1,15 +1,15 @@
 class MCFireball extends MCSpell;
 
-function Cast(Actor owner)
+function Cast(MCPawn caster, MCPawn enemy)
 {
 	local UDKProjectile fireball;
-	fireball = Spawn(class'MCProjectileFireBall', owner, , vect(0, 128, 128));
-	fireball.Init(vect(0, 256, 128));
+	fireball = Spawn(class'MCProjectileFireBall', caster, , caster.Location);
+	fireball.Init(enemy.Location - caster.Location);
 }
 
 DefaultProperties
 {
 	name="Fireball"
 	AP=6
-	
+	bFire=true
 }
