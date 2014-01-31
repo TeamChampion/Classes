@@ -71,15 +71,6 @@ GFxInventory.SetUpWeaponShop(WeaponShop);
 }
 
 
-// Not using this function anymore since I deleted the file
-/*
-function GfxSelectedChar(SeqAct_SelectChar GFxSC)
-{
-  selectedPawn  = GFxSC.selectedChar;
-
-  SaveConfig();
-}
-*/
 
 
 /**
@@ -163,6 +154,43 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 
 //	return Spawn(WizardArhetype.Class,,, StartSpot.Location,, WizardArhetype);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
