@@ -1222,16 +1222,29 @@ exec function MCTrackHero()
 		return;
 	}
 }
-/*
-// Test function to try out the projectiles
-// TODO: add enemy reference
+
+// Test functions to try out the projectiles
 exec function CastFireball ()
 {
-	local MCFireball fireball;
-	fireball = Spawn(class'MCFireball');
-	fireball.Cast(self);
+	local MCFireball spell;
+	spell = Spawn(class'MCFireball');
+	spell.Cast(MCPawn, MCEnemy);
 }
-*/
+
+// TODO: Find out why fire fan doesn't show up.
+exec function CastFireFan ()
+{
+	local MCFireFan spell;
+	spell = Spawn(class'MCFireFan');
+	spell.Cast(MCPawn, MCEnemy);
+}
+
+exec function CastRockAndRoll ()
+{
+	local MCRockAndRoll spell;
+	spell = Spawn(class'MCRockAndroll');
+	spell.Cast(MCPawn, MCEnemy);
+}
 
 defaultproperties
 {
