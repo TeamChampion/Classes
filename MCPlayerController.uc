@@ -74,7 +74,7 @@ var array <MCTile> BlueTiles;	// add Tile Pathnotes Check in here
 
 var int addPlusThree;
 
-
+var MCPlayerReplication MCPReplication;
 
 
 // Replication block
@@ -158,6 +158,8 @@ simulated function beforeWeStart()
 //		`log(GetALocalPlayerController());
 //		`log(GetALocalPlayerController().Pawn);
 //		`log(GetALocalPlayerController().Pawn.Health);
+
+	MCPReplication = MCPlayerReplication(PlayerReplicationInfo);
 	}
 
 	// If Pawn is found then stop the timer and clear the spam
@@ -297,6 +299,8 @@ reliable server function TurnBased(int TurnPlayer)
 		MCPR.GameRound++;
 	}
 
+
+	MCPlayerReplication(PlayerReplicationInfo).GetPlayerHealth(MCPawn.Health);
 	// just update all Pawns all once so it doesn't fail later
 	foreach DynamicActors(Class'MCPawn', WhatPeople)
 	{
@@ -1040,6 +1044,14 @@ state WaitingForTurn
 			`log("Let's Go To PlayerWalking Shall we");
 			GotoState('PlayerWalking');
 		}
+
+/*
+		for (i = 0;i < MCGameReplication(WorldInfo.GRI).MCPRIArray.length ; i++)
+		{
+			`log(MCGameReplication(WorldInfo.GRI).MCPRIArray[i].PawnName);
+		}
+*/
+
 /*
 		for (i = 0; i < MCA.Paths.Length ; i++)
 		{
@@ -1233,6 +1245,73 @@ exec function CastFireball ()
 }
 */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 defaultproperties
 {
 	CameraClass=class'MystrasChampion.MCCamera'
@@ -1245,4 +1324,5 @@ defaultproperties
 	bCanTurnBlue=true
 	addPlusThree=0
 	setActivePlayer= 0
+
 }
