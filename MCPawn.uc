@@ -79,7 +79,6 @@ replication
   // Replicate only if the values are dirty and from server to client
   if (bNetDirty)
     PawnName, PlayerUniqueID, APf;
-    
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -94,8 +93,8 @@ simulated event ReplicatedEvent(name VarName)
   }
   if (varname == 'APf')
   {
-    //MCPlayerReplication(PlayerReplicationInfo).APf = APf;
-//    `log("Player" @ self.PawnName @ "just got" @ self.APf @ "AP");
+    MCPlayerReplication(PlayerReplicationInfo).APf = APf;
+    //`log("Player" @ self.PawnName @ "just got" @ self.APf @ "AP");
   }
   if (varname == 'PawnName')
   {
