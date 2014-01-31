@@ -66,12 +66,8 @@ GFxInventory.SetUpWeaponShop(WeaponShop);
 	{
 		MCGameReplication(GameReplicationInfo).GameRound = GameRound;
 	}
-
 	super.PostBeginPlay();
 }
-
-
-
 
 /**
  * Returns a pawn of the default pawn class, "and spawns him somewhere"

@@ -10,10 +10,10 @@ simulated event PostBeginPlay()
 
 	if (MouseInterfaceGFx != None)
 	{
-		MouseInterfaceGFx.Close(true);
+		//MouseInterfaceGFx.Close(true);
 	}
 
-	SpawnBattleHud();
+	//SpawnBattleHud();
 }
 
 function SpawnBattleHud()
@@ -84,26 +84,28 @@ event PostRender()
 	{
 		TrackHeroes();
 		//`log("String or variable" @ PC.Pawn.APf);
-		if (PC.MCPawn != none)
+		if (PC.MCPlayer != none)
 		{
 			
 			Canvas.DrawColor = RedColor;
 			Canvas.Font = class'Engine'.Static.GetSmallFont();
 			Canvas.SetPos(5, 150);
-			Canvas.DrawText("Player        :" @ PC.MCPawn);
+			Canvas.DrawText("Player        :" @ PC.MCPlayer);
 
 			Canvas.SetPos(5, 165);
-			Canvas.DrawText("Player Name    :" @ PC.MCPawn.PawnName);
+			Canvas.DrawText("Player Name    :" @ PC.MCPlayer.PawnName);
 
 			Canvas.SetPos(5, 180);
-			Canvas.DrawText("Player AP      :" @ PC.MCPawn.APf);
+			Canvas.DrawText("Player AP      :" @ PC.MCPlayer.APf);
 
 			Canvas.SetPos(5, 195);
-			Canvas.DrawText("Unique ID     :" @ PC.MCPawn.PlayerUniqueID);
+			Canvas.DrawText("Unique ID     :" @ PC.MCPlayer.PlayerUniqueID);
 
 			Canvas.SetPos(5, 210);
 			Canvas.DrawText("Current State :" @ PC.GetStateName());
 
+			Canvas.SetPos(5, 225);
+			Canvas.DrawText("Health      :" @ PC.MCPlayer.Health);
 
 
 /*
@@ -137,6 +139,9 @@ event PostRender()
 
 			Canvas.SetPos(300, 210);
 			Canvas.DrawText("Current State :" @ PC.MCEnemy.GetStateName());
+
+			Canvas.SetPos(300, 225);
+			Canvas.DrawText("Health      :" @ PC.MCEnemy.Health);
 
 		}
 
@@ -246,13 +251,13 @@ function TrackHeroes()
 
 /*
 		Canvas.SetPos(5, 165);
-		Canvas.DrawText("Player Name    :" @ PC.MCPawn.PawnName);
+		Canvas.DrawText("Player Name    :" @ PC.MCPlayer.PawnName);
 
 		Canvas.SetPos(5, 180);
-		Canvas.DrawText("Player AP      :" @ PC.MCPawn.APf);
+		Canvas.DrawText("Player AP      :" @ PC.MCPlayer.APf);
 
 		Canvas.SetPos(5, 195);
-		Canvas.DrawText("Unique ID     :" @ PC.MCPawn.PlayerUniqueID);
+		Canvas.DrawText("Unique ID     :" @ PC.MCPlayer.PlayerUniqueID);
 
 		Canvas.SetPos(5, 210);
 		Canvas.DrawText("Current State :" @ PC.GetStateName());

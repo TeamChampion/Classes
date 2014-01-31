@@ -1,4 +1,5 @@
-class MCProjectileRockAndRoll extends MCProjectile;
+class MCProjectileRockAndRoll extends MCProjectile
+	placeable;
 // Fire Fan (burning hands)	: 1 SlotDamage Triangle from Fire Source
 
 Simulated function PostBeginPlay()
@@ -10,10 +11,10 @@ Simulated function PostBeginPlay()
 
 defaultproperties
 {
-    ProjFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_DecoyFlare'
-    ProjExplosionTemplate=ParticleSystem'Envy_Effects.VH_Deaths.P_VH_Death_Dust_Secondary'
+    MCProjFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_DecoyFlare'
+    MCProjExplosionTemplate=ParticleSystem'Envy_Effects.VH_Deaths.P_VH_Death_Dust_Secondary'
 	MaxEffectDistance=7000.0
-
+	
 	Speed=600
 	MaxSpeed=1000
 	AccelRate=1000.0

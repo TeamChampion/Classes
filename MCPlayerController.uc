@@ -39,7 +39,7 @@ var const MCCameraProperties CameraProperties;
 // Player Unique ID
 var int PlayerUniqueID;
 var playerstart closestPlayerStart;
-var MCPawn MCPawn;
+var MCPawn MCPlayer;
 var MCPawn MCEnemy;
 //	Others
 ///////////////////////////////////////////////
@@ -59,7 +59,6 @@ var MCPawn MyPlayers[2];
 var int setActivePlayer;
 
 var array <MCPawn> MyPawns;
-var MCPawn CurrentTurnPawn;
 
 // used for turning on and off PlayerMove, so they all don\t collide
 var bool bCanStartMoving;
@@ -86,7 +85,7 @@ replication
 
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
-		NewHitActor, ScriptedMoveTarget, MCA, MyPlayers, MCPawn, MCEnemy, bCanTurnBlue, addPlusThree;
+		NewHitActor, ScriptedMoveTarget, MCA, MyPlayers, MCPlayer, MCEnemy, bCanTurnBlue, addPlusThree;
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -153,7 +152,7 @@ simulated function beforeWeStart()
 	// If we have any form of Pawn then set him to MCPawn
 	if (Pawn != none)
 	{
-		MCPawn = MCPawn(Pawn);
+		MCPlayer = MCPawn(Pawn);
 //		`log(MCPawn);
 //		`log(GetALocalPlayerController());
 //		`log(GetALocalPlayerController().Pawn);
@@ -163,10 +162,10 @@ simulated function beforeWeStart()
 	}
 
 	// If Pawn is found then stop the timer and clear the spam
-	if (MCPawn != none)
+	if (MCPlayer != none)
 	{
 		// Set PC in Pawn class
-		MCPawn.setYourPC(self);
+		MCPlayer.setYourPC(self);
 		// Set unique ID to Players
 		SetTimer(1.0, false, 'findClosestPlayerStart');
 
@@ -185,7 +184,7 @@ simulated function findClosestPlayerStart()
 	local playerstart p;
 
 	// if we don't have a pawn then abort
-	if (MCPawn == none)
+	if (MCPlayer == none)
 	{
 		return;
 	}
@@ -197,7 +196,7 @@ simulated function findClosestPlayerStart()
 		//confirm that you are getting these names as possible options
 		//`log("found a playerstart named" @ P.name);
 
-		currentDist = VSize(MCPawn.Location - P.Location);
+		currentDist = VSize(MCPlayer.Location - P.Location);
 		if (currentDist < dist)
 		{
 			dist = currentDist;
@@ -214,10 +213,10 @@ simulated function findClosestPlayerStart()
 	// Update Replication Info so other players know this playerrep's new ID value
 	MCPlayerReplication(PlayerReplicationInfo).PlayerUniqueID = PlayerUniqueID;
 
-    MCPlayerReplication(PlayerReplicationInfo).PawnName = MCPawn.PawnName;
-    MCPlayerReplication(PlayerReplicationInfo).APf = MCPawn.APf;
+    MCPlayerReplication(PlayerReplicationInfo).PawnName = MCPlayer.PawnName;
+    MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
 
-	MCPawn.PlayerUniqueID = PlayerUniqueID;
+	MCPlayer.PlayerUniqueID = PlayerUniqueID;
 
 	//setting this var triggers color change for every version 
     //of YourPawn present in each player's reality.
@@ -264,7 +263,7 @@ simulated function checkForTwoPlayers()
 		// set Enemy Pawn for Hud etc
 		foreach DynamicActors(class'MCPawn', NewMCP)
 		{
-			if (NewMCP != MCPawn)
+			if (NewMCP != MCPlayer)
 			{
 				MCEnemy = NewMCP;
 			}
@@ -300,7 +299,7 @@ reliable server function TurnBased(int TurnPlayer)
 	}
 
 
-	MCPlayerReplication(PlayerReplicationInfo).GetPlayerHealth(MCPawn.Health);
+	MCPlayerReplication(PlayerReplicationInfo).GetPlayerHealth(MCPlayer.Health);
 	// just update all Pawns all once so it doesn't fail later
 	foreach DynamicActors(Class'MCPawn', WhatPeople)
 	{
@@ -331,7 +330,7 @@ reliable server function TurnBased(int TurnPlayer)
 				WhatPeople.APf = 6.0;
 
 				// Update his Replication
-				MCPlayerReplication(PlayerReplicationInfo).APf = MCPawn.APf;
+				MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
 			}else
 			{
 				// Otherwise do something to Player 2
@@ -360,7 +359,7 @@ reliable server function TurnBased(int TurnPlayer)
 				`log("You" @ WhatPeople @ "got" @ WhatPeople.APf @ "new AP, congratulations");
 
 				// Update his Replication
-				MCPlayerReplication(PlayerReplicationInfo).APf = MCPawn.APf;
+				MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
 			}else
 			{
 				// Otherwise Reset AP
@@ -368,7 +367,7 @@ reliable server function TurnBased(int TurnPlayer)
 				`log("MR" @ WhatPeople.PawnName @ "" @ WhatPeople.PlayerUniqueID @ "Got resetted");
 
 				// Update his Replication
-				MCPlayerReplication(PlayerReplicationInfo).APf = MCPawn.APf;
+				MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
 			}
 		}
 	}
@@ -508,7 +507,7 @@ reliable client function FindPathsWeCanGoTo()
 
 			// if we have a Movetarget, AP and if that Tiles PathNode is not blocked then add them to an Array
 			//if (MoveTarget != none && getPathAPCost() <= MCPawn.APf && !MCA.Tiles[i].PathNode.bBlocked)
-			if (MoveTarget != none && getPathAPCost() <= MCPawn.APf && !MCA.Tiles[i].PathNode.bBlocked && VSize(MCEnemy.Location - MCA.Tiles[i].Location) > 50.0f)
+			if (MoveTarget != none && getPathAPCost() <= MCPlayer.APf && !MCA.Tiles[i].PathNode.bBlocked && VSize(MCEnemy.Location - MCA.Tiles[i].Location) > 50.0f)
 			{
 				BlueTiles.InsertItem(index++,MCA.Tiles[i]);
 			}
@@ -520,7 +519,7 @@ reliable client function FindPathsWeCanGoTo()
 		}
 
 		// If he Pawn has 0 AP reset adding Tiles until next round
-		if (MCPawn.APf == 0)
+		if (MCPlayer.APf == 0)
 		{
 			bCanTurnBlue=true;		
 		}else
@@ -530,7 +529,7 @@ reliable client function FindPathsWeCanGoTo()
 		}
 
 		// resets Movetarget to 0 so we don't bug out
-		MoveTarget = FindPathToward(MCPAwn);
+		MoveTarget = FindPathToward(MCPlayer);
 
 		// turn on the added Tiles in the Array
 		TurnTilesOn();
@@ -586,7 +585,7 @@ simulated function int getPathAPCost()
 			{
 				NewAPCost += MCA.Paths[j].APValue;
 				// If AP is equal to AP or a little bit more then stop the search
-				if (MCPawn.APf < NewAPCost)
+				if (MCPlayer.APf < NewAPCost)
 				{
 					//`warn("You're Cost is Too much"@ NewAPCost);
 				}
@@ -632,7 +631,7 @@ auto state PlayerWalking
 		// If we are not moving then please use this
 
 		//`log(RouteCache[0].APValue);
-		if (MCPawn != none && !bCanStartMoving)
+		if (MCPlayer != none && !bCanStartMoving)
 		{
 
 			// Type cast to get our HUD
@@ -655,7 +654,7 @@ auto state PlayerWalking
 			}
 
 			// If we Just got 6 AP and if You can jump in to FindPathsWeCanGoTo() then go
-			if (MCPawn.APf == 6 && bCanTurnBlue)
+			if (MCPlayer.APf == 6 && bCanTurnBlue)
 			{
 				FindPathsWeCanGoTo();
 			}
@@ -682,7 +681,7 @@ auto state PlayerWalking
 				MoveTarget = FindPathToward(ScriptedMoveTarget);
 
 				// If we have a Path && if we have AP
-				if (MoveTarget != None && getPathAPCost() <= MCPawn.APf) 
+				if (MoveTarget != None && getPathAPCost() <= MCPlayer.APf) 
 				{
 					// Debugging direction where we should go to
 					for (i = 0;i < RouteCache.Length; i++)
@@ -702,7 +701,7 @@ auto state PlayerWalking
 				// MoveTarget is the first PathNode to go to
 	//			MoveTarget = FindPathToward(ScriptedMoveTarget);
 
-	//			if (MoveTarget != None && RouteCache.Length <= MCPawn.APf)
+	//			if (MoveTarget != None && RouteCache.Length <= MCPlayer.APf)
 	//			{
 					//bFlagIsHere = false;
 
@@ -763,7 +762,7 @@ auto state PlayerWalking
 		if (HitActor.tag == 'MouseInterfaceKActor' || HitActor.tag == 'MCTile' )
 		{
 			//if you have AP and you can not move
-			if (getPathAPCost() <= MCPawn.APf && !bCanStartMoving) 
+			if (getPathAPCost() <= MCPlayer.APf && !bCanStartMoving) 
 			{
 
 				foreach AllActors(Class'MCPathNode', PathNode)
@@ -801,7 +800,7 @@ auto state PlayerWalking
 
 		// Pawn != None && 
 
-		if( MCPawn != none && ScriptedMoveTarget != None && !MCPawn.ReachedDestination(ScriptedMoveTarget) && bCanStartMoving )
+		if( MCPlayer != none && ScriptedMoveTarget != None && !MCPlayer.ReachedDestination(ScriptedMoveTarget) && bCanStartMoving )
 		{
 			//`log(CurrentPawnOn());
 			GetAxes(Pawn.Rotation,X,Y,Z);
@@ -853,21 +852,21 @@ auto state PlayerWalking
 			}
 		}
 
-		if (MCPawn.ReachedDestination(ScriptedMoveTarget) && bCanStartMoving)
+		if (MCPlayer.ReachedDestination(ScriptedMoveTarget) && bCanStartMoving)
 		{
 
 
 
-			if (MCPawn.APf < 0.90f && MCPawn.PlayerUniqueID == 1 && IsInState('PlayerWalking') && bCanStartMoving)
+			if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 1 && IsInState('PlayerWalking') && bCanStartMoving)
 			{
-				`log("we will change AP from" @ MCPawn.PawnName @ "to" @ MCEnemy);
+				`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
 				SetTimer(1.0f, false, 'TurnBasedTwo');
 				//TurnBased(2);
 			}
 
-			if (MCPawn.APf < 0.90f && MCPawn.PlayerUniqueID == 2 && IsInState('PlayerWalking') && bCanStartMoving)
+			if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 2 && IsInState('PlayerWalking') && bCanStartMoving)
 			{
-				`log("we will change AP from" @ MCPawn.PawnName @ "to" @ MCEnemy);
+				`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
 				SetTimer(1.0f, false, 'TurnBasedOne');
 				//TurnBased(1);
 			}
@@ -989,7 +988,7 @@ reliable server function ChangePathOn()
 
 		for (i = 0; i < MCA.Tiles.Length ; i++)
 		{
-			if ( VSize(MCPawn.Location - MCA.Paths[i].Location) < 50.0f )
+			if ( VSize(MCPlayer.Location - MCA.Paths[i].Location) < 50.0f )
 			{
 				`log("Where we at" @ MCA.Paths[i]);
 				//MCA.Paths[i].bBlocked = true;
@@ -1009,7 +1008,7 @@ reliable server function ChangePathOff()
 
 		for (i = 0; i < MCA.Tiles.Length ; i++)
 		{
-			if ( VSize(MCPawn.Location - MCA.Paths[i].Location) < 50.0f )
+			if ( VSize(MCPlayer.Location - MCA.Paths[i].Location) < 50.0f )
 			{
 				`log("Where we at" @ MCA.Paths[i]);
 				//MCA.Paths[i].bBlocked = false;
@@ -1039,7 +1038,7 @@ state WaitingForTurn
 	function PlayerTick(float DeltaTime)
 	{
 
-		if (MCPawn.APf == 6 && !IsInState('PlayerWalking'))
+		if (MCPlayer.APf == 6 && !IsInState('PlayerWalking'))
 		{
 			`log("Let's Go To PlayerWalking Shall we");
 			GotoState('PlayerWalking');
@@ -1112,7 +1111,7 @@ reliable server function ChangeAPWithMove(int RouteLength, int PlayerID)
 			`log("AP" @ WhatPeople.APf @ "-" @ RouteLength);
 			WhatPeople.APf -= RouteLength;
 			`log("AP is now=" @ WhatPeople.APf);
-			MCPlayerReplication(PlayerReplicationInfo).APf = MCPawn.APf;
+			MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
 		}
 	}
 }
@@ -1133,15 +1132,15 @@ reliable client function OnAIMoveToActor()
 	if (DestActor != None)
 	{
 
-		`log("AP" @ MCPawn.APf @ "-" @ getPathAPCost());
+		`log("AP" @ MCPlayer.APf @ "-" @ getPathAPCost());
 		// Calculate AP Cost
-		MCPawn.APf -= getPathAPCost();
+		MCPlayer.APf -= getPathAPCost();
 		SendAPCost = getPathAPCost();
 		//MCPawn.APf = MCPlayerReplication(PlayerReplicationInfo).APf;
-		`log("AP is now=" @ MCPawn.APf);
+		`log("AP is now=" @ MCPlayer.APf);
 		`log("SendAPCost =" @ SendAPCost);
 		// Enemy can also see AP reduction
-		ChangeAPWithMove(SendAPCost, MCPawn.PlayerUniqueID);
+		ChangeAPWithMove(SendAPCost, MCPlayer.PlayerUniqueID);
 		
 		// Set so that we will be Walking
 		if (!IsInState('PlayerWalking'))
@@ -1240,7 +1239,15 @@ exec function CastFireball ()
 {
 	local MCFireball spell;
 	spell = Spawn(class'MCFireball');
-	spell.Cast(MCPawn, MCEnemy);
+	spell.Cast(MCPlayer, MCEnemy);
+	ServerCastFireball();
+}
+
+server reliable function ServerCastFireball()
+{
+	local MCFireball spell;
+	spell = Spawn(class'MCFireball');
+	spell.Cast(MCPlayer, MCEnemy);
 }
 
 // TODO: Find out why fire fan doesn't show up.
@@ -1248,14 +1255,30 @@ exec function CastFireFan ()
 {
 	local MCFireFan spell;
 	spell = Spawn(class'MCFireFan');
-	spell.Cast(MCPawn, MCEnemy);
+	spell.Cast(MCPlayer, MCEnemy);
+	ServerCastFireFan();
+}
+
+server reliable function ServerCastFireFan ()
+{
+	local MCFireFan spell;
+	spell = Spawn(class'MCFireFan');
+	spell.Cast(MCPlayer, MCEnemy);
 }
 
 exec function CastRockAndRoll ()
 {
 	local MCRockAndRoll spell;
 	spell = Spawn(class'MCRockAndroll');
-	spell.Cast(MCPawn, MCEnemy);
+	spell.Cast(MCPlayer, MCEnemy);
+	ServerCastRockAndRoll();
+}
+
+reliable server function ServerCastRockAndRoll ()
+{
+	local MCRockAndRoll spell;
+	spell = Spawn(class'MCRockAndroll');
+	spell.Cast(MCPlayer, MCEnemy);
 }
 
 

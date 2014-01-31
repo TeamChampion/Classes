@@ -15,13 +15,13 @@ defaultproperties
 // Starting Point																											//
 // ------------------------------------------------------------------------------------------------------------------------ //
 	// The particle system used to visually represents the projectile.
-	ProjFlightTemplate=ParticleSystem'udkrtsgamecontent.ParticleSystems.BuildingFire'
+	MCProjFlightTemplate=ParticleSystem'udkrtsgamecontent.ParticleSystems.BuildingFire'
 
 // ------------------------------------------------------------------------------------------------------------------------ //
 // Hit/Explotion Point																										//
 // ------------------------------------------------------------------------------------------------------------------------ //
 	// The particle system that is played when the projectile explodes.
-	ProjExplosionTemplate=ParticleSystem'udkrtsgamecontent.ParticleSystems.P_WP_RocketLauncher_RocketExplosion'
+	MCProjExplosionTemplate=ParticleSystem'udkrtsgamecontent.ParticleSystems.P_WP_RocketLauncher_RocketExplosion'
 
 // ------------------------------------------------------------------------------------------------------------------------ //
 // Travelling Point																											//
