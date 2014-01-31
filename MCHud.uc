@@ -1,5 +1,35 @@
 class MCHud extends MouseInterfaceHUD;
 
+var GFxBattleUI GFxBattleUI;
+
+simulated event PostBeginPlay()
+{
+	Super.PostBeginPlay();
+
+	// If we are using ScaleForm, then create the ScaleForm movie
+
+	if (MouseInterfaceGFx != None)
+	{
+		MouseInterfaceGFx.Close(true);
+	}
+
+	SpawnBattleHud();
+}
+
+function SpawnBattleHud()
+{
+	if (GFxBattleUI == none)
+	{
+		GFxBattleUI = new class'GFxBattleUI';
+		if (GFxBattleUI != none)
+		{
+			GFxBattleUI.MouseInterfaceHUD = self;
+
+			GFxBattleUI.Init(class'Engine'.static.GetEngine().GamePlayers[GFxBattleUI.LocalPlayerOwnerIndex]);
+		}
+	}
+}
+
 event PostRender()
 {
 	local MCGameReplication MCPR;
@@ -18,14 +48,17 @@ event PostRender()
 
 	super.DrawHUD();
 
-	if (MCPR != none)
+	if (GFxBattleUI != none)
 	{
-		`log(MCPR.PRIArray[0]);
-		`log(MCPR.PRIArray[1]);
+		GFxBattleUI.GetPlayerInformation();
 	}
 //	`log(MCRep.PRIArray);
 	
-
+	if (MCPR !=none)
+	{
+//		`log(MCPR.MCPRIArray[0]);
+//		`log(MCPR.MCPRIArray[1]);
+	}
 
 
 
@@ -49,10 +82,11 @@ event PostRender()
 
 	if (PC != none)
 	{
-
+		TrackHeroes();
 		//`log("String or variable" @ PC.Pawn.APf);
 		if (PC.MCPawn != none)
 		{
+			
 			Canvas.DrawColor = RedColor;
 			Canvas.Font = class'Engine'.Static.GetSmallFont();
 			Canvas.SetPos(5, 150);
@@ -72,7 +106,7 @@ event PostRender()
 
 
 
-
+/*
 			Canvas.SetPos(5, 225);
 			Canvas.DrawText("BlueTiles  :" @ PC.BlueTiles.length);
 
@@ -81,7 +115,7 @@ event PostRender()
 
 			Canvas.SetPos(5, 255);
 			Canvas.DrawText("PathCost :" @ PC.getPathAPCost());
-			
+*/
 		}
 
 	//	`log(PC.MyPlayers[1].PlayerUniqueID);
@@ -145,23 +179,72 @@ event PostRender()
 function TrackHeroes()
 {
 	local MCGameReplication MCPR;
+	local int i;
 	//local MCPlayerController PC;
 
 	MCPR = MCGameReplication(WorldInfo.GRI);
-/*
-	foreach DynamicActors(class'MCPlayerController', PC)
-	{
-		break;
-	}
-*/
-/*
-	if (MCPR != none && MCPR.PRIArray[0].PlayerUniqueID == 1)
-	{
-		Canvas.DrawColor = GreenColor;
-		Canvas.Font = class'Engine'.Static.GetSmallFont();
-		Canvas.SetPos(5, 150);
-		Canvas.DrawText("Player        :" @ MCPR);
 
+	
+	if (MCPR != none)
+	{
+		for (i = 0; i < MCPR.MCPRIArray.length ; i++)
+		{
+			
+			// Player 01 to the left
+			if (MCPR.MCPRIArray[i].PlayerUniqueID == 1)
+			{
+				Canvas.DrawColor = GreenColor;
+				Canvas.Font = class'Engine'.Static.GetSmallFont();
+
+				// Name
+				Canvas.SetPos(5, 350);
+				Canvas.DrawText("PawnName      :" @ MCPR.MCPRIArray[i].PawnName);
+				// PC Name
+				Canvas.SetPos(5, 365);
+				Canvas.DrawText("PlayerName    :" @ MCPR.MCPRIArray[i].PlayerName);
+				// HP
+				Canvas.SetPos(5, 380);
+				Canvas.DrawText("Health        :" @ MCPR.MCPRIArray[i].Health);
+				// AP
+				Canvas.SetPos(5, 395);
+				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].APf);
+			}
+			// Player 02 to the right
+			if (MCPR.MCPRIArray[i].PlayerUniqueID == 2)
+			{
+				Canvas.DrawColor = GreenColor;
+				Canvas.Font = class'Engine'.Static.GetSmallFont();
+
+				// Name
+				Canvas.SetPos(300, 350);
+				Canvas.DrawText("PawnName      :" @ MCPR.MCPRIArray[i].PawnName);
+				// PC Name
+				Canvas.SetPos(300, 365);
+				Canvas.DrawText("PlayerName    :" @ MCPR.MCPRIArray[i].PlayerName);
+				// HP
+				Canvas.SetPos(300, 380);
+				Canvas.DrawText("Health        :" @ MCPR.MCPRIArray[i].Health);
+				// AP
+				Canvas.SetPos(300, 395);
+				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].APf);
+			}
+
+
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 		Canvas.SetPos(5, 165);
 		Canvas.DrawText("Player Name    :" @ PC.MCPawn.PawnName);
 
@@ -185,8 +268,9 @@ function TrackHeroes()
 
 		Canvas.SetPos(5, 255);
 		Canvas.DrawText("PathCost :" @ PC.getPathAPCost());
-	}
 */
+	
+
 }
 
 defaultproperties

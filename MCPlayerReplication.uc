@@ -4,12 +4,14 @@ var int PlayerUniqueID;
 var float APf;
 var string PawnName;
 
+var int Health;
+
 // Replication block
 replication
 {
 	// I am the Server, send these variables to all Clients
 	if (bNetDirty && Role == Role_Authority)
-		PlayerUniqueID, APf, PawnName;
+		PlayerUniqueID, APf, PawnName, Health;
 	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
 //	if (bNetDirty && bNetOwner)
 //		 GameRound;
@@ -45,8 +47,30 @@ simulated event ReplicatedEvent(name VarName)
 	{
 
 	}
+	if (VarName == 'Health')
+	{
+
+	}
 
 	super.ReplicatedEvent(VarName);
+}
+
+
+simulated function GetPlayerHealth(int NewHealth)
+{
+	/*
+	local MCPlayerController PlayerOwner;
+
+	foreach LocalPlayerControllers(Class'MCPlayerController', PlayerOwner)
+	{
+		if (PlayerOwner != none && PlayerUniqueID == PlayerOwner.MCPawn.PlayerUniqueID)
+		{
+			//Health = PlayerOwner.MCPawn.Health;
+			break;
+		}
+	}
+	*/
+	Health = NewHealth;
 }
 
 /*
