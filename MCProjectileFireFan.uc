@@ -15,32 +15,36 @@ defaultproperties
 // Starting Point																											//
 // ------------------------------------------------------------------------------------------------------------------------ //
 	// The particle system used to visually represents the projectile.
-	MCProjFlightTemplate=ParticleSystem'udkrtsgamecontent.ParticleSystems.BuildingFire'
+	MCProjFlightTemplate=ParticleSystem'UDKRTSGameContent.ParticleSystems.BuildingFire'
+	//MCProjFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_DecoyFlare'
 
 // ------------------------------------------------------------------------------------------------------------------------ //
 // Hit/Explotion Point																										//
 // ------------------------------------------------------------------------------------------------------------------------ //
 	// The particle system that is played when the projectile explodes.
-	MCProjExplosionTemplate=ParticleSystem'udkrtsgamecontent.ParticleSystems.P_WP_RocketLauncher_RocketExplosion'
+	MCProjExplosionTemplate=ParticleSystem'UDKRTSGameContent.ParticleSystems.P_WP_RocketLauncher_RocketExplosion'
 
 // ------------------------------------------------------------------------------------------------------------------------ //
 // Travelling Point																											//
 // ------------------------------------------------------------------------------------------------------------------------ //
-	// time before Particle dies out
-	LifeSpan=1
-	Speed=200
-	MaxSpeed=600
-	//AccelRate=3000.0
+	MaxEffectDistance=7000.0
 
-// ------------------------------------------------------------------------------------------------------------------------ //
-// Damage 																													//
-// ------------------------------------------------------------------------------------------------------------------------ //
-	Damage=50
+	Speed=50
+	MaxSpeed=20
+	AccelRate=500
+
+	Damage=25
 	DamageRadius=0
+	MomentumTransfer=0
+	CheckRadius=26.0
 
-// ------------------------------------------------------------------------------------------------------------------------ //
-// Other 																													//
-// ------------------------------------------------------------------------------------------------------------------------ //
-	//ProjectileLightClass=class'UTGame.UTShockBallLight'
+	//Physics=PHYS_Projectile
 	//MyDamageType=class'UTDmgType_LinkPlasma'
+	//LifeSpan=3.0
+	NetCullDistanceSquared=+144000000.0
+
+	bCollideWorld=true
+	//DrawScale=1.4
+
+	ExplosionSound=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_ImpactCue'
 }
