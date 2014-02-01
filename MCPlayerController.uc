@@ -1250,7 +1250,6 @@ server reliable function ServerCastFireball()
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
-// TODO: Find out why fire fan doesn't show up.
 exec function CastFireFan ()
 {
 	local MCFireFan spell;
@@ -1281,6 +1280,20 @@ reliable server function ServerCastRockAndRoll ()
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
+function CastRockWall()
+{
+	local MCRockWall spell;
+	spell = spawn(class'MCRockWall');
+	spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
+	ServerCastRockWall();
+}
+
+reliable server function ServerCastRockWall()
+{
+	local MCRockWall spell;
+	spell = spawn(class'MCRockWall');
+	spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
+}
 
 
 
