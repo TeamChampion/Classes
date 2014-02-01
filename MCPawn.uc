@@ -66,6 +66,8 @@ var() repnotify config string PawnName;
 
 //when this value changes ReplicatedEvent below is fired
 var repnotify int PlayerUniqueID;
+//when this value changes ReplicatedEvent below is fired
+var repnotify bool bHaveAp;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -93,12 +95,26 @@ simulated event ReplicatedEvent(name VarName)
   }
   if (varname == 'APf')
   {
+    if (APf < 10 )
+    {
+      bHaveAp = true;
+      MCPlayerReplication(PlayerReplicationInfo).bHaveAP = bHaveAp;
+    }
+    if (APf == 0)
+    {
+      bHaveAp = false;
+      MCPlayerReplication(PlayerReplicationInfo).bHaveAP = bHaveAp;
+    }
     MCPlayerReplication(PlayerReplicationInfo).APf = APf;
     //`log("Player" @ self.PawnName @ "just got" @ self.APf @ "AP");
   }
   if (varname == 'PawnName')
   {
     //MCPlayerReplication(PlayerReplicationInfo).PawnName = PawnName;
+  }
+  if (varname == 'bHaveAp')
+  {
+   // MCPlayerReplication(PlayerReplicationInfo).bHaveAP = bHaveAp;
   }
 }
 
