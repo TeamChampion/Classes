@@ -118,6 +118,7 @@ function findThisInPC()
 
 function setPlayerLightUpIndicator()
 {
+<<<<<<< HEAD
 	local MCPlayerController MyPC;
 	local MCGameReplication MyGMRep;
 	local MCPawn MyPawn;
@@ -129,6 +130,19 @@ function setPlayerLightUpIndicator()
 	MyPC = MCPlayerController(GetPC());
 	// Get Pawn
 	MyPawn = MCPawn(GetPC().Pawn);
+=======
+//	local MCPlayerController MyPC;
+	local MCGameReplication MyGMRep;
+//	local MCPawn MyPawn;
+	local int i;
+//	local GFxObject GetIndicator;
+	local int setTheNumber;
+
+	// Get PlayerControoler
+//	MyPC = MCPlayerController(GetPC());
+	// Get Pawn
+//	MyPawn = MCPawn(GetPC().Pawn);
+>>>>>>> origin/vipero-branch
 	// Get GameReplication
 	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
 
@@ -140,7 +154,11 @@ function setPlayerLightUpIndicator()
 
 			setTheNumber = MyGMRep.MCPRIArray[i].PlayerUniqueID;
 		}
+<<<<<<< HEAD
 		
+=======
+
+>>>>>>> origin/vipero-branch
 
 		RootMC.SetInt("LightUPNumber", setTheNumber);
 		ActionScriptVoid("root.LightUpIndicator");
@@ -170,12 +188,20 @@ function GetPlayerInformation()
 	MCP = MCPawn(GetPC().Pawn);
 	// Get GameReplication
 	MCGRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
+<<<<<<< HEAD
+=======
+
+	setPlayerLightUpIndicator();
+>>>>>>> origin/vipero-branch
 
 	setPlayerLightUpIndicator();
 
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/vipero-branch
 	// GameRound
 	GameRoundTF = RootMC.GetObject("gameroundareaINS").GetObject("roundINS");
 	if (GameRoundTF != none)
@@ -198,6 +224,7 @@ function GetPlayerInformation()
 			{
 				P01NameTF.SetString("text", MCGRep.MCPRIArray[i].PawnName);
 			}
+<<<<<<< HEAD
 
 			// Player 02 Health Text
 			P01HPTextTF = P01areaMC.GetObject("healthbartextINS");
@@ -235,6 +262,45 @@ function GetPlayerInformation()
 			}
 		}
 
+=======
+
+			// Player 02 Health Text
+			P01HPTextTF = P01areaMC.GetObject("healthbartextINS");
+			if (P02HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+			{
+				P01HPTextTF.SetInt("text", MCGRep.MCPRIArray[i].Health);
+			}else
+			{
+				P01HPTextTF.SetString("text", "");
+			}
+
+			// Player 02 AP Text
+			P01APareaMC = P01areaMC.GetObject("playerapareaINS");
+			if (P01APareaMC != none)
+			{
+				// AP Number
+				P01APNumbTF = P01APareaMC.GetObject("apINS");
+				if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+				{
+					P01APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
+				}else
+				{
+					P01APNumbTF.SetString("text", "");
+				}
+
+				// AP Text
+				P01APTextTF = P01APareaMC.GetObject("aptextINS");
+				if (P01APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+				{
+					//P01APTextTF.SetString("text", "AP");
+				}else
+				{
+					P01APTextTF.SetString("text", "");
+				}
+			}
+		}
+
+>>>>>>> origin/vipero-branch
 		// Player 2 Stats
 		// if we have the same id then show our stuff
 		// otherwise hide it for other player.
@@ -257,7 +323,11 @@ function GetPlayerInformation()
 			{
 				P02HPTextTF.SetString("text", "");
 			}
+<<<<<<< HEAD
 			
+=======
+
+>>>>>>> origin/vipero-branch
 			// Player 02 AP Text
 			P02APareaMC = P02areaMC.GetObject("playerapareaINS");
 			if (P02APareaMC != none)
