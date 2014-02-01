@@ -1234,7 +1234,7 @@ exec function MCTrackHero()
 	}
 }
 
-// Test functions to try out the projectiles
+// Test functions to try out the spells
 exec function CastFireball ()
 {
 	local MCFireball spell;
@@ -1280,7 +1280,8 @@ reliable server function ServerCastRockAndRoll ()
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
-function CastRockWall()
+// TODO: Make the rock wall colidable
+exec function CastRockWall()
 {
 	local MCRockWall spell;
 	spell = spawn(class'MCRockWall');
@@ -1288,6 +1289,7 @@ function CastRockWall()
 	ServerCastRockWall();
 }
 
+// TODO: figure out why it doesn't spawn on the server
 reliable server function ServerCastRockWall()
 {
 	local MCRockWall spell;

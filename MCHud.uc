@@ -10,10 +10,10 @@ simulated event PostBeginPlay()
 
 	if (MouseInterfaceGFx != None)
 	{
-		MouseInterfaceGFx.Close(true);
+		//MouseInterfaceGFx.Close(true);
 	}
 
-	SpawnBattleHud();
+	//SpawnBattleHud();
 }
 
 function SpawnBattleHud()

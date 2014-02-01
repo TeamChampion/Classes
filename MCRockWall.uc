@@ -1,8 +1,8 @@
 class MCRockWall extends MCSpell;
 
-function Cast(MCPawn caster, Actor target)
+function Cast(MCPawn caster, Vector target)
 {
-	Spawn(class'MCRock', caster, , target.Location, caster.Rotation);
+	Spawn(class'MCRock', caster, ,target);
 }
 
 DefaultProperties
