@@ -21,7 +21,6 @@ function SetDesiredCameraLocation(Vector NewDesiredCameraLocation)
 	DesiredCameraLocation = NewDesiredCameraLocation;
 }
 
-
 /**
  * Query ViewTarget and outputs Point Of View.
  *
