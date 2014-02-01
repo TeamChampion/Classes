@@ -5,6 +5,7 @@ var float APf;
 var string PawnName;
 
 var int Health;
+var bool bHaveAp;
 
 // Replication block
 replication
@@ -48,6 +49,10 @@ simulated event ReplicatedEvent(name VarName)
 
 	}
 	if (VarName == 'Health')
+	{
+
+	}
+	if (VarName == 'bHaveAp')
 	{
 
 	}
