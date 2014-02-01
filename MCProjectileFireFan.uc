@@ -40,7 +40,7 @@ defaultproperties
 
 	//Physics=PHYS_Projectile
 	//MyDamageType=class'UTDmgType_LinkPlasma'
-	//LifeSpan=3.0
+	LifeSpan=3.0
 	NetCullDistanceSquared=+144000000.0
 
 	bCollideWorld=true
