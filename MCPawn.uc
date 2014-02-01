@@ -78,7 +78,7 @@ replication
 
   // Replicate only if the values are dirty and from server to client
   if (bNetDirty)
-    PawnName, PlayerUniqueID, APf;
+    PawnName, PlayerUniqueID, APf, bHaveAp;
 }
 
 simulated event ReplicatedEvent(name VarName)
