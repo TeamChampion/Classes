@@ -5,13 +5,13 @@ var float APf;
 var string PawnName;
 
 var int Health;
-
+var bool bHaveAp;
 // Replication block
 replication
 {
 	// I am the Server, send these variables to all Clients
 	if (bNetDirty && Role == Role_Authority)
-		PlayerUniqueID, APf, PawnName, Health;
+		PlayerUniqueID, APf, PawnName, Health, bHaveAp;
 	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
 //	if (bNetDirty && bNetOwner)
 //		 GameRound;
@@ -48,6 +48,10 @@ simulated event ReplicatedEvent(name VarName)
 
 	}
 	if (VarName == 'Health')
+	{
+
+	}
+	if (VarName == 'bHaveAp')
 	{
 
 	}
