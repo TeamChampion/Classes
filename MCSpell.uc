@@ -7,7 +7,6 @@ var() int AP;
 var() bool bFire, bEarth, bThunder, bAcid, bIce;
 //var() int slots;
 
-
 DefaultProperties
 {
 	bFire=false
