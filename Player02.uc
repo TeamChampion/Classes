@@ -27,10 +27,15 @@ defaultproperties
 {
    Health=100 // Bots HP
    Name=Player01_Pawn
-/*
-   Begin Object Class=SkeletalMeshComponent Name=Player02_Pawn
-   End Object
-   Mesh=WPawnSkeletalMeshComponent
-   Components.Add(WPawnSkeletalMeshComponent)
-*/
+
+  MySpells[0] = "stonewall"
+  MySpells[1] = "rockandroll"
+  MySpells[2] = "rockfang"
+  MySpells[3] = "unearthmaterial"
+
+  MyDynamicSpells[0] = "stonewall"
+  MyDynamicSpells[1] = "rockandroll"
+  MyDynamicSpells[2] = "rockfang"
+  MyDynamicSpells[3] = "unearthmaterial"
+
 }
