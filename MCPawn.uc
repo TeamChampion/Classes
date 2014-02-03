@@ -37,7 +37,8 @@ var float Modifier;
 var(MystStats) array <Sequence> SpellList;
 var(MystStats) int AP;
 var(MystStats) int MaxAP;
-
+var(MystSpells) string MySpells[4];
+var(MystSpells) array <string> MyDynamicSpells;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 

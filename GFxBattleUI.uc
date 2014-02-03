@@ -5,7 +5,7 @@ var MouseInterfaceHUD MouseInterfaceHUD;
 var MCPlayerController MCPC;
 var MCPawn MCP;
 
-
+var int SaveWhoseTurn;
 
 /*
 // TF = TextField - texts, ints, floats etc
@@ -61,32 +61,19 @@ var GFxCLIKWidget Fire02;
 var GFxCLIKWidget Fire03;
 var GFxCLIKWidget Fire04;
 
+// Widget for AP Reset button
+var GFxCLIKWidget ResetAPBtn;
 
-/*
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-var GFxObject 
-*/
+// Widget for Spells
+var GFxCLIKWidget Spell1;
+var GFxCLIKWidget Spell2;
+var GFxCLIKWidget Spell3;
+var GFxCLIKWidget Spell4;
 
+// Just check if it has started
 var bool bInitialized;
 
-
+/*
 function Init(optional LocalPlayer LocalPlayer)
 {
 	// Initialize the ScaleForm movie
@@ -97,6 +84,7 @@ function Init(optional LocalPlayer LocalPlayer)
  	RootMC = GetVariableObject("root");
 	`log("------------------------------------ Start Movie");
 }
+*/
 
 function bool Start(optional bool StartPaused = false)
 {
@@ -145,152 +133,434 @@ function getActionscript(int find)
 
 
 
-
-
-
-
-
-
-
-
-function ConfigHUD()
+function SaveCodeAS()
 {
-	setPlayerLightUpIndicator();
-	setAPButtonPosition();
-	GetPlayerInformation();
+	
+//	RootMC.SetInt("LightUPNumber", setTheNumber);
+//	ActionScriptVoid("root.LightUpIndicator");
+
+
+
+
+
+	// first page
+//	TitleMC = RootMC.GetObject("test0101").GetObject("Title");
+//	TitleMC.SetText(shopText[0]);
+	// second page
+	//RootMC.GotoAndStop("TimeShopText");
+	//TitleMC = RootMC.GetObject("text_mc02").GetObject("TextFieldTitle");    
+	//TitleMC.SetText(shopText[0]);
 }
 
-function Tick(float DeltaTime)
-{
-	setPlayerLightUpIndicator();
-	setAPButtonPosition();
-	GetPlayerInformation();
-}
+
+
 
 
 
 
 
 /*
-// Function that sets the indicator color, whos turn is red or blue
+// We start off by setting the initial settings
+// @network					Client
 */
-function setPlayerLightUpIndicator()
+function ConfigHUD()
+{
+	// GameRound
+	GameRoundTF = RootMC.GetObject("gameroundareaINS").GetObject("roundINS");
+
+	ConfigPlayerStats();
+	ConfigAPButton();
+	ConfigSpells();
+
+	bInitialized = true;
+}
+
+/*
+// Set up Player Stats to link them all with Scaleform
+// @network					Client
+*/
+function ConfigPlayerStats()
+{
+	`log("Hello PlayerConfigStats");
+
+	// Player 1 Stats
+	// Player 1 Area MovieClip
+	P01areaMC = RootMC.GetObject("player01areaINS");
+	if (P01areaMC != none)
+	{
+		// Name
+		P01NameTF = P01areaMC.GetObject("playernameINS");
+		// Health Text
+		P01HPTextTF = P01areaMC.GetObject("healthbartextINS");
+		// AP Area MovieClip
+		P01APareaMC = P01areaMC.GetObject("playerapareaINS");
+		if (P01APareaMC != none)
+		{
+			// AP Number
+			P01APNumbTF = P01APareaMC.GetObject("apINS");
+			// AP Text
+			P01APTextTF = P01APareaMC.GetObject("aptextINS");
+		}
+	}
+
+	// Player 2 Stats
+	// Player 2 Area MovieClip
+	P02areaMC = RootMC.GetObject("player02areaINS");
+	if (P02areaMC != none)
+	{
+		// Name
+		P02NameTF = P02areaMC.GetObject("playernameINS");
+		// Health Text
+		P02HPTextTF = P02areaMC.GetObject("healthbartextINS");
+		// AP Area MovieClip
+		P02APareaMC = P02areaMC.GetObject("playerapareaINS");
+		if (P02APareaMC != none)
+		{
+			// AP Number
+			P02APNumbTF = P02APareaMC.GetObject("apINS");
+			// AP Text
+			P02APTextTF = P02APareaMC.GetObject("aptextINS");
+		}
+	}
+
+	`log("GoodBye PlayerConfigStats");
+}
+
+/*
+// Config the AP Reset Button
+// @network					Client
+*/
+function ConfigAPButton()
+{
+	`log("Hello ConfigAPButton");
+	
+	// Get the Widget
+	ResetAPBtn = GFxClikWidget(RootMC.GetObject("resetapINS",class'GFxClikWidget'));
+	if (ResetAPBtn != none)
+	{
+		// Add button press, mouse over, mouse out
+		ResetAPBtn.AddEventListener('CLIK_buttonPress', APResetButton);
+	}
+
+	`log("GoodBye ConfigAPButton");
+}
+
+/*
+// Config the Spell buttons to work with the game
+// @network					Client
+*/
+function ConfigSpells()
+{
+	local MCPawn MyPawn;
+	local MCPlayerController PC;
+	local ASDisplayInfo ASDisplayInfo;
+	local string SpellName;
+	local int SpellIndex;
+	local GFxClikWidget ThisClikButton;
+
+	MyPawn = MCPawn(GetPC().Pawn);
+	PC = MCPlayerController(GetPC());
+	SpellIndex = 0;
+
+
+	// Check all the Spells the Pawn has
+	foreach MyPawn.MyDynamicSpells(SpellName)
+	{
+		// If the SpellName matches with the case, then assign it please.
+		switch (SpellName)
+		{
+			case "kaleidoscope":
+				// Get the Object Button 
+				ThisClikButton = GFxClikWidget(RootMC.GetObject("kaleidoscopeINS", class'GFxClikWidget'));
+				if (ThisClikButton != none)
+				{
+					// Add the press and rollover
+					// @TODO Add Mouse Capture Features
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+				}
+				break;
+			case "firefan":
+				ThisClikButton = GFxClikWidget(RootMC.GetObject("firefanINS", class'GFxClikWidget'));
+				if (ThisClikButton != none)
+				{
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastFireFan);
+				}
+				break;
+			case "fireball":
+				ThisClikButton = GFxClikWidget(RootMC.GetObject("fireballINS", class'GFxClikWidget'));
+				if (ThisClikButton != none)
+				{
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastFireball);
+				}
+				break;
+			case "firefountain":
+				ThisClikButton = GFxClikWidget(RootMC.GetObject("firefountainINS", class'GFxClikWidget'));
+				if (ThisClikButton != none)
+				{
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+				}
+				break;
+
+
+
+			case "stonewall":
+				ThisClikButton = GFxClikWidget(RootMC.GetObject("stonewallINS", class'GFxClikWidget'));
+				if (ThisClikButton != none)
+				{
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+				}
+				break;	
+			case "rockandroll":
+				ThisClikButton = GFxClikWidget(RootMC.GetObject("rockandrollINS", class'GFxClikWidget'));
+				if (ThisClikButton != none)
+				{
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastRockAndRoll);
+				}
+				break;	
+			case "rockfang":
+				ThisClikButton = GFxClikWidget(RootMC.GetObject("rockfangINS", class'GFxClikWidget'));
+				if (ThisClikButton != none)
+				{
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+				}
+				break;	
+			case "unearthmaterial":
+				ThisClikButton = GFxClikWidget(RootMC.GetObject("unearthmaterialINS", class'GFxClikWidget'));
+				if (ThisClikButton != none)
+				{
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+				}
+				break;
+
+			default:
+				//`log("no Spell String");
+		}
+
+		switch (SpellIndex)
+		{
+			case 0:
+				// If it's in the first index then make it into Spell NR 1
+				Spell1 = ThisClikButton;
+				// Get where it is at
+				ASDisplayInfo = Spell1.GetDisplayInfo();
+				// Set position
+				ASDisplayInfo.x = 425;
+				ASDisplayInfo.y = 600;
+				Spell1.SetDisplayInfo(ASDisplayInfo);
+				break;
+			case 1:
+				Spell2 = ThisClikButton;
+				ASDisplayInfo = Spell2.GetDisplayInfo();
+				ASDisplayInfo.x = 535;
+				ASDisplayInfo.y = 600;
+				Spell2.SetDisplayInfo(ASDisplayInfo);
+				break;
+			case 2:
+				Spell3 = ThisClikButton;
+				ASDisplayInfo = Spell3.GetDisplayInfo();
+				ASDisplayInfo.x = 645;
+				ASDisplayInfo.y = 600;
+				Spell3.SetDisplayInfo(ASDisplayInfo);
+				break;
+			case 3:
+				Spell4 = ThisClikButton;
+				ASDisplayInfo = Spell4.GetDisplayInfo();
+				ASDisplayInfo.x = 755;
+				ASDisplayInfo.y = 600;
+				Spell4.SetDisplayInfo(ASDisplayInfo);
+				break;
+			default:
+				//`log("no SpellIndex");
+		}
+		// Adds +1 to ForEach Index
+		SpellIndex++;
+	}
+}
+
+/*
+// Set up Player Stats to link them all with Scaleform
+// @param		ev		Event data generated by the CLIKwidget
+// @network				Client
+*/
+function APResetButton(GFxClikWidget.EventData ev)
+{
+	local MCPawn MyPawn;
+	local MCPlayerController PC;
+
+	PC = MCPlayerController(GetPC());
+	MyPawn = MCPawn(GetPC().Pawn);
+
+	// If AP is more than 0.90 && My ID is this && if we aren't moving at all
+	if (MyPawn.APf > 0.90 && MyPawn.PlayerUniqueID == 1 && !PC.bCanStartMoving)
+	{
+		MyPawn.APf = 0;
+		// Activate the Timer for next round
+		PC.SetWhoseTurn(2);
+		// Update Replication
+		MCPlayerReplication(PC.PlayerReplicationInfo).APf = MyPawn.APf;
+		// Can we use FindPathsWeCanGoTo() function, yes we can to find paths
+		PC.bCanTurnBlue = true;
+		PC.FindPathsWeCanGoTo();
+		// Turn off Movement so we don't start walking
+		PC.bCanStartMoving = false;
+		// Reset MoveTo Target
+		PC.ScriptedMoveTarget = none;
+
+	}else if(MyPawn.APf > 0.90 && MyPawn.PlayerUniqueID == 2 && !PC.bCanStartMoving)
+	{
+		MyPawn.APf = 0;
+		PC.SetWhoseTurn(1);
+		MCPlayerReplication(PC.PlayerReplicationInfo).APf = MyPawn.APf;
+		PC.bCanTurnBlue = true;
+		PC.FindPathsWeCanGoTo();
+		PC.bCanStartMoving = false;
+		PC.ScriptedMoveTarget = none;
+	}
+}
+
+
+/*
+// Updates the The Hud the entire time
+// @network					Client
+*/
+function Tick(float DeltaTime)
+{
+	// AP Button
+	SetAPButtonPosition( getWhoseTurn() );
+	// Blue or Red Indicator
+	setPlayerLightUpPosition( getWhoseTurn() );
+	// Player 1 or 2 stats
+	GetPlayerInformation();
+}
+
+
+/*
+// Enable Mouse Clicking example
+// @param		ev		Event data generated by the CLIKwidget
+// @network				Client
+*/
+function PressSpell(GFxClikWidget.EventData ev)
+{
+	`log("Something Pressed!");
+}
+
+
+/*
+// Enable mouse capturing
+// @param		ev		Event data generated by the CLIKwidget
+// @network				Client
+*/
+function EnableMouseCapture(GFxClikWidget.EventData ev)
+{
+	//`log("MouseOver");
+}
+
+/*
+// Disable mouse capturing
+// @param		ev		Event data generated by the CLIKwidget
+// @network				Client
+*/
+function DisableMouseCapture(GFxClikWidget.EventData ev)
+{
+	//`log("MouseOut");
+}
+
+
+
+/*
+// Sets the position of AP button based on whos turn it is
+// @network					Client
+*/
+function int getWhoseTurn()
 {
 	local MCGameReplication MyGMRep;
-//	local MCPlayerController MyPC;
-//	local MCPawn MyPawn;
 	local int i;
 	local int setTheNumber;
-
-	// Get PlayerControoler
-//	MyPC = MCPlayerController(GetPC());
-	// Get Pawn
-//	MyPawn = MCPawn(GetPC().Pawn);
 
 	// Get GameReplication
 	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
 
 	for (i = 0; i < MyGMRep.MCPRIArray.Length ; i++)
 	{
-		// If My Rep char has my current Characters AP then set indicator
+		// If A Player has BHaveAP true then assign him the UniqueID and return it
 		if (MyGMRep.MCPRIArray[i].bHaveAp)
 		{
 			setTheNumber = MyGMRep.MCPRIArray[i].PlayerUniqueID;
+			// Save this as a Global int and return later, fixes a bug so it doesn't turn to 0 when BHaveAP is switching
+			SaveWhoseTurn = MyGMRep.MCPRIArray[i].PlayerUniqueID;;
+			return setTheNumber;
 		}
+	}
+	return SaveWhoseTurn;
+}	
 
-		RootMC.SetInt("LightUPNumber", setTheNumber);
-		ActionScriptVoid("root.LightUpIndicator");
+/*
+// Function that sets the indicator color, whos turn is red or blue
+// @param		WhatID		PlayerUniqueID to be passed in
+// @network					Client
+*/
+function setPlayerLightUpPosition(int WhatID)
+{
+	local GFxObject Player01AreaMC;;
+	local GFxObject Player02AreaMC;;
+
+	Player01AreaMC = RootMC.GetObject("player01areaINS").GetObject("indicatorINS");
+	Player02AreaMC = RootMC.GetObject("player02areaINS").GetObject("indicatorINS");
+
+	// If Player 1 then Light up his
+	if (WhatID == 1)
+	{
+		Player01AreaMC.SetVisible(true);
+		Player02AreaMC.SetVisible(false);
+	}
+	// If Player 2 then Light up his
+	else if (WhatID == 2)
+	{
+		Player02AreaMC.SetVisible(true);
+		Player01AreaMC.SetVisible(false);
 	}
 }	
 
 /*
 // Sets the position of AP button based on whos turn it is
-//@TODO still being worked on, not finalized
+// @param		WhatID		PlayerUniqueID to be passed in
+// @network					Client
 */
-function setAPButtonPosition()
+function SetAPButtonPosition(int WhatID)
 {
-	local MCGameReplication MyGMRep;
-	local int i;
-	local int setTheNumber;
 	local GFxObject ResetAPMC;
 	local ASDisplayInfo ASDisplayInfo;
+	local MCPawn MyPawn;
+
+	// Get Pawn
+	MyPawn = MCPawn(GetPC().Pawn);
 
 	ResetAPMC = RootMC.GetObject("resetapINS");
 	ASDisplayInfo = ResetAPMC.GetDisplayInfo();
 
-	// Get GameReplication
-	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
-
-	for (i = 0; i < MyGMRep.MCPRIArray.Length ; i++)
+	if (WhatID == MyPawn.PlayerUniqueID)
 	{
-		// If My Rep char has my current Characters AP then set indicator
-		if (MyGMRep.MCPRIArray[i].bHaveAp)
+		// If Player 1
+		if (WhatID == 1)
 		{
-			setTheNumber = MyGMRep.MCPRIArray[i].PlayerUniqueID;
-		}
-		/*
-		// If The Player is number 1 then show his AP Reset Button
-		if (MyGMRep.MCPRIArray[i].bHaveAp && MyGMRep.MCPRIArray[i].PlayerUniqueID == 1)
-		{
+			// Set Position
 			ASDisplayInfo.x = 5;
 			ASDisplayInfo.y = 180;
-			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
-		}else
-		{
-			// Otherwise hide it for player 2
-			ResetAPMC.SetVisible(false);
-			//break;
 		}
-
-		if (MyGMRep.MCPRIArray[i].bHaveAp && MyGMRep.MCPRIArray[i].PlayerUniqueID == 2)
+		// If Player 2
+		if (WhatID == 2)
 		{
+			// Set Position
 			ASDisplayInfo.x = 1158;
 			ASDisplayInfo.y = 180;
-			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
-		}else
-		{
-			ResetAPMC.SetVisible(false);
-			//break;
 		}
-		*/
-
-		RootMC.SetInt("LightUPNumber", setTheNumber);
-		//ActionScriptVoid("root.SwitchAPResetButton");
-
-		if (setTheNumber == 1) 
-		{
-			ASDisplayInfo.x = 5;
-			ASDisplayInfo.y = 180;
-			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
-			ResetAPMC.SetVisible(true);
-		}else if (setTheNumber == 2)
-		{
-			// Otherwise hide it for player 2
-			ResetAPMC.SetVisible(false);
-			break;
-		}
-
-		if (setTheNumber == 2)
-		{
-			ASDisplayInfo.x = 1158;
-			ASDisplayInfo.y = 180;
-			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
-			ResetAPMC.SetVisible(true);
-		}else if (setTheNumber == 1)
-		{
-			// Otherwise hide it for player 2
-			ResetAPMC.SetVisible(false);
-			break;
-		}
-
-
+		ResetAPMC.SetDisplayInfo(ASDisplayInfo);
+		ResetAPMC.SetVisible(true);
+	}else
+	{
+		ResetAPMC.SetVisible(false);
 	}
-
-
-
-}	
-
-
+}
 
 
 
@@ -323,48 +593,36 @@ function GetPlayerInformation()
 	// Players
 	for (i = 0; i < MCGRep.MCPRIArray.Length ; i++)
 	{
-
 		// Player 1 Stats
 		// if we have the same id then show our stuff
 		// otherwise hide it for other player.
-		P01areaMC = RootMC.GetObject("player01areaINS");
 		if (P01areaMC != none && MCGRep.MCPRIArray[i].PlayerUniqueID == 1)
 		{
 			// Player 01 Name
-			P01NameTF = P01areaMC.GetObject("playernameINS");
 			if (P01NameTF != none)
 			{
 				P01NameTF.SetString("text", MCGRep.MCPRIArray[i].PawnName);
 			}
-
 			// Player 01 Health Text
-			P01HPTextTF = P01areaMC.GetObject("healthbartextINS");
 			if (P01HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
 			{
 				P01HPTextTF.SetInt("text", MCGRep.MCPRIArray[i].Health);
 			}else
 			{
-				//P01HPTextTF.SetString("text", "");
 				P01HPTextTF.SetVisible(false);
 			}
-			
 			// Player 01 AP Text
-			P01APareaMC = P01areaMC.GetObject("playerapareaINS");
 			if (P01APareaMC != none)
 			{
 				// AP Number
-				P01APNumbTF = P01APareaMC.GetObject("apINS");
 				if (P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
 				{
 					P01APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
 				}else
 				{
-					//P01APNumbTF.SetString("text", "");
 					P01APNumbTF.SetVisible(false);
 				}
-
 				// AP Text
-				P01APTextTF = P01APareaMC.GetObject("aptextINS");
 				if (P01APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
 				{
 					//P01APTextTF.SetString("text", "AP");
@@ -378,44 +636,33 @@ function GetPlayerInformation()
 		// Player 2 Stats
 		// if we have the same id then show our stuff
 		// otherwise hide it for other player.
-		P02areaMC = RootMC.GetObject("player02areaINS");
 		if (P02areaMC != none && MCGRep.MCPRIArray[i].PlayerUniqueID == 2)
 		{
 			// Player 02 Name
-			P02NameTF = P02areaMC.GetObject("playernameINS");
 			if (P02NameTF != none)
 			{
 				P02NameTF.SetString("text", MCGRep.MCPRIArray[i].PawnName);
 			}
-
 			// Player 02 Health Text
-			P02HPTextTF = P02areaMC.GetObject("healthbartextINS");
 			if (P02HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
 			{
 				P02HPTextTF.SetInt("text", MCGRep.MCPRIArray[i].Health);
 			}else
 			{
-				//P02HPTextTF.SetString("text", "");
 				P02HPTextTF.SetVisible(false);
 			}
-
 			// Player 02 AP Text
-			P02APareaMC = P02areaMC.GetObject("playerapareaINS");
 			if (P02APareaMC != none)
 			{
 				// AP Number
-				P02APNumbTF = P02APareaMC.GetObject("apINS");
 				if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
 				{
 					P02APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
 				}else
 				{
-					//P02APNumbTF.SetString("text", "");
 					P02APNumbTF.SetVisible(false);
 				}
-
 				// AP Text
-				P02APTextTF = P02APareaMC.GetObject("aptextINS");
 				if (P02APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
 				{
 					//P02APTextTF.SetString("text", "AP");
@@ -426,116 +673,10 @@ function GetPlayerInformation()
 			}
 		}
 	}
-
-
-
-	// first page
-//	TitleMC = RootMC.GetObject("test0101").GetObject("Title");
-//	TitleMC.SetText(shopText[0]);
-	// second page
-	//RootMC.GotoAndStop("TimeShopText");
-	//TitleMC = RootMC.GetObject("text_mc02").GetObject("TextFieldTitle");    
-	//TitleMC.SetText(shopText[0]);
 }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-// Callback automatically called for each object in the movie with enableInitCallback enabled
-event bool WidgetInitialized(name WidgetName, name WidgetPath, GFxObject Widget)
-{
-    // Determine which widget is being initialized and handle it accordingly
-    switch(Widgetname)
-    {
-/*
-        case 'InShop2':
-            InShopButton = GFxCLIKWidget(Widget);
-            InShopButton.SetString("label", menuButton[0]);
-            //InShopButton.SetString("label", Localize("Hero", "Cathode", "UDKMOBA"));
-            setSwitch = 0;
-            InShopButton.AddEventListener('CLIK_click', GoToFrame);
-    //CathodeBtn = GFxClikWidget(GetObject("cathodeBtn", class'GFxClikWidget'));
-    //CathodeBtn.SetString("label", Localize("Hero", "Cathode", "UDKMOBA"));
-	//CathodeBtn.AddEventListener('CLIK_buttonPress', OnCathodePress);
-
-    //CathodeBtn.SetString("label", Localize("Hero", "Cathode", "UDKMOBA"));
-	//Localize( string SectionName, string KeyName, string PackageName );
-            break;
-
-        case 'InShopReturn2':
-            InShopReturnButton = GFxCLIKWidget(Widget);
-            InShopReturnButton.SetString("label", menuButton[1]);
-            setSwitch = 2;
-            InShopReturnButton.AddEventListener('CLIK_click', GoToFrame);
-            break;
-
-        case 'InShopGo2':
-            InShopGoButton = GFxCLIKWidget(Widget);
-            InShopGoButton.SetString("label", menuButton[2]);
-            setSwitch = 1;
-            InShopGoButton.AddEventListener('CLIK_click', GoToFrame);
-            break;
-            
-        case 'InShopReturnMain2':
-            InShopReturnMainButton = GFxCLIKWidget(Widget);
-            InShopReturnMainButton.SetString("label", menuButton[3]);
-            setSwitch = 2;
-            InShopReturnMainButton.AddEventListener('CLIK_click', GoToFrame);
-            break;
-*/
-		case 'Earth01':
-			`log("Earth01");
-			break;
-		case 'Earth02':
-			`log("Earth02");
-			break;
-		case 'Earth03':
-			`log("Earth03");
-			break;
-		case 'Earth04':
-			`log("Earth04");
-			break;
-
-		case 'Fire01':
-			`log("Fire01");
-			break;
-		case 'Fire02':
-			`log("Fire02");
-			break;
-		case 'Fire03':
-			`log("Fire03");
-			break;
-		case 'Fire04':
-			`log("Fire04");
-			break;
-
-
-
-
-
-
-
-
-
-
-        default:
-        	// Pass on if not a widget we are looking for
-            return Super.WidgetInitialized(Widgetname, WidgetPath, Widget);
-    }
-    
-    return false;
-}
 
 
 
@@ -543,14 +684,6 @@ event bool WidgetInitialized(name WidgetName, name WidgetPath, GFxObject Widget)
 
 DefaultProperties
 {
-	// ScaleForm widgets being used for WidgetInitialized
-	WidgetBindings.Add((WidgetName="InShop2",			WidgetClass=class'GFxCLIKWidget'))
-	WidgetBindings.Add((WidgetName="InShopReturn2",		WidgetClass=class'GFxCLIKWidget'))
-	WidgetBindings.Add((WidgetName="InShopGo2",			WidgetClass=class'GFxCLIKWidget'))
-	WidgetBindings.Add((WidgetName="InShopReturnMain2",	WidgetClass=class'GFxCLIKWidget'))
-
-
-	
     bDisplayWithHudOff=false
     TimingMode=TM_Game
     MovieInfo=SwfMovie'MystrasChampionFlash.Battle.BattleHUD'
