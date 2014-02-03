@@ -1235,6 +1235,7 @@ exec function MCTrackHero()
 }
 
 // Test functions to try out the spells
+// Spells here are in pairs. One to spawn on the client, one for the server to spawn on others
 exec function CastFireball ()
 {
 	local MCFireball spell;
@@ -1280,16 +1281,15 @@ reliable server function ServerCastRockAndRoll ()
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
-// TODO: Make the rock wall colidable
+// Rock Wall just spawns on the server for both players
 exec function CastRockWall()
 {
-	local MCRockWall spell;
-	spell = spawn(class'MCRockWall');
-	spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
+	//local MCRockWall spell;
+	//spell = spawn(class'MCRockWall');
+	//spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
 	ServerCastRockWall();
 }
 
-// TODO: figure out why it doesn't spawn on the server
 reliable server function ServerCastRockWall()
 {
 	local MCRockWall spell;
