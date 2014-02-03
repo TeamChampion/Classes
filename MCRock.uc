@@ -1,6 +1,21 @@
 class MCRock extends Actor;
 
 var() float MovementSpeed;
+var() ParticleSystem smoke;
+
+Replication
+{
+	if (bNetDirty)
+		smoke;
+}
+
+simulated function PostBeginPlay()
+{
+	local Vector newLocation;
+	super.PostBeginPlay();
+	newLocation = Location + vect(0,0,60);
+	WorldInfo.MyEmitterPool.SpawnEmitter(smoke, newLocation);
+}
 
 simulated event Tick(float DeltaTime)
 {
@@ -16,16 +31,13 @@ simulated event Tick(float DeltaTime)
 auto simulated state Moving
 {
 Begin:
-    Sleep(4.0);
+    Sleep(2.5);
     GotoState('Idle');
 }
 
 simulated state Idle
 {
     ignores Tick;
-	//simulated event Tick(float DeltaTime){};
-Begin:
-	
 }
 
 DefaultProperties
@@ -33,7 +45,7 @@ DefaultProperties
 	RemoteRole=ROLE_SimulatedProxy
 	bOnlyDirtyReplication 	= false
 	bAlwaysRelevant			= true
-	
+	smoke = ParticleSystem'Envy_Effects.VH_Deaths.P_VH_Death_Dust_Secondary';
 	Begin Object class=StaticMeshComponent name=RockMesh
 		StaticMesh=StaticMesh'mystrasmain.StaticMesh.RockBlocker'
 	End Object
@@ -45,5 +57,5 @@ DefaultProperties
 	bCollideActors=true 
 	bBlockActors=true
 	//Components.Add(MyLightEnvironment)
-	MovementSpeed=16
+	MovementSpeed=30
 }
