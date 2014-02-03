@@ -49,6 +49,19 @@ var GFxObject GameRoundMC;
 var GFxObject GameRoundTF; //roundINS
 
 
+
+// Widgets for spells
+var GFxCLIKWidget Earth01;
+var GFxCLIKWidget Earth02;
+var GFxCLIKWidget Earth03;
+var GFxCLIKWidget Earth04;
+
+var GFxCLIKWidget Fire01;
+var GFxCLIKWidget Fire02;
+var GFxCLIKWidget Fire03;
+var GFxCLIKWidget Fire04;
+
+
 /*
 var GFxObject 
 var GFxObject 
@@ -71,6 +84,7 @@ var GFxObject
 var GFxObject 
 */
 
+var bool bInitialized;
 
 
 function Init(optional LocalPlayer LocalPlayer)
@@ -89,10 +103,16 @@ function bool Start(optional bool StartPaused = false)
     super.Start();
     Advance(0.f);
 
+	RootMC = GetVariableObject("root");
+
+	if (!bInitialized)
+	{
+		ConfigHUD();
     `log("-----------------------------------------------------------------------");
     `log("---------------------------------main----------------------------------");
     `log("-----------------------------------------------------------------------");
-	RootMC = GetVariableObject("root");
+	}
+	
 	return true;
 }
 
@@ -116,13 +136,50 @@ function findThisInPC()
 	`log("I found you from HUD and PC");
 }
 
+// Sent function from ActionScript
+function getActionscript(int find)
+{
+	//`log(find);
+	//`log("I GOT THE STUPID THING!!!!!!!!!!!!!!!!!");
+}
+
+
+
+
+
+
+
+
+
+
+
+function ConfigHUD()
+{
+	setPlayerLightUpIndicator();
+	setAPButtonPosition();
+	GetPlayerInformation();
+}
+
+function Tick(float DeltaTime)
+{
+	setPlayerLightUpIndicator();
+	setAPButtonPosition();
+	GetPlayerInformation();
+}
+
+
+
+
+
+/*
+// Function that sets the indicator color, whos turn is red or blue
+*/
 function setPlayerLightUpIndicator()
 {
-	local MCPlayerController MyPC;
 	local MCGameReplication MyGMRep;
-	local MCPawn MyPawn;
+//	local MCPlayerController MyPC;
+//	local MCPawn MyPawn;
 	local int i;
-	local GFxObject GetIndicator;
 	local int setTheNumber;
 
 	// Get PlayerControoler
@@ -146,17 +203,102 @@ function setPlayerLightUpIndicator()
 	}
 }	
 
-
-function getActionscript(int find)
+/*
+// Sets the position of AP button based on whos turn it is
+//@TODO still being worked on, not finalized
+*/
+function setAPButtonPosition()
 {
-	//`log(find);
-	//`log("I GOT THE STUPID THING!!!!!!!!!!!!!!!!!");
-}
+	local MCGameReplication MyGMRep;
+	local int i;
+	local int setTheNumber;
+	local GFxObject ResetAPMC;
+	local ASDisplayInfo ASDisplayInfo;
+
+	ResetAPMC = RootMC.GetObject("resetapINS");
+	ASDisplayInfo = ResetAPMC.GetDisplayInfo();
+
+	// Get GameReplication
+	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
+
+	for (i = 0; i < MyGMRep.MCPRIArray.Length ; i++)
+	{
+		// If My Rep char has my current Characters AP then set indicator
+		if (MyGMRep.MCPRIArray[i].bHaveAp)
+		{
+			setTheNumber = MyGMRep.MCPRIArray[i].PlayerUniqueID;
+		}
+		/*
+		// If The Player is number 1 then show his AP Reset Button
+		if (MyGMRep.MCPRIArray[i].bHaveAp && MyGMRep.MCPRIArray[i].PlayerUniqueID == 1)
+		{
+			ASDisplayInfo.x = 5;
+			ASDisplayInfo.y = 180;
+			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
+		}else
+		{
+			// Otherwise hide it for player 2
+			ResetAPMC.SetVisible(false);
+			//break;
+		}
+
+		if (MyGMRep.MCPRIArray[i].bHaveAp && MyGMRep.MCPRIArray[i].PlayerUniqueID == 2)
+		{
+			ASDisplayInfo.x = 1158;
+			ASDisplayInfo.y = 180;
+			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
+		}else
+		{
+			ResetAPMC.SetVisible(false);
+			//break;
+		}
+		*/
+
+		RootMC.SetInt("LightUPNumber", setTheNumber);
+		//ActionScriptVoid("root.SwitchAPResetButton");
+
+		if (setTheNumber == 1) 
+		{
+			ASDisplayInfo.x = 5;
+			ASDisplayInfo.y = 180;
+			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
+			ResetAPMC.SetVisible(true);
+		}else if (setTheNumber == 2)
+		{
+			// Otherwise hide it for player 2
+			ResetAPMC.SetVisible(false);
+			break;
+		}
+
+		if (setTheNumber == 2)
+		{
+			ASDisplayInfo.x = 1158;
+			ASDisplayInfo.y = 180;
+			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
+			ResetAPMC.SetVisible(true);
+		}else if (setTheNumber == 1)
+		{
+			// Otherwise hide it for player 2
+			ResetAPMC.SetVisible(false);
+			break;
+		}
+
+
+	}
+
+
+
+}	
 
 
 
 
 
+
+
+/*
+// Update function that will update player stats
+*/
 function GetPlayerInformation()
 {
 	local MCGameReplication MCGRep;
@@ -170,7 +312,7 @@ function GetPlayerInformation()
 	// Get GameReplication
 	MCGRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
 
-	setPlayerLightUpIndicator();
+
 
 	// GameRound
 	GameRoundTF = RootMC.GetObject("gameroundareaINS").GetObject("roundINS");
@@ -202,7 +344,8 @@ function GetPlayerInformation()
 				P01HPTextTF.SetInt("text", MCGRep.MCPRIArray[i].Health);
 			}else
 			{
-				P01HPTextTF.SetString("text", "");
+				//P01HPTextTF.SetString("text", "");
+				P01HPTextTF.SetVisible(false);
 			}
 			
 			// Player 01 AP Text
@@ -216,7 +359,8 @@ function GetPlayerInformation()
 					P01APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
 				}else
 				{
-					P01APNumbTF.SetString("text", "");
+					//P01APNumbTF.SetString("text", "");
+					P01APNumbTF.SetVisible(false);
 				}
 
 				// AP Text
@@ -251,7 +395,8 @@ function GetPlayerInformation()
 				P02HPTextTF.SetInt("text", MCGRep.MCPRIArray[i].Health);
 			}else
 			{
-				P02HPTextTF.SetString("text", "");
+				//P02HPTextTF.SetString("text", "");
+				P02HPTextTF.SetVisible(false);
 			}
 
 			// Player 02 AP Text
@@ -265,7 +410,8 @@ function GetPlayerInformation()
 					P02APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
 				}else
 				{
-					P02APNumbTF.SetString("text", "");
+					//P02APNumbTF.SetString("text", "");
+					P02APNumbTF.SetVisible(false);
 				}
 
 				// AP Text
@@ -297,8 +443,114 @@ function GetPlayerInformation()
 
 
 
+
+
+
+
+
+
+
+
+
+// Callback automatically called for each object in the movie with enableInitCallback enabled
+event bool WidgetInitialized(name WidgetName, name WidgetPath, GFxObject Widget)
+{
+    // Determine which widget is being initialized and handle it accordingly
+    switch(Widgetname)
+    {
+/*
+        case 'InShop2':
+            InShopButton = GFxCLIKWidget(Widget);
+            InShopButton.SetString("label", menuButton[0]);
+            //InShopButton.SetString("label", Localize("Hero", "Cathode", "UDKMOBA"));
+            setSwitch = 0;
+            InShopButton.AddEventListener('CLIK_click', GoToFrame);
+    //CathodeBtn = GFxClikWidget(GetObject("cathodeBtn", class'GFxClikWidget'));
+    //CathodeBtn.SetString("label", Localize("Hero", "Cathode", "UDKMOBA"));
+	//CathodeBtn.AddEventListener('CLIK_buttonPress', OnCathodePress);
+
+    //CathodeBtn.SetString("label", Localize("Hero", "Cathode", "UDKMOBA"));
+	//Localize( string SectionName, string KeyName, string PackageName );
+            break;
+
+        case 'InShopReturn2':
+            InShopReturnButton = GFxCLIKWidget(Widget);
+            InShopReturnButton.SetString("label", menuButton[1]);
+            setSwitch = 2;
+            InShopReturnButton.AddEventListener('CLIK_click', GoToFrame);
+            break;
+
+        case 'InShopGo2':
+            InShopGoButton = GFxCLIKWidget(Widget);
+            InShopGoButton.SetString("label", menuButton[2]);
+            setSwitch = 1;
+            InShopGoButton.AddEventListener('CLIK_click', GoToFrame);
+            break;
+            
+        case 'InShopReturnMain2':
+            InShopReturnMainButton = GFxCLIKWidget(Widget);
+            InShopReturnMainButton.SetString("label", menuButton[3]);
+            setSwitch = 2;
+            InShopReturnMainButton.AddEventListener('CLIK_click', GoToFrame);
+            break;
+*/
+		case 'Earth01':
+			`log("Earth01");
+			break;
+		case 'Earth02':
+			`log("Earth02");
+			break;
+		case 'Earth03':
+			`log("Earth03");
+			break;
+		case 'Earth04':
+			`log("Earth04");
+			break;
+
+		case 'Fire01':
+			`log("Fire01");
+			break;
+		case 'Fire02':
+			`log("Fire02");
+			break;
+		case 'Fire03':
+			`log("Fire03");
+			break;
+		case 'Fire04':
+			`log("Fire04");
+			break;
+
+
+
+
+
+
+
+
+
+
+        default:
+        	// Pass on if not a widget we are looking for
+            return Super.WidgetInitialized(Widgetname, WidgetPath, Widget);
+    }
+    
+    return false;
+}
+
+
+
+
+
 DefaultProperties
 {
+	// ScaleForm widgets being used for WidgetInitialized
+	WidgetBindings.Add((WidgetName="InShop2",			WidgetClass=class'GFxCLIKWidget'))
+	WidgetBindings.Add((WidgetName="InShopReturn2",		WidgetClass=class'GFxCLIKWidget'))
+	WidgetBindings.Add((WidgetName="InShopGo2",			WidgetClass=class'GFxCLIKWidget'))
+	WidgetBindings.Add((WidgetName="InShopReturnMain2",	WidgetClass=class'GFxCLIKWidget'))
+
+
+	
     bDisplayWithHudOff=false
     TimingMode=TM_Game
     MovieInfo=SwfMovie'MystrasChampionFlash.Battle.BattleHUD'
