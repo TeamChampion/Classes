@@ -2,6 +2,10 @@ class MCRock extends Actor;
 
 DefaultProperties
 {
+	RemoteRole=ROLE_SimulatedProxy
+	//bOnlyDirtyReplication 	= false
+	bAlwaysRelevant			= true
+	
 	Begin Object class=StaticMeshComponent name=RockMesh
 		StaticMesh=StaticMesh'mystrasmain.StaticMesh.RockBlocker'
 	End Object
