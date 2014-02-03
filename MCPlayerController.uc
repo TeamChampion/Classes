@@ -416,7 +416,7 @@ simulated function optimize(int whatPlayerID)
 // Function that Turns of the Tiles after lightover
 // @NOT_USING currently not being used
 */
-function TurnOffTiles(int index)
+function TurnOffTiles()
 {
 	local int i;
 
@@ -860,14 +860,16 @@ auto state PlayerWalking
 			if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 1 && IsInState('PlayerWalking') && bCanStartMoving)
 			{
 				`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
-				SetTimer(1.0f, false, 'TurnBasedTwo');
+				//SetTimer(1.0f, false, 'TurnBasedTwo');
+				SetWhoseTurn(2);
 				//TurnBased(2);
 			}
 
 			if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 2 && IsInState('PlayerWalking') && bCanStartMoving)
 			{
 				`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
-				SetTimer(1.0f, false, 'TurnBasedOne');
+				//SetTimer(1.0f, false, 'TurnBasedOne');
+				SetWhoseTurn(1);
 				//TurnBased(1);
 			}
 
@@ -933,22 +935,37 @@ auto state PlayerWalking
 
 
 /*
+// Set up Player Stats to link them all with Scaleform
+// @param		WhoseTurnIsIt	Sets what person we will switch to
+// @network						Client
+*/
+function SetWhoseTurn(int WhoseTurnIsIt)
+{
+	if (WhoseTurnIsIt == 1)
+	{
+		SetTimer(1.0f, false, 'TurnBasedOne');
+
+	}else if(WhoseTurnIsIt == 2)
+	{
+		SetTimer(1.0f, false, 'TurnBasedTwo');
+	}
+}
+
+/*
 // Cooldown until next persons round will be calculated
+// @network						Client
 */
 function TurnBasedTwo()
 {
-	`log("Nr 2 Can Move");
-	//SetTimer(1.0f, false, 'TurnBasedTwo',);
 	TurnBased(2);
 }
 
 /*
 // Cooldown until next persons round will be calculated
+// @network						Client
 */
 function TurnBasedOne()
 {
-	`log("Nr 1 Can Move");
-	//SetTimer(1.0f, false, 'TurnBasedTwo',);
 	TurnBased(1);
 }
 
@@ -1234,9 +1251,7 @@ exec function MCTrackHero()
 	}
 }
 
-// Test functions to try out the spells
-// Spells here are in pairs. One to spawn on the client, one for the server to spawn on others
-exec function CastFireball ()
+exec function CastFireball (GFxClikWidget.EventData ev)
 {
 	local MCFireball spell;
 	spell = Spawn(class'MCFireball');
@@ -1251,7 +1266,7 @@ server reliable function ServerCastFireball()
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
-exec function CastFireFan ()
+exec function CastFireFan (GFxClikWidget.EventData ev)
 {
 	local MCFireFan spell;
 	spell = Spawn(class'MCFireFan');
@@ -1266,7 +1281,7 @@ server reliable function ServerCastFireFan ()
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
-exec function CastRockAndRoll ()
+exec function CastRockAndRoll (GFxClikWidget.EventData ev)
 {
 	local MCRockAndRoll spell;
 	spell = Spawn(class'MCRockAndroll');
