@@ -1282,18 +1282,15 @@ reliable server function ServerCastRockAndRoll ()
 }
 
 // Rock Wall just spawns on the server for both players
-exec function CastRockWall()
+exec function CastStoneWall()
 {
-	//local MCRockWall spell;
-	//spell = spawn(class'MCRockWall');
-	//spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
-	ServerCastRockWall();
+	ServerCastStoneWall();
 }
 
-reliable server function ServerCastRockWall()
+reliable server function ServerCastStoneWall()
 {
-	local MCRockWall spell;
-	spell = spawn(class'MCRockWall');
+	local MCStoneWall spell;
+	spell = spawn(class'MCStoneWall');
 	spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
 }
 
