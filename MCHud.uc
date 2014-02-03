@@ -213,6 +213,9 @@ function TrackHeroes()
 				// AP
 				Canvas.SetPos(5, 395);
 				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].APf);
+				// Has AP
+				Canvas.SetPos(5, 410);
+				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].bHaveAp);
 			}
 			// Player 02 to the right
 			if (MCPR.MCPRIArray[i].PlayerUniqueID == 2)
@@ -229,9 +232,11 @@ function TrackHeroes()
 				// HP
 				Canvas.SetPos(300, 380);
 				Canvas.DrawText("Health        :" @ MCPR.MCPRIArray[i].Health);
-				// AP
+				// Has AP
 				Canvas.SetPos(300, 395);
 				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].APf);
+				Canvas.SetPos(300, 410);
+				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].bHaveAp);
 			}
 
 
