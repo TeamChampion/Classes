@@ -1251,7 +1251,6 @@ exec function MCTrackHero()
 	}
 }
 
-// Test functions to try out the projectiles
 exec function CastFireball (GFxClikWidget.EventData ev)
 {
 	local MCFireball spell;
@@ -1296,22 +1295,20 @@ reliable server function ServerCastRockAndRoll ()
 	spell = Spawn(class'MCRockAndroll');
 	spell.Cast(MCPlayer, MCEnemy);
 }
-/*
-function CastRockWall()
+
+// Rock Wall just spawns on the server for both players
+exec function CastStoneWall()
 {
-	local MCRockWall spell;
-	spell = spawn(class'MCRockWall');
-	spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
-	ServerCastRockWall();
+	ServerCastStoneWall();
 }
 
-reliable server function ServerCastRockWall()
+reliable server function ServerCastStoneWall()
 {
-	local MCRockWall spell;
-	spell = spawn(class'MCRockWall');
+	local MCStoneWall spell;
+	spell = spawn(class'MCStoneWall');
 	spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
 }
-*/
+
 
 
 
