@@ -28,7 +28,19 @@ var(Camera, Zoom) const float MinZoom;
 // Speed at which the camera blends from one place to another
 var(Camera) const float BlendSpeed;
 
+// Tracking hero
 var bool IsTrackingHeroPawn;
+// Tracking Enemy Pawn
+var bool IsTrackingEnemyPawn;
+// bool that controls if we can not use the camera for a match, if false then use regular camera
+var bool bSetToMatch;
+// bool that just resets Camera Location & Rotation
+var bool bStartPosition;
+// use MouseMovement to move camera
+var bool bSetMouseMovement;
+// use Keyboard to move camera
+var bool bSetKeyboardMovement;
+
 
 defaultproperties
 {
@@ -42,4 +54,11 @@ defaultproperties
 	MinZoom=256
 
 	BlendSpeed=3.125f
+
+	IsTrackingEnemyPawn = false
+	IsTrackingHeroPawn = false
+	bSetToMatch = true
+	bStartPosition = true
+	bSetMouseMovement = false
+	bSetKeyboardMovement = false
 }
