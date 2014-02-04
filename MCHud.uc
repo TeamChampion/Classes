@@ -10,7 +10,7 @@ simulated event PostBeginPlay()
 
 	if (MouseInterfaceGFx != None)
 	{
-		//MouseInterfaceGFx.Close(true);
+		MouseInterfaceGFx.Close(true);
 	}
 
 	//SpawnBattleHud();
@@ -32,6 +32,7 @@ function SpawnBattleHud()
 
 event PostRender()
 {
+	
 	local MCPlayerController PC;
 	local MCGameReplication MCPR;
 
@@ -50,12 +51,12 @@ event PostRender()
 		{
 
 			GFxBattleUI.MouseInterfaceHUD = self;
-			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			// Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation)
 			GFxBattleUI.SetTimingMode(TM_Real);
-			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			// If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE
 			GFxBattleUI.bAllowFocus = true;
 
-			/** TRUE after Start() is called, FALSE after Close() is called. */
+			// TRUE after Start() is called, FALSE after Close() is called.
 			if (!GFxBattleUI.bMovieIsOpen)
 			{
 				GFxBattleUI.Start();
@@ -70,7 +71,7 @@ event PostRender()
 		GFxBattleUI.Tick(RenderDelta);
 	}
 
-	debugMenuHUD();
+	//debugMenuHUD();
 }
 
 
@@ -225,46 +226,10 @@ function TrackHeroes()
 			}
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-/*
-		Canvas.SetPos(5, 165);
-		Canvas.DrawText("Player Name    :" @ PC.MCPlayer.PawnName);
-
-		Canvas.SetPos(5, 180);
-		Canvas.DrawText("Player AP      :" @ PC.MCPlayer.APf);
-
-		Canvas.SetPos(5, 195);
-		Canvas.DrawText("Unique ID     :" @ PC.MCPlayer.PlayerUniqueID);
-
-		Canvas.SetPos(5, 210);
-		Canvas.DrawText("Current State :" @ PC.GetStateName());
-
-
-
-
-		Canvas.SetPos(5, 225);
-		Canvas.DrawText("BlueTiles  :" @ PC.BlueTiles.length);
-
-		Canvas.SetPos(5, 240);
-		Canvas.DrawText("bCanTurnBlue  :" @ PC.bCanTurnBlue);
-
-		Canvas.SetPos(5, 255);
-		Canvas.DrawText("PathCost :" @ PC.getPathAPCost());
-*/
-	
-
 }
 
 defaultproperties
 {
-	
+	// Will we show the debug HUD from MouseInterface
+	bShowDebugText=false
 }
