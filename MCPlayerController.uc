@@ -1309,71 +1309,17 @@ reliable server function ServerCastStoneWall()
 	spell.Cast(MCPlayer, (MCEnemy.Location - MCPlayer.Location) / 2);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+exec function CastRockFang()
+{
+	ServerCastRockFang();
+}
+
+reliable server function ServerCastRockFang()
+{
+	local MCRockFang spell;
+	spell = spawn(class'MCRockFang');
+	spell.Cast(MCPlayer, MCEnemy.Location);
+}
 
 defaultproperties
 {
@@ -1386,6 +1332,6 @@ defaultproperties
 	bFlagIsHere=true
 	bCanTurnBlue=true
 	addPlusThree=0
-	setActivePlayer= 0
+	setActivePlayer=0
 
 }
