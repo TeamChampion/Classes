@@ -532,7 +532,7 @@ simulated function ReturnToTownButton(GFxClikWidget.EventData ev)
 	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
 	*/
 	Close(true);
-	ConsoleCommand("open TestMap02");
+	ConsoleCommand("open TestMap01");
 	`log("ReturnToTownButton here");
 
 
@@ -599,6 +599,11 @@ function int getWhoseTurn()
 
 	// Get GameReplication
 	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
+
+	if (MyGMRep.MCPRIArray.length < 0)
+	{
+		return SaveWhoseTurn;
+	}
 
 	for (i = 0; i < MyGMRep.MCPRIArray.Length ; i++)
 	{
@@ -702,14 +707,20 @@ function GetPlayerInformation()
 	// Get GameReplication
 	MCGRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
 
-
-
 	// GameRound
 	GameRoundTF = RootMC.GetObject("gameroundareaINS").GetObject("roundINS");
 	if (GameRoundTF != none)
 	{
 		GameRoundTF.SetInt("text", MCGRep.GameRound);
 	}
+
+//	`log("MCGRep.MCPRIArray.length =" @ MCGRep.PRIArray.length );
+
+	if (MCGRep.MCPRIArray.length < 0)
+	{
+		return;
+	}
+
 	// Players
 	for (i = 0; i < MCGRep.MCPRIArray.Length ; i++)
 	{
@@ -751,7 +762,7 @@ function GetPlayerInformation()
 					P01APTextTF.SetString("text", "");
 				}
 			}
-		}	
+		}
 
 		// Player 2 Stats
 		// if we have the same id then show our stuff
@@ -792,6 +803,7 @@ function GetPlayerInformation()
 				}
 			}
 		}
+		//////////////////////////
 	}
 }
 

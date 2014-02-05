@@ -20,7 +20,8 @@ simulated event PostBeginPlay()
   `log("currentSpells01: " @ currentSpells01); 
   `log("currentSpells02: " @ currentSpells02); 
   `log("currentSpells03: " @ currentSpells03); 
-  `log("currentSpells04: " @ currentSpells04); 
+  `log("currentSpells04: " @ currentSpells04);
+  super.PostBeginPlay();
 }
 
 defaultproperties

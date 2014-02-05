@@ -7,6 +7,7 @@ var ProtectedWrite Vector DesiredCameraLocation;
 // If true, then the camera should track the hero pawn until the player attempts to adjust the camera location
 var bool IsTrackingHeroPawn;
 
+var vector CameraMoveDirection;
 
 
 /*
@@ -29,7 +30,7 @@ function SetDesiredCameraLocation(Vector NewDesiredCameraLocation)
 function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 {
 	local MCPlayerController MCPC;
-	local Vector CameraDirectionX, CameraDirectionY, CameraDirectionZ, CameraMoveDirection, CameraIntersectionPoint;
+	local Vector CameraDirectionX, CameraDirectionY, CameraDirectionZ, CameraIntersectionPoint;
 	local LocalPlayer LocalPlayer;	// Used for Mouse tracking
 	local Vector2D MousePosition;	// Used for Mouse Tracking
 
