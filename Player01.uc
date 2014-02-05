@@ -23,6 +23,7 @@ simulated event PostBeginPlay()
   `log("currentSpells03: " @ currentSpells03); 
   `log("currentSpells04: " @ currentSpells04); 
 */
+    super.PostBeginPlay();
 }
 
 defaultproperties

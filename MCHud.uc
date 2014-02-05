@@ -32,7 +32,6 @@ function SpawnBattleHud()
 
 event PostRender()
 {
-	
 	local MCPlayerController PC;
 	local MCGameReplication MCPR;
 
@@ -41,6 +40,7 @@ event PostRender()
 	PC = MCPlayerController(PlayerOwner);
 
 	Super.PostRender();
+
 
 	// Set up battle HUD
 	if (GFxBattleUI == none && PC.MCPlayer != none && MCPR.MCPRIArray.Length >= 1)
@@ -51,12 +51,12 @@ event PostRender()
 		{
 
 			GFxBattleUI.MouseInterfaceHUD = self;
-			// Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation)
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
 			GFxBattleUI.SetTimingMode(TM_Real);
-			// If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
 			GFxBattleUI.bAllowFocus = true;
 
-			// TRUE after Start() is called, FALSE after Close() is called.
+			/** TRUE after Start() is called, FALSE after Close() is called. */
 			if (!GFxBattleUI.bMovieIsOpen)
 			{
 				GFxBattleUI.Start();
@@ -71,7 +71,7 @@ event PostRender()
 		GFxBattleUI.Tick(RenderDelta);
 	}
 
-	//debugMenuHUD();
+	debugMenuHUD();
 }
 
 
@@ -79,7 +79,9 @@ function debugMenuHUD()
 {
 	local MCPlayerController PC;
 	local MCPawn MyPawn;
+	local MCGameReplication MCPR;
 
+	MCPR = MCGameReplication(WorldInfo.GRI);
 	MyPawn = MCPawn(PlayerOwner.Pawn);
 
 	super.DrawHUD();
@@ -89,6 +91,16 @@ function debugMenuHUD()
 		break;
 	}
 	
+	if (MCPR != none)
+	{
+		Canvas.DrawColor = WhiteColor;
+		Canvas.Font = class'Engine'.Static.GetSmallFont();
+		Canvas.SetPos(5, 290);
+		Canvas.DrawText("PRI :" @ MCPR.PRIArray.length);
+		Canvas.SetPos(5, 305);
+		Canvas.DrawText("MC PRI :" @ MCPR.MCPRIArray.length);
+	}
+
 	if(MyPawn != none && PC != none)
 	{
 			Canvas.SetPos(5, 260);
@@ -115,7 +127,7 @@ function debugMenuHUD()
 			Canvas.DrawColor = RedColor;
 			Canvas.Font = class'Engine'.Static.GetSmallFont();
 			Canvas.SetPos(5, 625);
-			Canvas.DrawText("Player           :" @ PC.MCPlayer);
+			Canvas.DrawText("Camera Hero          :" @ PC.CameraProperties.IsTrackingHeroPawn);
 
 			Canvas.SetPos(5, 640);
 			Canvas.DrawText("Player Name   :" @ PC.MCPlayer.PawnName);
@@ -138,7 +150,7 @@ function debugMenuHUD()
 			Canvas.DrawColor = GreenColor;
 			Canvas.Font = class'Engine'.Static.GetSmallFont();
 			Canvas.SetPos(220, 625);
-			Canvas.DrawText("Player           :" @ PC.MCEnemy);
+			Canvas.DrawText("Camera Enemy          :" @ PC.CameraProperties.IsTrackingEnemyPawn);
 
 			Canvas.SetPos(220, 640);
 			Canvas.DrawText("Player Name   :" @ PC.MCEnemy.PawnName);
@@ -178,6 +190,11 @@ function TrackHeroes()
 		Canvas.DrawText("Replication");
 		Canvas.SetPos(5, 335);
 		Canvas.DrawText("----------------------------------------------------------");
+
+		if (MCPR.MCPRIArray.length < 0)
+		{
+			return;
+		}
 
 		for (i = 0; i < MCPR.MCPRIArray.length ; i++)
 		{
@@ -226,10 +243,46 @@ function TrackHeroes()
 			}
 		}
 	}
+
+
+
+
+
+
+
+
+
+
+/*
+		Canvas.SetPos(5, 165);
+		Canvas.DrawText("Player Name    :" @ PC.MCPlayer.PawnName);
+
+		Canvas.SetPos(5, 180);
+		Canvas.DrawText("Player AP      :" @ PC.MCPlayer.APf);
+
+		Canvas.SetPos(5, 195);
+		Canvas.DrawText("Unique ID     :" @ PC.MCPlayer.PlayerUniqueID);
+
+		Canvas.SetPos(5, 210);
+		Canvas.DrawText("Current State :" @ PC.GetStateName());
+
+
+
+
+		Canvas.SetPos(5, 225);
+		Canvas.DrawText("BlueTiles  :" @ PC.BlueTiles.length);
+
+		Canvas.SetPos(5, 240);
+		Canvas.DrawText("bCanTurnBlue  :" @ PC.bCanTurnBlue);
+
+		Canvas.SetPos(5, 255);
+		Canvas.DrawText("PathCost :" @ PC.getPathAPCost());
+*/
+	
+
 }
 
 defaultproperties
 {
-	// Will we show the debug HUD from MouseInterface
-	bShowDebugText=false
+	
 }

@@ -42,7 +42,10 @@ var(MystSpells) array <string> MyDynamicSpells;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
+// His PlayerController
 var MCPlayerController PC;
+// Decal for showing something under a pawn
+var DecalComponent MyDecal;
 
 var repnotify float APf;
 
@@ -81,7 +84,7 @@ replication
 
   // Replicate only if the values are dirty and from server to client
   if (bNetDirty)
-    PawnName, PlayerUniqueID, APf, bHaveAp;
+    PawnName, PlayerUniqueID, APf, bHaveAp, MyDecal;
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -93,6 +96,7 @@ simulated event ReplicatedEvent(name VarName)
   if (varname == 'PlayerUniqueID')
   {
     changePlayerColor();
+    SpawnDecal();
   }
   if (varname == 'APf')
   {
@@ -123,11 +127,58 @@ simulated event PostBeginPlay()
 {
     `log("Mystras Champion Pawn spawned");
     debugWeapon();
+    super.PostBeginPlay();
 }
 
+/*
+// Spawn a Decal Under the Pawn to show where he is
+*/
+simulated function SpawnDecal()
+{
+  local Vector newPlace;
+  local Rotator newRotation;
+  local MaterialInstanceConstant MyDecalColor;
+  local LinearColor MatColor;
 
+  MyDecalColor = MaterialInstanceConstant'mystraschampionsettings.Decals.CharacterDecal_INST';
 
+  newRotation.Roll = 0;
+  newRotation.Yaw = 0;
+  newRotation.Pitch = -16384;
 
+  newPlace.x = 0.0f;
+  newPlace.y = 0.0f;
+  newPlace.z = 0.0f;
+
+  MyDecal = WorldInfo.MyDecalManager.SpawnDecal(MyDecalColor,newPlace,newRotation,200.0f, 200.0f,500.0f,false);
+  MyDecal.bMovableDecal = true;
+  
+  if (MyDecal != None)
+  {      
+    if (MyDecal.GetDecalMaterial() != None)
+    {
+        MyDecalColor = new class'MaterialInstanceConstant';
+        MyDecalColor.SetParent(MyDecal.GetDecalMaterial());
+
+        if (PlayerUniqueID == 1)
+        {
+            MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        }else if (PlayerUniqueID == 2)
+        {
+            MatColor = MakeLinearColor(0.0f, 0.0f, 1.0f, 1.0f);
+        }
+        MyDecalColor.SetVectorParameterValue('SetColor', MatColor);
+        MyDecal.SetDecalMaterial(MyDecalColor);
+    }
+  }
+  AttachComponent(MyDecal);
+}
+
+simulated function Tick(float DeltaTime)
+{
+  super.Tick(DeltaTime);
+  ///
+}
 
 /*
 Functions that says what PlayerController this Pawn is using
@@ -293,4 +344,15 @@ defaultproperties
 
   Role = ROLE_Authority
   RemoteRole = ROLE_SimulatedProxy
+
+/*
+  Begin Object class=DecalComponent Name=NewDecalComponent
+    //DecalMaterial=DecalMaterial'Dark_UI.Decal_Mat.Aim_V2'
+    Translation=(X=500,Y=500,Z=0)
+    DecalTransform = DecalTransform_OwnerRelative
+      ParentRelativeOrientation = (Pitch=-16384,Yaw=0,Roll=0)
+  End Object
+  // add new vcomponent
+  Components.Add(NewDecalComponent)
+*/
 }
