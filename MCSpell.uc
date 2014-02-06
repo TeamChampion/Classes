@@ -5,6 +5,7 @@ var() string spellName;
 var() string Description;
 var() int AP;
 var() bool bFire, bEarth, bThunder, bAcid, bIce;
+var() float damage;
 //var() int slots;
 
 DefaultProperties

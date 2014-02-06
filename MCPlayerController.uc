@@ -1,29 +1,23 @@
 class MCPlayerController extends MouseInterfacePlayerController;
-
 /*
 // Guides that can be helpful
 
 // http://forums.epicgames.com/threads/936393-Drawing-names-above-player-head-referencing-PlayerReplicationInfo
-
 */
 
-
-/*
-	Variables Section
-*/
 //	AI Movement Variables
 ///////////////////////////////////////////////
-/** Move target from last scripted action */
+// Move target from last scripted action
 var Actor ScriptedMoveTarget;
 
-/** Route from last scripted action; if valid, sets ScriptedMoveTarget with the points along the route */
+// Route from last scripted action; if valid, sets ScriptedMoveTarget with the points along the route
 var Route ScriptedRoute;
 
-/** view focus from last scripted action */
-var Actor ScriptedFocus;
-
-/** using for setting mouseInterfaceHud actor to this*/
+// Setting MouseInterfaceActor to this and then assigning it to DescActor
 var Actor NewHitActor;
+
+// debug Actor for showing where to go
+var MCTestActor SpawnActor;
 
 
 
@@ -41,6 +35,9 @@ var int PlayerUniqueID;
 var playerstart closestPlayerStart;
 var MCPawn MCPlayer;
 var MCPawn MCEnemy;
+
+
+
 //	Others
 ///////////////////////////////////////////////
 // Struct that contains all the PathNodes, Triggers and Tiles
@@ -50,42 +47,36 @@ struct MCActors
 	var array<Trigger> Triggers;
 	var array<MCTile> Tiles;
 };
-
 // struct object
 var MCActors MCA;
-// Pawn char calling
-
-var MCPawn MyPlayers[2];
-var int setActivePlayer;
-
-var array <MCPawn> MyPawns;
-
 // used for turning on and off PlayerMove, so they all don\t collide
 var bool bCanStartMoving;
-
-///////////////////////////////////////////////
-
-var bool bFlagIsHere;	// used for debug flag to know when to remove it
+// If true then we can look for places to
 var bool bCanTurnBlue;
-var array <PathNode> RouteCacheCheck;	// Where we want to go all the time
-var array <MCTile> RoutedTiles;	// add Tile Pathnotes Check in here
-var array <MCTile> BlueTiles;	// add Tile Pathnotes Check in here
+// Add Tiles to an array to later check what Tiles we are going to lightup
+var array <MCTile> BlueTiles;
 
-var int addPlusThree;
 
-var MCPlayerReplication MCPReplication;
 
+//	Others
+///////////////////////////////////////////////
+// Struct that contains all the PathNodes, Triggers and Tiles
+//var MCPawn MyPlayers[2];
+//var int setActivePlayer;
+//var array <MCPawn> MyPawns;
+//var array <PathNode> RouteCacheCheck;	// Where we want to go all the time
+//var array <MCTile> RoutedTiles;	// add Tile Pathnotes Check in here
 
 // Replication block
 replication
 {
 	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
-	if (bNetDirty && bNetOwner)
-		 setActivePlayer;
+//	if (bNetDirty && bNetOwner)
+		 //setActivePlayer;
 
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
-		NewHitActor, ScriptedMoveTarget, MCA, MyPlayers, MCPlayer, MCEnemy, bCanTurnBlue, addPlusThree;
+		NewHitActor, ScriptedMoveTarget, MCA, MCPlayer, MCEnemy, bCanTurnBlue;
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -102,7 +93,7 @@ simulated event PostBeginPlay()
 
     super.PostBeginPlay();
 
-	// Sets Tiles and PathNode in an array if they are close to eachother
+	// Adds Tiles and PathNode in to an array if they are close to eachother
 	foreach AllActors(Class'MCTile', Tile)
 	{
 		foreach AllActors(Class'MCPathNode', PathNode)
@@ -121,27 +112,19 @@ simulated event PostBeginPlay()
 		MCA.Tiles.AddItem(Tile);
 		continue;
 	}
-	
+
+	//	debug to check this tile
 	for (i = 0; i < MCA.Paths.Length ; i++)
 	{
 		if (MCA.Paths[i].name == 'MCPathNode_40')
 		{
 			`log(MCA.Paths[i].APValue);
 			MCA.Paths[i].bBlocked = true;
-			//MCA.Paths[i].bDisabled = true;
 		}
 	}
 	
-
+	// Checks for Pawn, when we get him turn this off
 	SetTimer(0.1f, true, 'beforeWeStart');
-
-	if (Role == ROLE_Authority)
-	{
-	//	SetTimer(1.0, true, 'PlayerRepTest');
-	}else
-	{
-	//	SetTimer(1.0, true, 'PlayerRepTest');
-	}
 }
 
 /* Step 01
@@ -153,12 +136,6 @@ simulated function beforeWeStart()
 	if (Pawn != none)
 	{
 		MCPlayer = MCPawn(Pawn);
-//		`log(MCPawn);
-//		`log(GetALocalPlayerController());
-//		`log(GetALocalPlayerController().Pawn);
-//		`log(GetALocalPlayerController().Pawn.Health);
-
-	MCPReplication = MCPlayerReplication(PlayerReplicationInfo);
 	}
 
 	// If Pawn is found then stop the timer and clear the spam
@@ -207,8 +184,8 @@ simulated function findClosestPlayerStart()
 	//SET UNIQUE PLAYER ID BASED ON START POINT
 	if (closestPlayerStart.Name == 'PlayerStart_0')	{	PlayerUniqueID = 1;	}	// Olgar
 	if (closestPlayerStart.Name == 'PlayerStart_1')	{	PlayerUniqueID = 2;	}	// waas
-	if (closestPlayerStart.Name == 'PlayerStart_2')	{	PlayerUniqueID = 3;	}	
-	if (closestPlayerStart.Name == 'PlayerStart_3')	{	PlayerUniqueID = 4;	}
+//	if (closestPlayerStart.Name == 'PlayerStart_2')	{	PlayerUniqueID = 3;	}	
+//	if (closestPlayerStart.Name == 'PlayerStart_3')	{	PlayerUniqueID = 4;	}
 
 	// Update Replication Info so other players know this playerrep's new ID value
 	MCPlayerReplication(PlayerReplicationInfo).PlayerUniqueID = PlayerUniqueID;
@@ -231,7 +208,8 @@ function that checks if we have 2 players available at start and if so add them 
 simulated function checkForTwoPlayers()
 {
 	local MCPawn NewMCP;
-	local int HowMany, goPlus;
+	local int HowMany;
+//	local int goPlus;
 //	local int i;
 
 	HowMany = 0;
@@ -246,17 +224,18 @@ simulated function checkForTwoPlayers()
 	// if we have 2 players then add them to the array
 	if (HowMany == 2)
 	{
+		/*
 		goPlus = 0;
 		foreach AllActors(Class'MCPawn', NewMCP)
 		{
 			// dynamic array
 			MyPawns.InsertItem(goPlus, NewMCP);
 			// normal array
-			MyPlayers[goPlus] = NewMCP;
+			//MyPlayers[goPlus] = NewMCP;
 			goPlus++;
 			continue;
 		}
-
+		*/
 		// clear this check
 		ClearTimer('checkForTwoPlayers');
 
@@ -399,6 +378,68 @@ simulated function AcknowledgePossession( Pawn P )
 {
     `log("AcknowledgePossession:"@ P);
     super.AcknowledgePossession(P);
+}
+
+
+simulated event Destroyed()
+{
+	Local MCHud MyMCHud;
+	local MouseInterfaceHUD MouseInterfaceHUD;
+
+	MyMCHud = MCHud(myHUD);
+	// Type cast to get our HUD
+	MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
+
+
+	if (MyMCHud.GFxBattleUI != none)
+	{
+		MyMCHud.GFxBattleUI.close(true);
+	}
+
+	if (MouseInterfaceHUD != none)
+	{
+		MouseInterfaceHUD.MouseInterfaceGFx.close(true);
+	}
+
+	if (LocalPlayer(Player) != None)
+	{
+		LocalPlayer(Player).ViewportClient.bDisableWorldRendering = false;
+	}
+
+	KillMCEnemy();
+
+	MCPlayer.Destroy();
+
+	Super.Destroyed();
+}
+
+reliable server function KillMCEnemy()
+{
+	local MCPlayerController MCPC;
+	foreach DynamicActors(class'MCPlayerController', MCPC)
+	{
+		MCPC.MCEnemy = none;
+	}
+
+	SetNewMCEnemy();
+}
+
+reliable client function SetNewMCEnemy()
+{
+	local MCPawn NewMCP;
+
+	foreach DynamicActors(class'MCPawn', NewMCP)
+	{
+		if (NewMCP != MCPlayer)
+		{
+			MCEnemy = NewMCP;
+		}
+	}
+}
+
+function PlayerTick(float DeltaTime)
+{
+	super.PlayerTick(DeltaTime);
 }
 
 /*
@@ -608,8 +649,6 @@ simulated function int getPathAPCost()
 
 auto state PlayerWalking
 {
-	local MCTestActor SpawnActor;	// Spawning & destroying flags
-
 	ignores SeePlayer, HearNoise, Bump;
 
 	function BeginState(Name PreviousStateName)
@@ -691,54 +730,8 @@ auto state PlayerWalking
 					
 				}
 			}
-
-			// if we have a Tile we can start moving to
-	//		if (DestActor != None)
-	//		{
-	//			ScriptedMoveTarget = DestActor;
-
-				// finds the route target for all
-				// MoveTarget is the first PathNode to go to
-	//			MoveTarget = FindPathToward(ScriptedMoveTarget);
-
-	//			if (MoveTarget != None && RouteCache.Length <= MCPlayer.APf)
-	//			{
-					//bFlagIsHere = false;
-
-				// kill of all Actors if it's less then route
-			
-					// Spawn a flag if we can do there
-//					for (i = 0;i < RouteCache.Length; i++)
-//					{
-						//`log("RouteCache" @ RouteCache[i]);	// how many pathnodes until destination
-//							SpawnActor = Spawn(class'MCTestActor', , , RouteCache[i].Location,);
-						
-						// Set Tiles to Turn green & add them to an array to see which are active
-						//SetTileChangeColor(i);
-						
-						
-						// Adds current RouteCache list into an empty Array
-				//		if (RouteCache[i] != RouteCacheCheck[i])
-				//		{
-				//			//insert
-				//			RouteCacheCheck.InsertItem(i,RouteCache[i]);
-				//			// removes if there are more Checks
-				//			if (RouteCache.Length < RouteCacheCheck.Length)
-				//			{
-				//				RouteCacheCheck.Remove(RouteCache.Length, 5);
-				//			}
-				//		}
-						
-//					}
-					//	`log("RouteCacheCheck.Length" @ RouteCacheCheck.Length);
-					//	`log("RouteCache.Length     " @ RouteCache.Length);
-					//`log("CheckTestActor.Length " @ CheckTestActor.Length);
-					//`log("RouteCache.Length     " @ RouteCache.Length);
-					//`log("------------------------------");	
-	//			}
-	//		}
 		}
-		super.PlayerTick(DeltaTime);
+		global.PlayerTick(DeltaTime);
 	}
 
 	// sets of the click to move place
@@ -747,6 +740,8 @@ auto state PlayerWalking
 		local MouseInterfaceHUD MouseInterfaceHUD;	
 		local actor HitActor;			// What Tile we are looking at
 		local MCPathNode PathNode;		// PathNode
+
+		// debug For Flag to kill them off
 		foreach AllActors(Class'MCTestActor', SpawnActor)
 		{
 			SpawnActor.destroy();
@@ -877,9 +872,7 @@ auto state PlayerWalking
 			FindPathsWeCanGoTo();
 			// sets movement off
 			bCanStartMoving = false;
-//			addPlusThree = 0;
 			ScriptedMoveTarget = none;
-//			`log("Reached a destination so change addPlusThree" @ addPlusThree);
 //			`log("Reached a destination so change bCanTurnBlue" @ bCanTurnBlue);
 
 
@@ -887,24 +880,6 @@ auto state PlayerWalking
 			// Step 03
 			// When player has less than 0.90 AP we switch CurrentTurnPawn
 ////////////////////////////////////////////////////////////////////////////////////
-/*
-			if (CurrentTurnPawn == MyPlayers[0] && CurrentTurnPawn.APf < 0.90)
-			{
-				CurrentTurnPawn.APf = 0.0f;
-				CurrentTurnPawn = MyPlayers[1];
-				//SetTimer(1.0f, false,'TurnBased');
-				TurnBased();
-			}
-
-			if (CurrentTurnPawn == MyPlayers[1] && CurrentTurnPawn.APf < 0.90)
-			{
-				CurrentTurnPawn.APf = 0.0f;
-				CurrentTurnPawn = MyPlayers[0];
-				//SetTimer(1.0f, false,'TurnBased');
-				TurnBased();
-			}
-*/
-
 		}
 
 		// ROLE_Authority is used for the server or the machine which is controlling the actor.
@@ -972,29 +947,6 @@ function TurnBasedOne()
 
 
 
-
-
-/*
-
-
-	foreach AllActors(Class'MCTile', Tile)
-	{
-		foreach AllActors(Class'MCPathNode', PathNode)
-		{
-			if ( VSize(Tile.Location - PathNode.Location) < 70.0f)
-			{
-			//	`log("Tile" @ Tile @ "PathNode" @ PathNode);
-			//	`log("Tile Location    " @ Tile.Location.X @ " " @ Tile.Location.Y );
-			//	`log("PathNode Location" @ PathNode.Location.X @ " " @ PathNode.Location.Y );
-			//	`log("Vsize bitch" @ VSize(Tile.Location - PathNode.Location) );
-			//	`log("----------------------------------------------------------");
-				MCA.Paths.AddItem(PathNode);
-				continue;
-			}
-		}
-	}
-*/
-
 /*
 // When in Waiting state you set the Pawns block and ExtraCost so that the enemy can't touch him
 */
@@ -1042,7 +994,7 @@ reliable server function ChangePathOff()
 */
 state WaitingForTurn
 {
-	local int i;
+
 
 	simulated function BeginState(Name PreviousStateName)
 	{
@@ -1054,7 +1006,8 @@ state WaitingForTurn
 
 	function PlayerTick(float DeltaTime)
 	{
-
+		//local int i;
+		
 		if (MCPlayer.APf == 6 && !IsInState('PlayerWalking'))
 		{
 			`log("Let's Go To PlayerWalking Shall we");
@@ -1077,6 +1030,7 @@ state WaitingForTurn
 			}
 		}
 */
+		Global.PlayerTick(DeltaTime);
 	}
 
 	simulated function EndState(Name NextStateName)
@@ -1099,6 +1053,7 @@ exec function StateWaiting()
 {
 	GotoState('WaitingForTurn');
 }
+
 
 
 
@@ -1329,9 +1284,5 @@ defaultproperties
 	InputClass=class'MouseInterfacePlayerInput'
 
 	bCanStartMoving=false
-	bFlagIsHere=true
 	bCanTurnBlue=true
-	addPlusThree=0
-	setActivePlayer=0
-
 }

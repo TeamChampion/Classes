@@ -27,20 +27,20 @@ defaultproperties
 // ------------------------------------------------------------------------------------------------------------------------ //
 // Travelling Point																											//
 // ------------------------------------------------------------------------------------------------------------------------ //
-	MaxEffectDistance=7000.0
+	MaxEffectDistance=700.0
 
-	Speed=50
-	MaxSpeed=20
-	AccelRate=500
+	Speed=1
+	MaxSpeed=100
+	AccelRate=2
 
-	Damage=25
+	Damage=50
 	DamageRadius=0
 	MomentumTransfer=0
-	CheckRadius=26.0
+	CheckRadius=0.1
 
 	//Physics=PHYS_Projectile
 	//MyDamageType=class'UTDmgType_LinkPlasma'
-	LifeSpan=3.0
+	LifeSpan=6.0
 	NetCullDistanceSquared=+144000000.0
 
 	bCollideWorld=true
