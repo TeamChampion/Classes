@@ -55,6 +55,10 @@ var bool bCanStartMoving;
 var bool bCanTurnBlue;
 // Add Tiles to an array to later check what Tiles we are going to lightup
 var array <MCTile> BlueTiles;
+<<<<<<< HEAD
+
+=======
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 
 var bool bIsSelectingFireFountain;
 var bool bIsSelectingStoneWall;
@@ -240,6 +244,11 @@ simulated function checkForTwoPlayers()
 			continue;
 		}
 		*/
+<<<<<<< HEAD
+		// clear this check
+		ClearTimer('checkForTwoPlayers');
+=======
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 
 		// set Enemy Pawn for Hud etc
 		foreach DynamicActors(class'MCPawn', NewMCP)
@@ -442,6 +451,13 @@ reliable client function SetNewMCEnemy()
 	}
 }
 
+<<<<<<< HEAD
+function PlayerTick(float DeltaTime)
+{
+	super.PlayerTick(DeltaTime);
+}
+=======
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 
 /*
 // Test function that calls something from replication
@@ -744,7 +760,7 @@ auto state PlayerWalking
 				}
 			}
 		}
-		super.PlayerTick(DeltaTime);
+		global.PlayerTick(DeltaTime);
 	}
 
 	// sets of the click to move place
@@ -1105,14 +1121,26 @@ reliable server function ChangePathOff()
 */
 state WaitingForTurn
 {
+<<<<<<< HEAD
+
+
+	simulated function BeginState(Name PreviousStateName)
+=======
 	function BeginState(Name PreviousStateName)
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 	{
 		`log( "Welcome to" @ GetStateName() );
 	}
 
 	function PlayerTick(float DeltaTime)
 	{
+<<<<<<< HEAD
+		//local int i;
+		
+		if (MCPlayer.APf == 6 && !IsInState('PlayerWalking'))
+=======
 		if (MCPlayer != none && MCEnemy != none)
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 		{
 			if (MCPlayer.APf == 0 && MCEnemy.APf == 0)
 			{
@@ -1182,6 +1210,13 @@ state AdjustCamera
 					break;
 				}
 			}
+<<<<<<< HEAD
+		}
+*/
+		Global.PlayerTick(DeltaTime);
+	}
+=======
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 
 
 
@@ -1213,6 +1248,7 @@ simulated function TurnOfCameraTrack()
 	CameraProperties.IsTrackingEnemyPawn = false;
 }
 */
+
 
 
 

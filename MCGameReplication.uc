@@ -71,11 +71,14 @@ simulated function RemovePRI(PlayerReplicationInfo PRI)
 	super.RemovePRI(PRI);
 }
 
+<<<<<<< HEAD
+=======
 
 simulated function FindBoth()
 {
 	`log("FindONBOTH!!!!!!!!!!!!");
 }
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 defaultproperties
 {
 	
