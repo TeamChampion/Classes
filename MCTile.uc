@@ -1,18 +1,22 @@
 class MCTile extends MouseInterfaceKActor
 	hidecategories(Display, Attachment, Physics, Advanced, Debug, Mobile);
 /*
-Main variables
+//Main variables
 */
 var StaticMeshComponent MyKActorComponent;	// For Setting static mesh on the KActor
 var MaterialInstanceConstant MatInst;
-
-var Texture2D WhiteCorner01;
-var Texture2D WhiteCorner02;
-var Texture2D WhiteCorner03;
+// The PathNode in here
 var MCPathNode PathNode;
-
+// Setting colors
 var Texture2D NoBorderBlack;
 var Texture2D BorderWhite;
+// If DamageMode Is On This Tile, dont ever Light up this tile
+var Texture2D DamageModeTile;
+
+
+
+
+
 /*
 testing variables
 */
@@ -27,7 +31,7 @@ replication
 
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
-		PathNode;
+		PathNode, ;
 }
 
 
@@ -76,6 +80,39 @@ simulated function TileTurnBlue()
 		default:
 			`log("nothing");
 	}
+}
+
+simulated function SpellTileTurnRed()
+{
+	local LinearColor MatColor;
+	
+	MatInst = new class'MaterialInstanceConstant';
+	MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
+	MyKActorComponent.SetMaterial(1, MatInst);
+
+	MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 0.5f);
+	MatInst.SetVectorParameterValue('SetColor', MatColor);
+	MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
+}
+
+simulated function SpellTileTurnBlue()
+{
+	local LinearColor MatColor;
+	
+	MatInst = new class'MaterialInstanceConstant';
+	MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
+	MyKActorComponent.SetMaterial(1, MatInst);
+
+	MatColor = MakeLinearColor(0.0f, 0.3f, 1.0f, 0.5f);
+	MatInst.SetVectorParameterValue('SetColor', MatColor);
+	MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
+}
+
+simulated event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
+{
+
+	super.TakeDamage(Damage, EventInstigator, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
+	///
 }
 
 
@@ -232,11 +269,6 @@ defaultproperties
 	//bUsedWithStaticLightning=true;
 	//bCollideWorld=False //false is for nonmoving objects
 	//bWakeOnLevelStart=false
-
-
-	WhiteCorner01 = Texture2D'mystraschampionsettings.Texture.WhiteCorner01'
-	WhiteCorner02 = Texture2D'mystraschampionsettings.Texture.WhiteCorner02'
-	WhiteCorner03 = Texture2D'mystraschampionsettings.Texture.WhiteCorner03'
 
 	NoBorderBlack = Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG'
 	BorderWhite = Texture2D'mystraschampionsettings.Texture.WhiteCorner'

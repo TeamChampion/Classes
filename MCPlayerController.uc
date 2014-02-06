@@ -56,7 +56,11 @@ var bool bCanTurnBlue;
 // Add Tiles to an array to later check what Tiles we are going to lightup
 var array <MCTile> BlueTiles;
 
-
+var bool bIsSelectingFireFountain;
+var bool bIsSelectingStoneWall;
+var bool bIsRed;
+var array <MCTile> FireTiles;
+var MCTile TileColor;
 //	Others
 ///////////////////////////////////////////////
 // Struct that contains all the PathNodes, Triggers and Tiles
@@ -662,10 +666,24 @@ auto state PlayerWalking
 		local Actor DestActor;
 		local MouseInterfaceHUD MouseInterfaceHUD;	
 		local actor HitActor;			// What Tile we are looking at
+		//local MCTile TileColor;
 		// If we are not moving then please use this
 
+		if (MCPlayer != none && !bCanStartMoving && bIsRed)
+		{
+			MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
+			HitActor = MouseInterfaceHUD.HitActor2;
+		
+			if (HitActor.tag == 'MouseInterfaceKActor' || HitActor.tag == 'MCTile' )
+				for (i = 0; i < MCA.Tiles.Length; i++)
+					if (MCA.Tiles[i].name == HitActor.name)
+						TileColor = MCA.Tiles[i];
+			
+			// Turns Tile color
+			SpellTileTurnOn();
+		}
 
-		if (MCPlayer != none && !bCanStartMoving)
+		if (MCPlayer != none && !bCanStartMoving && !bIsRed)
 		{
 
 			// Type cast to get our HUD
@@ -736,12 +754,16 @@ auto state PlayerWalking
 		local actor HitActor;			// What Tile we are looking at
 		local MCPathNode PathNode;		// PathNode
 
-		// debug For Flag to kill them off
-		foreach AllActors(Class'MCTestActor', SpawnActor)
+		if (SpawnActor != none)
 		{
-			SpawnActor.destroy();
-			continue;
+			// debug For Flag to kill them off
+			foreach AllActors(Class'MCTestActor', SpawnActor)
+			{
+				SpawnActor.destroy();
+				continue;
+			}
 		}
+
 	
 		// Type cast to get our HUD
 		MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
@@ -751,22 +773,65 @@ auto state PlayerWalking
 		// next is to set destination to pathnode and not tile
 		if (HitActor.tag == 'MouseInterfaceKActor' || HitActor.tag == 'MCTile' )
 		{
-			//if you have AP and you can not move
-			if (getPathAPCost() <= MCPlayer.APf && !bCanStartMoving) 
+			// Spells Press
+			if (MCPlayer != none && !bCanStartMoving && bIsRed)
 			{
-
-				foreach AllActors(Class'MCPathNode', PathNode)
+				// If Fire Fan
+				if (bIsSelectingFireFountain)
 				{
-					// If the Tiles && Paths X & Y match then we know where to move
-					if(HitActor.Location.X == PathNode.Location.X &&
-					   HitActor.Location.Y == PathNode.Location.Y &&
-					   !PathNode.bBlocked && VSize(MCEnemy.Location - PathNode.Location) > 50.0f )
+					// Set What Tile is clicked
+					if (HitActor.tag == 'MouseInterfaceKActor' || HitActor.tag == 'MCTile' )
+						for (i = 0; i < MCA.Tiles.Length; i++)
+							if (MCA.Tiles[i].name == HitActor.name)
+								TileColor = MCA.Tiles[i];
+
+					//TileColor.DoSomethingToSetItToFireFanDamage();
+				}
+
+				// If Stone Wall
+				if (bIsSelectingStoneWall)
+				{
+					if (Phase1)
 					{
-						NewHitActor = PathNode;
-						OnAIMoveToActor();
-						bCanStartMoving = true;
+						// PlaceOneStone
+						if (Phase2)
+						{
+							//Place StoneDirection && Spawn
+							//TileColor.DoSomethingToSetItToFireFanDamage();
+						}
 					}
-				}	
+
+
+				}
+			}
+
+
+
+
+
+
+
+
+			// Moving Press
+			if (MCPlayer != none && !bCanStartMoving && !bIsRed)
+			{
+				//if you have AP and you can not move
+				if (getPathAPCost() <= MCPlayer.APf) 
+				{
+
+					foreach AllActors(Class'MCPathNode', PathNode)
+					{
+						// If the Tiles && Paths X & Y match then we know where to move
+						if(HitActor.Location.X == PathNode.Location.X &&
+						   HitActor.Location.Y == PathNode.Location.Y &&
+						   !PathNode.bBlocked && VSize(MCEnemy.Location - PathNode.Location) > 50.0f )
+						{
+							NewHitActor = PathNode;
+							OnAIMoveToActor();
+							bCanStartMoving = true;
+						}
+					}	
+				}
 			}
 		}
 		super.StartFire(FireModeNum);
@@ -1250,6 +1315,197 @@ function crap()
 
 
 
+/*
+//
+// Function that check which Tiles we can go to and add them to an Array so that we can Light them Up
+//
+reliable client function FindPathsWeCanGoTo()
+{
+	local int index;	// Where we start to remove/insert ni the array
+	local int i;
+
+	// start by setting start index for adding Tiles to 0
+	index=0;
+	// remove old Tiles so that we can add new Tiles
+	BlueTiles.Remove(index, BlueTiles.length);
+
+	// do we want to add tiles
+	if (bCanTurnBlue)
+	{
+		// Search all of our current Tiles
+		for (i = 0; i < MCA.Tiles.Length ; i++)
+		{
+			// find the Tiles we can move towards
+			MoveTarget = FindPathToward(MCA.Tiles[i]);
+
+			// if we have a Movetarget, AP and if that Tiles PathNode is not blocked then add them to an Array
+			//if (MoveTarget != none && getPathAPCost() <= MCPawn.APf && !MCA.Tiles[i].PathNode.bBlocked)
+			if (MoveTarget != none && getPathAPCost() <= MCPlayer.APf && !MCA.Tiles[i].PathNode.bBlocked && VSize(MCEnemy.Location - MCA.Tiles[i].Location) > 50.0f)
+			{
+				BlueTiles.InsertItem(index++,MCA.Tiles[i]);
+			}
+			else
+			{
+				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
+				MCA.Tiles[i].TurnTileOff();
+			}
+		}
+
+		// If he Pawn has 0 AP reset adding Tiles until next round
+		if (MCPlayer.APf == 0)
+		{
+			bCanTurnBlue=true;		
+		}else
+		{	
+			// Otherwise turn of using this function
+			bCanTurnBlue=false;
+		}
+
+		// resets Movetarget to 0 so we don't bug out
+		MoveTarget = FindPathToward(MCPlayer);
+
+		// turn on the added Tiles in the Array
+		TurnTilesOn();
+	}
+}
+
+//
+// Light up all Tiles that we can move towards
+//
+simulated function TurnTilesOn()
+{
+	local int i;
+
+	for (i = 0;i < BlueTiles.length ; i++)
+	{
+		BlueTiles[i].TileTurnBlue();
+	}
+
+}
+
+//
+// Function that calculates how much it cost to a certain destination and then
+// return a number equal to what AP it should cost
+//
+simulated function int getPathAPCost()
+{
+	local int i,j;
+	local int NewAPCost;	// What will the AP be
+
+	// Search all Paths to get What RouteCache we have
+	for (j = 0;j < MCA.Paths.Length; j++)
+	{
+		for (i = 0; i < RouteCache.Length; i++)
+		{
+			// If they are the same then add the new AP
+			if (RouteCache[i] == MCA.Paths[j])
+			{
+				NewAPCost += MCA.Paths[j].APValue;
+				// If AP is equal to AP or a little bit more then stop the search
+				if (MCPlayer.APf < NewAPCost)
+				{
+					//`warn("You're Cost is Too much"@ NewAPCost);
+				}
+			}
+		}
+	}
+	// Return our new Cost
+	return NewAPCost;
+}
+*/
+
+
+
+/*
+bIsSelectingFireFountain
+FireTiles
+bIsRed
+*/
+exec function SelectFireFountain(GFxClikWidget.EventData ev)
+{
+	local int i;
+	local MCFireFountain fountain;
+
+	fountain = Spawn(class'MCFireFountain');
+
+	if (fountain.AP < MCPlayer.APf)
+	{
+		for (i = 0;i < BlueTiles.length ; i++)
+		{
+			BlueTiles[i].TurnTileOff();
+		}
+
+		// bIsRed = Spell Active
+		bIsRed = true;
+		// What Spell we will use
+		bIsSelectingFireFountain = true;
+		CheckDistanceNearPlayer();
+	}
+}
+
+reliable client function CheckDistanceNearPlayer()
+{
+	local int index;	// Where we start to remove/insert ni the array
+	local int i;
+
+
+	// start by setting start index for adding Tiles to 0
+	index=0;
+	// remove old Tiles so that we can add new Tiles
+	FireTiles.Remove(index, FireTiles.length);
+
+	// do we want to add tiles
+	if (bIsRed)
+	{
+		// Search all of our current Tiles
+		for (i = 0; i < MCA.Tiles.Length ; i++)
+		{
+			// find the Tiles we can move towards
+			if (bIsSelectingFireFountain && VSize(MCPlayer.Location - MCA.Tiles[i].Location) < 230.0f &&
+				VSize(MCPlayer.Location - MCA.Tiles[i].Location) > 70.0f)
+			{
+				FireTiles.InsertItem(index++,MCA.Tiles[i]);
+			}else
+			{
+				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
+				MCA.Tiles[i].TurnTileOff();
+			}
+			// find the Tiles we can move towards
+			if (bIsSelectingStoneWall && VSize(MCPlayer.Location - MCA.Tiles[i].Location) < 230.0f &&
+				VSize(MCPlayer.Location - MCA.Tiles[i].Location) > 70.0f &&
+				VSize(MCEnemy.Location - MCA.Tiles[i].Location) > 70.0f)
+			{
+				FireTiles.InsertItem(index++,MCA.Tiles[i]);
+			}else
+			{
+				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
+				MCA.Tiles[i].TurnTileOff();
+			}
+		}
+
+		// turn on the added Tiles in the Array
+		SpellTileTurnOn();
+
+		//bIsRed = false;
+	}
+}
+
+simulated function SpellTileTurnOn()
+{
+	local int i;
+
+	for (i = 0;i < FireTiles.length ; i++)
+	{
+		if (TileColor == FireTiles[i])
+		{
+			FireTiles[i].SpellTileTurnRed();
+		}else
+		{
+			FireTiles[i].SpellTileTurnBlue();
+		}
+	}
+
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
