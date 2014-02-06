@@ -36,6 +36,8 @@ simulated function AddPRIToMC()
 {
 	local int i;
 
+	MCPRIArray.Remove(0, MCPRIArray.length);
+
 	if (PRIArray.length >= 2)
 	{
 		`log("--------------------------------------------------------------------------------------------------");
@@ -47,6 +49,26 @@ simulated function AddPRIToMC()
 		`log("--------------------------------------------------------------------------------------------------");
 		ClearTimer('AddPRIToMC');
 	}
+}
+
+simulated function RemovePRI(PlayerReplicationInfo PRI)
+{
+	local int i;
+	local MCPlayerReplication MCPRepli;
+
+	MCPRepli = MCPlayerReplication(PRI);
+
+    for (i=0; i<PRIArray.Length; i++)
+    {
+		if (PRIArray[i] == PRI && PRI.Name == MCPRepli.Name)
+		{
+			MCPRIArray.Remove(i,1);
+		    PRIArray.Remove(i,1);
+			return;
+		}
+    }
+
+	super.RemovePRI(PRI);
 }
 
 defaultproperties

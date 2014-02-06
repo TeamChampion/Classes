@@ -45,8 +45,9 @@ var GFxObject P02APTextTF;	// Set His AP Text
 // Send MAXHP to code
 //	- Indicator checks if we have AP, IF AP is more then 0 then show it
 
-var GFxObject GameRoundMC;
-var GFxObject GameRoundTF; //roundINS
+var GFxObject GameRoundMC;	// Round MovieClip
+var GFxObject GameRoundTF; 	// roundINS
+var GFxObject BackgroundMC;	// Option Background
 
 
 
@@ -63,6 +64,11 @@ var GFxCLIKWidget Fire04;
 
 // Widget for AP Reset button
 var GFxCLIKWidget ResetAPBtn;
+// Widget for Option Buttons
+var GFxCLIKWidget OptionBtn;
+var GFxCLIKWidget ContinueBtn;
+var GFxCLIKWidget RestartBattleBtn;
+var GFxCLIKWidget ReturnToTownBtn;
 
 // Widget for Spells
 var GFxCLIKWidget Spell1;
@@ -167,10 +173,14 @@ function ConfigHUD()
 {
 	// GameRound
 	GameRoundTF = RootMC.GetObject("gameroundareaINS").GetObject("roundINS");
+	// Background
+	BackgroundMC = RootMC.GetObject("backgroundINS");
+	BackgroundMC.SetVisible(false);
 
 	ConfigPlayerStats();
 	ConfigAPButton();
 	ConfigSpells();
+	ConfigOptionButton();
 
 	bInitialized = true;
 }
@@ -244,6 +254,48 @@ function ConfigAPButton()
 
 	`log("GoodBye ConfigAPButton");
 }
+
+
+/*
+// Config the AP Reset Button
+// @network					Client
+*/
+function ConfigOptionButton()
+{
+	`log("Hello OptionButton");
+	
+	// Get the Widget
+	// Main Option button
+	OptionBtn = GFxClikWidget(RootMC.GetObject("optionINS",class'GFxClikWidget'));
+	if (OptionBtn != none)
+	{
+		// Add button press, mouse over, mouse out
+		OptionBtn.AddEventListener('CLIK_buttonPress', OptionButton);
+	}
+	// Continue Button
+	ContinueBtn = GFxClikWidget(RootMC.GetObject("continueINS",class'GFxClikWidget'));
+	if (ContinueBtn != none)
+	{
+		ContinueBtn.AddEventListener('CLIK_buttonPress', ContinueButton);
+		ContinueBtn.SetVisible(false);
+	}
+	// Restart Battle Button
+	RestartBattleBtn = GFxClikWidget(RootMC.GetObject("restartbattleINS",class'GFxClikWidget'));
+	if (RestartBattleBtn != none)
+	{
+		RestartBattleBtn.AddEventListener('CLIK_buttonPress', RestartBattleButton);
+		RestartBattleBtn.SetVisible(false);
+	}
+	// Return To Town Button
+	ReturnToTownBtn = GFxClikWidget(RootMC.GetObject("returntotownINS",class'GFxClikWidget'));
+	if (ReturnToTownBtn != none)
+	{
+		ReturnToTownBtn.AddEventListener('CLIK_buttonPress', ReturnToTownButton);
+		ReturnToTownBtn.SetVisible(false);
+	}
+	`log("GoodBye OptionButton");
+}
+
 
 /*
 // Config the Spell buttons to work with the game
@@ -418,6 +470,74 @@ function APResetButton(GFxClikWidget.EventData ev)
 	}
 }
 
+simulated function OptionButton(GFxClikWidget.EventData ev)
+{
+	local MCPlayerController PC;
+
+	if (OptionBtn != None)
+	{
+		PC = MCPlayerController(GetPC());
+
+		if (PC != None)
+		{
+			PC.SetPause(true);
+			// Show Buttons And Background
+			BackgroundMC.SetVisible(true);
+			ReturnToTownBtn.SetVisible(true);
+			ContinueBtn.SetVisible(true);
+			RestartBattleBtn.SetVisible(true);
+		}
+	}
+}
+
+
+
+function ContinueButton(GFxClikWidget.EventData ev)
+{
+	local MCPlayerController PC;
+
+	`log("ContinueButton here");
+
+	if (ContinueBtn != None)
+	{
+		PC = MCPlayerController(GetPC());
+
+		if (PC != None)
+		{
+			PC.SetPause(false);
+			// Show Buttons And Background
+			BackgroundMC.SetVisible(false);
+			ReturnToTownBtn.SetVisible(false);
+			ContinueBtn.SetVisible(false);
+			RestartBattleBtn.SetVisible(false);
+		}
+	}
+}
+
+simulated function RestartBattleButton(GFxClikWidget.EventData ev)
+{
+	`log("RestartBattleButton here");
+	//ConsoleCommand("open TestMap01");
+}
+
+simulated function ReturnToTownButton(GFxClikWidget.EventData ev)
+{
+
+/*
+	local MCGameReplication MyGMRep;
+	local int i;
+	local int setTheNumber;
+
+	// Get GameReplication
+	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
+	*/
+	Close(true);
+	ConsoleCommand("open TestMap01");
+	`log("ReturnToTownButton here");
+
+
+}
+
 
 /*
 // Updates the The Hud the entire time
@@ -479,6 +599,11 @@ function int getWhoseTurn()
 
 	// Get GameReplication
 	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
+
+	if (MyGMRep.MCPRIArray.length < 0)
+	{
+		return SaveWhoseTurn;
+	}
 
 	for (i = 0; i < MyGMRep.MCPRIArray.Length ; i++)
 	{
@@ -582,14 +707,20 @@ function GetPlayerInformation()
 	// Get GameReplication
 	MCGRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
 
-
-
 	// GameRound
 	GameRoundTF = RootMC.GetObject("gameroundareaINS").GetObject("roundINS");
 	if (GameRoundTF != none)
 	{
 		GameRoundTF.SetInt("text", MCGRep.GameRound);
 	}
+
+//	`log("MCGRep.MCPRIArray.length =" @ MCGRep.PRIArray.length );
+
+	if (MCGRep.MCPRIArray.length < 0)
+	{
+		return;
+	}
+
 	// Players
 	for (i = 0; i < MCGRep.MCPRIArray.Length ; i++)
 	{
@@ -631,7 +762,7 @@ function GetPlayerInformation()
 					P01APTextTF.SetString("text", "");
 				}
 			}
-		}	
+		}
 
 		// Player 2 Stats
 		// if we have the same id then show our stuff
@@ -672,6 +803,7 @@ function GetPlayerInformation()
 				}
 			}
 		}
+		//////////////////////////
 	}
 }
 

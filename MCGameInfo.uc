@@ -88,15 +88,9 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 		`log("Couldn't spawn player of type ??? at "$StartSpot);
 		return None;
 	}
-	// Spawn and return the pawn
-	`log(GetALocalPlayerController());
-	`log(GetALocalPlayerController().Pawn);
-
 
 	foreach AllActors(Class'MCPawn', FindPawn)
 	{
-
-
 		if (FindPawn != none)
 		{
 			`log("FindPawn" @ FindPawn);
@@ -104,26 +98,11 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 		}
 	}
 
-
-	//goPlus=0;
 	foreach AllActors(Class'NavigationPoint', StartSpot2)
 	{
-		/*
-		if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f)
+		if (StartSpot2.Name == 'PlayerStart_0')
 		{
-			`log("he be here bitch!!!");
-			
-		}else
-		{
-			//return Spawn(WizardArhetype02.Class,,, StartSpot2.Location,, WizardArhetype02);
-		}
-		*/
-
-
-
-		if (StartSpot2.Tag == 'PlayerSpawn01')
-		{
-			if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f)
+			if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f || FindPawn.PlayerUniqueID == 1)
 			{
 				`log("he be here bitch!!!");
 				
@@ -133,9 +112,9 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 			}
 		}
 		
-		if (StartSpot2.Tag == 'PlayerSpawn02')
+		if (StartSpot2.Name == 'PlayerStart_1')
 		{
-			if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f)
+			if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f || FindPawn.PlayerUniqueID == 2)
 			{
 				`log("he be here bitch!!!");
 				
@@ -143,7 +122,6 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 			{
 				return Spawn(WizardArhetype02.Class,,, StartSpot2.Location,, WizardArhetype02);
 			}
-			
 		}
 		continue;
 	}

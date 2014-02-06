@@ -41,6 +41,7 @@ event PostRender()
 
 	Super.PostRender();
 
+
 	// Set up battle HUD
 	if (GFxBattleUI == none && PC.MCPlayer != none && MCPR.MCPRIArray.Length >= 1)
 	{
@@ -78,7 +79,9 @@ function debugMenuHUD()
 {
 	local MCPlayerController PC;
 	local MCPawn MyPawn;
+	local MCGameReplication MCPR;
 
+	MCPR = MCGameReplication(WorldInfo.GRI);
 	MyPawn = MCPawn(PlayerOwner.Pawn);
 
 	super.DrawHUD();
@@ -88,6 +91,16 @@ function debugMenuHUD()
 		break;
 	}
 	
+	if (MCPR != none)
+	{
+		Canvas.DrawColor = WhiteColor;
+		Canvas.Font = class'Engine'.Static.GetSmallFont();
+		Canvas.SetPos(5, 290);
+		Canvas.DrawText("PRI :" @ MCPR.PRIArray.length);
+		Canvas.SetPos(5, 305);
+		Canvas.DrawText("MC PRI :" @ MCPR.MCPRIArray.length);
+	}
+
 	if(MyPawn != none && PC != none)
 	{
 			Canvas.SetPos(5, 260);
@@ -177,6 +190,11 @@ function TrackHeroes()
 		Canvas.DrawText("Replication");
 		Canvas.SetPos(5, 335);
 		Canvas.DrawText("----------------------------------------------------------");
+
+		if (MCPR.MCPRIArray.length < 0)
+		{
+			return;
+		}
 
 		for (i = 0; i < MCPR.MCPRIArray.length ; i++)
 		{
