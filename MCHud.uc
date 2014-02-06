@@ -127,7 +127,7 @@ function debugMenuHUD()
 			Canvas.DrawColor = RedColor;
 			Canvas.Font = class'Engine'.Static.GetSmallFont();
 			Canvas.SetPos(5, 625);
-			Canvas.DrawText("Player           :" @ PC.MCPlayer);
+			Canvas.DrawText("Camera Hero          :" @ PC.CameraProperties.IsTrackingHeroPawn);
 
 			Canvas.SetPos(5, 640);
 			Canvas.DrawText("Player Name   :" @ PC.MCPlayer.PawnName);
@@ -150,7 +150,7 @@ function debugMenuHUD()
 			Canvas.DrawColor = GreenColor;
 			Canvas.Font = class'Engine'.Static.GetSmallFont();
 			Canvas.SetPos(220, 625);
-			Canvas.DrawText("Player           :" @ PC.MCEnemy);
+			Canvas.DrawText("Camera Enemy          :" @ PC.CameraProperties.IsTrackingEnemyPawn);
 
 			Canvas.SetPos(220, 640);
 			Canvas.DrawText("Player Name   :" @ PC.MCEnemy.PawnName);

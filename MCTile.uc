@@ -6,11 +6,13 @@ Main variables
 var StaticMeshComponent MyKActorComponent;	// For Setting static mesh on the KActor
 var MaterialInstanceConstant MatInst;
 
-var Texture2d WhiteCorner01;
+var Texture2D WhiteCorner01;
 var Texture2D WhiteCorner02;
-var Texture2d WhiteCorner03;
+var Texture2D WhiteCorner03;
 var MCPathNode PathNode;
 
+var Texture2D NoBorderBlack;
+var Texture2D BorderWhite;
 /*
 testing variables
 */
@@ -42,7 +44,6 @@ simulated event PostBeginPlay()
 	}
 }
 
-
 /*
 Turns tile in to a specific color when AP is different
 */
@@ -54,22 +55,23 @@ simulated function TileTurnBlue()
 	MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
 	MyKActorComponent.SetMaterial(1, MatInst);
 
+	//Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG'
 	switch (PathNode.APValue)
 	{
 		case 1:
-			MatColor = MakeLinearColor(0.0f, 0.8125f, 0.007688f, 1.0f);
+			MatColor = MakeLinearColor(0.0f, 0.8125f, 0.007688f, 0.5f);
 			MatInst.SetVectorParameterValue('SetColor', MatColor);
-			MatInst.SetTextureParameterValue('SetNumber', WhiteCorner01);
+			MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
 			break;
 		case 2:
-			MatColor = MakeLinearColor(1.0f, 1.0f, 0.0f, 1.0f);
+			MatColor = MakeLinearColor(1.0f, 1.0f, 0.0f, 0.5f);
 			MatInst.SetVectorParameterValue('SetColor', MatColor);
-			MatInst.SetTextureParameterValue('SetNumber', WhiteCorner02);
+			MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
 			break;
 		case 3:
-			MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
+			MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 0.5f);
 			MatInst.SetVectorParameterValue('SetColor', MatColor);
-			MatInst.SetTextureParameterValue('SetNumber', WhiteCorner03);
+			MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
 			break;
 		default:
 			`log("nothing");
@@ -235,4 +237,7 @@ defaultproperties
 	WhiteCorner01 = Texture2D'mystraschampionsettings.Texture.WhiteCorner01'
 	WhiteCorner02 = Texture2D'mystraschampionsettings.Texture.WhiteCorner02'
 	WhiteCorner03 = Texture2D'mystraschampionsettings.Texture.WhiteCorner03'
+
+	NoBorderBlack = Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG'
+	BorderWhite = Texture2D'mystraschampionsettings.Texture.WhiteCorner'
 }

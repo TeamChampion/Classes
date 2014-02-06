@@ -55,7 +55,10 @@ var bool bCanStartMoving;
 var bool bCanTurnBlue;
 // Add Tiles to an array to later check what Tiles we are going to lightup
 var array <MCTile> BlueTiles;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 
 
 //	Others
@@ -198,7 +201,8 @@ simulated function findClosestPlayerStart()
 	//setting this var triggers color change for every version 
     //of YourPawn present in each player's reality.
 
-    checkForTwoPlayers();
+ //   checkForTwoPlayers();
+    SetTimer(0.5,true,'checkForTwoPlayers');
 }
 
 
@@ -220,7 +224,7 @@ simulated function checkForTwoPlayers()
 		HowMany++;
 		continue;
 	}
-
+	//`log("in CheckForTwoPlayers");
 	// if we have 2 players then add them to the array
 	if (HowMany == 2)
 	{
@@ -236,8 +240,11 @@ simulated function checkForTwoPlayers()
 			continue;
 		}
 		*/
+<<<<<<< HEAD
 		// clear this check
 		ClearTimer('checkForTwoPlayers');
+=======
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 
 		// set Enemy Pawn for Hud etc
 		foreach DynamicActors(class'MCPawn', NewMCP)
@@ -248,6 +255,8 @@ simulated function checkForTwoPlayers()
 			}
 		}
 		
+		// clear this check
+		ClearTimer('checkForTwoPlayers');
 		// Go and set the round so that Player 1 Starts the game
 		// Only use 0 this one time
 		TurnBased(0);
@@ -285,8 +294,7 @@ reliable server function TurnBased(int TurnPlayer)
 		MCPlayerReplication(PlayerReplicationInfo).APf = WhatPeople.APf;
 	}
 
-	// All Characters goes to WaitForTurn state
-	GoToWaiting();
+
 
 ////////////////////////////////////////////////////////////////////////////
 	// Step 01
@@ -350,6 +358,8 @@ reliable server function TurnBased(int TurnPlayer)
 			}
 		}
 	}
+	// All Characters goes to WaitForTurn state
+	GoToWaiting();
 }
 
 /*
@@ -437,10 +447,13 @@ reliable client function SetNewMCEnemy()
 	}
 }
 
+<<<<<<< HEAD
 function PlayerTick(float DeltaTime)
 {
 	super.PlayerTick(DeltaTime);
 }
+=======
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 
 /*
 // Test function that calls something from replication
@@ -654,7 +667,6 @@ auto state PlayerWalking
 	function BeginState(Name PreviousStateName)
 	{
 		`log( "Welcome to" @ GetStateName() );
-
 		Super.BeginState(PreviousStateName);
 	}
 
@@ -664,12 +676,11 @@ auto state PlayerWalking
 	{
 		local int i;
 		local Actor DestActor;
-//		local array<MCTestActor> CheckTestActor;
 		local MouseInterfaceHUD MouseInterfaceHUD;	
 		local actor HitActor;			// What Tile we are looking at
 		// If we are not moving then please use this
 
-		//`log(RouteCache[0].APValue);
+
 		if (MCPlayer != none && !bCanStartMoving)
 		{
 
@@ -902,11 +913,52 @@ auto state PlayerWalking
 	function EndState(Name NextStateName)
 	{
 		`log( "Bye Bye" @ GetStateName() );
-	} 
+	}
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*
@@ -914,8 +966,12 @@ auto state PlayerWalking
 // @param		WhoseTurnIsIt	Sets what person we will switch to
 // @network						Client
 */
-function SetWhoseTurn(int WhoseTurnIsIt)
+simulated function SetWhoseTurn(int WhoseTurnIsIt)
 {
+	// Track Enemy
+//	CameraProperties.IsTrackingEnemyPawn = true;
+	//AdjustCamera
+	// Sets next person
 	if (WhoseTurnIsIt == 1)
 	{
 		SetTimer(1.0f, false, 'TurnBasedOne');
@@ -926,12 +982,15 @@ function SetWhoseTurn(int WhoseTurnIsIt)
 	}
 }
 
+
+
 /*
 // Cooldown until next persons round will be calculated
 // @network						Client
 */
 function TurnBasedTwo()
 {
+//	CameraProperties.IsTrackingEnemyPawn = false;
 	TurnBased(2);
 }
 
@@ -941,6 +1000,7 @@ function TurnBasedTwo()
 */
 function TurnBasedOne()
 {
+//	CameraProperties.IsTrackingEnemyPawn = false;
 	TurnBased(1);
 }
 
@@ -954,18 +1014,17 @@ reliable server function ChangePathOn()
 {
 	local int i;
 
-
-		for (i = 0; i < MCA.Tiles.Length ; i++)
+	for (i = 0; i < MCA.Tiles.Length ; i++)
+	{
+		if ( VSize(MCPlayer.Location - MCA.Paths[i].Location) < 50.0f )
 		{
-			if ( VSize(MCPlayer.Location - MCA.Paths[i].Location) < 50.0f )
-			{
-				`log("Where we at" @ MCA.Paths[i]);
-				//MCA.Paths[i].bBlocked = true;
-				//MCA.Paths[i].ShutDown();
-				MCA.Paths[i].ExtraCost = 200;
-				break;
-			}
+			`log("Where we at" @ MCA.Paths[i]);
+			//MCA.Paths[i].bBlocked = true;
+			//MCA.Paths[i].ShutDown();
+			MCA.Paths[i].ExtraCost = 200;
+			break;
 		}
+	}
 }
 
 /*
@@ -988,74 +1047,142 @@ reliable server function ChangePathOff()
 
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
 // Test State for Waiting at start
 */
 state WaitingForTurn
 {
+<<<<<<< HEAD
 
 
 	simulated function BeginState(Name PreviousStateName)
+=======
+	function BeginState(Name PreviousStateName)
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 	{
 		`log( "Welcome to" @ GetStateName() );
-		
-		//ChangePathOn();
-		//Super.BeginState(PreviousStateName);
 	}
 
 	function PlayerTick(float DeltaTime)
 	{
+<<<<<<< HEAD
 		//local int i;
 		
 		if (MCPlayer.APf == 6 && !IsInState('PlayerWalking'))
+=======
+		if (MCPlayer != none && MCEnemy != none)
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 		{
-			`log("Let's Go To PlayerWalking Shall we");
-			GotoState('PlayerWalking');
-		}
-
-/*
-		for (i = 0;i < MCGameReplication(WorldInfo.GRI).MCPRIArray.length ; i++)
-		{
-			`log(MCGameReplication(WorldInfo.GRI).MCPRIArray[i].PawnName);
-		}
-*/
-
-/*
-		for (i = 0; i < MCA.Paths.Length ; i++)
-		{
-			if ( MCA.Paths[i].bBlocked )
+			if (MCPlayer.APf == 0 && MCEnemy.APf == 0)
 			{
-				`log("Is " @ MCA.Paths[i] @ "blocked =" @ MCA.Paths[i].bBlocked);
+			//	`log("Let's Go To AdjustCamera Shall we");
+				//GotoState('AdjustCamera');
 			}
+
+			if (MCPlayer.APf == 6 && MCEnemy.APf == 0 && !IsInState('PlayerWalking'))
+			{
+				`log("Let's Go To PlayerWalking Shall we");
+				GotoState('PlayerWalking');
+			}
+		}
+	//	super.PlayerTick(DeltaTime);
+	}
+
+	function EndState(Name NextStateName)
+	{
+		`log( "Bye Bye" @ GetStateName() );
+	}
+}
+
+
+
+
+
+/*
+state AdjustCamera
+{
+	function BeginState(Name PreviousStateName)
+	{
+		`log( "Welcome to" @ GetStateName() );
+	}
+/////////////////////////////////////////////////////////
+
+
+	function PlayerTick(float DeltaTime)
+	{
+		
+		local int i;
+
+		if (	MCPlayer.APf == 6 && MCEnemy.APf == 0 && MCPlayer != none && MCEnemy != none ||
+				MCPlayer.APf == 0 && MCEnemy.APf == 6 && MCPlayer != none && MCEnemy != none)
+		{
+
+
+
+			for (i = 0;i < MCGameReplication(WorldInfo.GRI).MCPRIArray.Length ; i++)
+			{
+				// IF PC MCPawn is me & I have AP
+				if (MCGameReplication(WorldInfo.GRI).MCPRIArray[i].PlayerUniqueID == MCPlayer.PlayerUniqueID &&
+					MCGameReplication(WorldInfo.GRI).MCPRIArray[i].bHaveAp)
+				{
+					CameraProperties.IsTrackingHeroPawn = true;
+					`log("Follow Player CAM cam");
+					PrepairTurnOfCamera();
+					//GotoState('WaitingForTurn');
+					break;
+
+				}else if(	MCGameReplication(WorldInfo.GRI).MCPRIArray[i].PlayerUniqueID == MCPlayer.PlayerUniqueID &&
+							!MCGameReplication(WorldInfo.GRI).MCPRIArray[i].bHaveAp)
+				{
+					CameraProperties.IsTrackingEnemyPawn = true;
+					`log("Follow Enemy cam");
+					PrepairTurnOfCamera();
+					//GotoState('WaitingForTurn');
+					break;
+				}
+			}
+<<<<<<< HEAD
 		}
 */
 		Global.PlayerTick(DeltaTime);
 	}
+=======
+>>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
 
-	simulated function EndState(Name NextStateName)
+
+
+		} //if
+	//	Global.PlayerTick(DeltaTime);
+	
+	}
+
+
+/////////////////////////////////////////////////////////
+	function EndState(Name NextStateName)
 	{
 
 		`log( "Bye Bye" @ GetStateName() );
-
-		//ChangePathOff();
-		//super.EndState(NextStateName);
 	}
-
-Begin:
-Sleep(1.0f);
-`log("State -------------:" @ GetStateName());
-goto('Begin');
-
 }
 
-exec function StateWaiting()
+simulated function PrepairTurnOfCamera()
 {
+	`log("Preparation");
 	GotoState('WaitingForTurn');
+	SetTimer(1.5f, false,'TurnOfCameraTrack');
 }
 
-
-
+simulated function TurnOfCameraTrack()
+{
+	//`log("We Stop this now");
+	CameraProperties.IsTrackingHeroPawn = false;
+	CameraProperties.IsTrackingEnemyPawn = false;
+}
+*/
 
 
 
@@ -1206,9 +1333,30 @@ exec function MCTrackHero()
 	}
 }
 
+
+
+
+simulated function moveCameraEnemy()
+{
+	`log("HI ME LOGGING");
+	CameraProperties.IsTrackingEnemyPawn = true;
+	SetTimer(1.0f, false, 'stopMpveCameraEnemy');
+}
+
+simulated function stopMpveCameraEnemy()
+{
+	CameraProperties.IsTrackingEnemyPawn = false;
+}
+
+
+
+
+
+
 exec function CastFireball (GFxClikWidget.EventData ev)
 {
 	local MCFireball spell;
+	moveCameraEnemy();
 	spell = Spawn(class'MCFireball');
 	spell.Cast(MCPlayer, MCEnemy);
 	ServerCastFireball();
@@ -1217,6 +1365,7 @@ exec function CastFireball (GFxClikWidget.EventData ev)
 server reliable function ServerCastFireball()
 {
 	local MCFireball spell;
+	moveCameraEnemy();
 	spell = Spawn(class'MCFireball');
 	spell.Cast(MCPlayer, MCEnemy);
 }
