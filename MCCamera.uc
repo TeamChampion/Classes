@@ -6,16 +6,15 @@ var const MCCameraProperties CameraProperties;
 var ProtectedWrite Vector DesiredCameraLocation;
 // If true, then the camera should track the hero pawn until the player attempts to adjust the camera location
 var bool IsTrackingHeroPawn;
-// bool that just resets Camera Location & Rotation
-var bool bStartPosition;
-// bool that controls if we can not use the camera
-var bool bSetToMatch;
-/**
- * Sets the desired location for the camera
- *
- * @param		NewDesiredCameraLocation		New desired location of the camera
- * @network										Client
- */
+
+var vector CameraMoveDirection;
+
+
+/*
+// Sets the desired location for the camera
+// @param		NewDesiredCameraLocation		New desired location of the camera
+// @network										Client
+*/
 function SetDesiredCameraLocation(Vector NewDesiredCameraLocation)
 {
 	DesiredCameraLocation = NewDesiredCameraLocation;
@@ -31,9 +30,9 @@ function SetDesiredCameraLocation(Vector NewDesiredCameraLocation)
 function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 {
 	local MCPlayerController MCPC;
-	local Vector CameraDirectionX, CameraDirectionY, CameraDirectionZ, CameraMoveDirection, CameraIntersectionPoint;
-//	local LocalPlayer LocalPlayer;	// Used for Mouse tracking
-//	local Vector2D MousePosition;	// Used for Mouse Tracking
+	local Vector CameraDirectionX, CameraDirectionY, CameraDirectionZ, CameraIntersectionPoint;
+	local LocalPlayer LocalPlayer;	// Used for Mouse tracking
+	local Vector2D MousePosition;	// Used for Mouse Tracking
 
 	// Return the default update camera target
 	if (CameraProperties == None)
@@ -43,20 +42,20 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 	}
 
 	// if this bool is false then we can't use the player camera
-	if (!bSetToMatch)
+	if (!CameraProperties.bSetToMatch)
 	{
 		Super.UpdateViewTarget(OutVT, DeltaTime);
 		return;
 	}
 
-	if (PCOwner != None && bSetToMatch)
+	if (PCOwner != None && CameraProperties.bSetToMatch)
 	{
-/*		
+
 		// Grab the mouse coordinates and check if they are on the egde of the screen
 		if (PCOwner.MyHUD != None)
 		{
 			LocalPlayer = LocalPlayer(PCOwner.Player);
-			if (LocalPlayer != None && LocalPlayer.ViewportClient != None)
+			if (LocalPlayer != None && LocalPlayer.ViewportClient != None && CameraProperties.bSetMouseMovement)
 			{
 				MousePosition = LocalPlayer.ViewportClient.GetMousePosition();
 				// Left
@@ -90,7 +89,7 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 				}
 			}
 		}
-*/
+
 		// Main Zoom Out Distance
 		if (CameraProperties.MovementPlane.Z > CameraProperties.MaxZoom)
 		{
@@ -103,9 +102,13 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 		}
 
 		// Normalize the camera move direction based on the player input
-//		CameraMoveDirection.X += PCOwner.PlayerInput.RawJoyRight;
-//		CameraMoveDirection.Y += (PCOwner.PlayerInput.RawJoyUp * -1.f);
-//		CameraMoveDirection = Normal(CameraMoveDirection);
+		if (CameraProperties.bSetKeyboardMovement)
+		{
+			CameraMoveDirection.X += PCOwner.PlayerInput.RawJoyRight;
+			CameraMoveDirection.Y += (PCOwner.PlayerInput.RawJoyUp * -1.f);
+			CameraMoveDirection = Normal(CameraMoveDirection);
+		}
+
 
 		// Turn off hero tracking as soon as the player attempts to adjust the camera
 		// IsZero, if that vector is not 0 then camera won't track
@@ -114,13 +117,22 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 			CameraProperties.IsTrackingHeroPawn = false;
 		}
 
+		// Tracking Hero Pawn
 		if (CameraProperties.IsTrackingHeroPawn)
 		{
-			
 			MCPC = MCPlayerController(PCOwner);
 			if (MCPC != None && MCPC.Pawn != None)
 			{
 				DesiredCameraLocation = MCPC.Pawn.Location;
+			}
+		}
+		// Tracking Enemy Pawn
+		else if (CameraProperties.IsTrackingEnemyPawn)
+		{
+			MCPC = MCPlayerController(PCOwner);
+			if (MCPC != None && MCPC.MCEnemy != None)
+			{
+				DesiredCameraLocation = MCPC.MCEnemy.Location;
 			}
 		}
 		else
@@ -133,9 +145,9 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 		}
 
 		// When starting a new game resets Camera Zoom & Rotation
-		if (bStartPosition)
+		if (CameraProperties.bStartPosition)
 		{
-			bStartPosition = false;
+			CameraProperties.bStartPosition = false;
 			CameraProperties.MovementPlane = CameraProperties.StartPlane;
 
 			CameraProperties.Rotation = CameraProperties.StartRotation;
@@ -157,6 +169,4 @@ defaultproperties
 {
 	//FreeCamDistance = 256
 	CameraProperties=MCCameraProperties'mystraschampionsettings.Camera.CameraProperties'
-	bStartPosition = true
-	bSetToMatch = true
 }
