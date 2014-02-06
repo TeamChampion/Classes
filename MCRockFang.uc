@@ -12,4 +12,5 @@ DefaultProperties
 	name="Rock Fang"
 	bEarth=true
 	AP=3
+	damage=50
 }
