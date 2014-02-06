@@ -165,6 +165,10 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 	
 }
 
+
+
+
+
 defaultproperties
 {
 	//FreeCamDistance = 256

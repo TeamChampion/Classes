@@ -349,7 +349,7 @@ function ConfigSpells()
 				ThisClikButton = GFxClikWidget(RootMC.GetObject("firefountainINS", class'GFxClikWidget'));
 				if (ThisClikButton != none)
 				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.SelectFireFountain);
 				}
 				break;
 

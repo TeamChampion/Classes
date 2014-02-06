@@ -18,7 +18,7 @@ var GFxResearchMaterialShop GFxResearchMaterialShop;
 var int GameRound;
 
 var config string selectedPawn;
-
+var MCCameraProperties CameraProperties;
 
 //
 
@@ -161,13 +161,11 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 
 
 
-
-
-
-
-
-
-
+exec function SetMatchModeOff()
+{
+	`log("Not match mode");
+	CameraProperties.bSetToMatch = false;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////// Shops & Stuff
@@ -273,6 +271,8 @@ exec function closeResearchMaterialShop()
 defaultproperties
 {
 	bDelayedStart=false
+	// Camera Properties
+	CameraProperties=MCCameraProperties'mystraschampionsettings.Camera.CameraProperties'
 
 	WizardArhetype01=Player01'mystraschampionsettings.Character.P01'
 	WizardArhetype02=Player02'mystraschampionsettings.Character.P02'
