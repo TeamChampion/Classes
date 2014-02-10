@@ -78,7 +78,8 @@ var GFxCLIKWidget Spell4;
 
 // Just check if it has started
 var bool bInitialized;
-
+// If I clicked a button then don't do anything
+var bool bButtonClicked;
 /*
 function Init(optional LocalPlayer LocalPlayer)
 {
@@ -211,6 +212,11 @@ function ConfigPlayerStats()
 			// AP Text
 			P01APTextTF = P01APareaMC.GetObject("aptextINS");
 		}
+		//Healthbar
+		//P01HPBarMC = P01areaMC.GetObject("healthbararea");
+		
+
+
 	}
 
 	// Player 2 Stats
@@ -279,6 +285,7 @@ function ConfigOptionButton()
 		ContinueBtn.AddEventListener('CLIK_buttonPress', ContinueButton);
 		ContinueBtn.SetVisible(false);
 	}
+/*
 	// Restart Battle Button
 	RestartBattleBtn = GFxClikWidget(RootMC.GetObject("restartbattleINS",class'GFxClikWidget'));
 	if (RestartBattleBtn != none)
@@ -286,6 +293,7 @@ function ConfigOptionButton()
 		RestartBattleBtn.AddEventListener('CLIK_buttonPress', RestartBattleButton);
 		RestartBattleBtn.SetVisible(false);
 	}
+*/	
 	// Return To Town Button
 	ReturnToTownBtn = GFxClikWidget(RootMC.GetObject("returntotownINS",class'GFxClikWidget'));
 	if (ReturnToTownBtn != none)
@@ -329,6 +337,8 @@ function ConfigSpells()
 					// Add the press and rollover
 					// @TODO Add Mouse Capture Features
 					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
+					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
 				}
 				break;
 			case "firefan":
@@ -336,6 +346,8 @@ function ConfigSpells()
 				if (ThisClikButton != none)
 				{
 					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastFireFan);
+					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
+					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
 				}
 				break;
 			case "fireball":
@@ -343,6 +355,8 @@ function ConfigSpells()
 				if (ThisClikButton != none)
 				{
 					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastFireball);
+					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
+					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
 				}
 				break;
 			case "firefountain":
@@ -350,6 +364,8 @@ function ConfigSpells()
 				if (ThisClikButton != none)
 				{
 					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.SelectFireFountain);
+					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
+					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
 				}
 				break;
 
@@ -359,7 +375,9 @@ function ConfigSpells()
 				ThisClikButton = GFxClikWidget(RootMC.GetObject("stonewallINS", class'GFxClikWidget'));
 				if (ThisClikButton != none)
 				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastStoneWall);
+					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
+					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
 				}
 				break;	
 			case "rockandroll":
@@ -367,13 +385,17 @@ function ConfigSpells()
 				if (ThisClikButton != none)
 				{
 					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastRockAndRoll);
+					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
+					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
 				}
 				break;	
 			case "rockfang":
 				ThisClikButton = GFxClikWidget(RootMC.GetObject("rockfangINS", class'GFxClikWidget'));
 				if (ThisClikButton != none)
 				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastRockFang);
+					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
+					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
 				}
 				break;	
 			case "unearthmaterial":
@@ -381,6 +403,8 @@ function ConfigSpells()
 				if (ThisClikButton != none)
 				{
 					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
+					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
+					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
 				}
 				break;
 
@@ -491,7 +515,9 @@ simulated function OptionButton(GFxClikWidget.EventData ev)
 }
 
 
-
+/*
+// Return Back in to the game
+*/
 function ContinueButton(GFxClikWidget.EventData ev)
 {
 	local MCPlayerController PC;
@@ -514,28 +540,22 @@ function ContinueButton(GFxClikWidget.EventData ev)
 	}
 }
 
+/*
 simulated function RestartBattleButton(GFxClikWidget.EventData ev)
 {
 	`log("RestartBattleButton here");
 	//ConsoleCommand("open TestMap01");
 }
-
-simulated function ReturnToTownButton(GFxClikWidget.EventData ev)
-{
+*/
 
 /*
-	local MCGameReplication MyGMRep;
-	local int i;
-	local int setTheNumber;
-
-	// Get GameReplication
-	MyGMRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
-	*/
+// Function that will return to Town from a game
+*/
+simulated function ReturnToTownButton(GFxClikWidget.EventData ev)
+{
 	Close(true);
-	ConsoleCommand("open TestMap01");
+	ConsoleCommand("open town01");
 	`log("ReturnToTownButton here");
-
-
 }
 
 
@@ -551,6 +571,8 @@ function Tick(float DeltaTime)
 	setPlayerLightUpPosition( getWhoseTurn() );
 	// Player 1 or 2 stats
 	GetPlayerInformation();
+	// Update The healthbar all the time
+	ActionScriptVoid("root.Update");
 }
 
 
@@ -572,7 +594,8 @@ function PressSpell(GFxClikWidget.EventData ev)
 */
 function EnableMouseCapture(GFxClikWidget.EventData ev)
 {
-	//`log("MouseOver");
+//	bButtonClicked = true;
+	`log("MouseOver");
 }
 
 /*
@@ -582,7 +605,8 @@ function EnableMouseCapture(GFxClikWidget.EventData ev)
 */
 function DisableMouseCapture(GFxClikWidget.EventData ev)
 {
-	//`log("MouseOut");
+//	bButtonClicked = false;
+	`log("MouseOut");
 }
 
 
@@ -804,6 +828,16 @@ function GetPlayerInformation()
 			}
 		}
 		//////////////////////////
+		// Healthbar
+		if (MCGRep.MCPRIArray[i].PlayerUniqueID == 1)
+		{
+			RootMC.SetInt("P01currentHP", MCGRep.MCPRIArray[i].Health);
+		}
+
+		if (MCGRep.MCPRIArray[i].PlayerUniqueID == 2)
+		{
+			RootMC.SetInt("P02currentHP", MCGRep.MCPRIArray[i].Health);
+		}
 	}
 }
 

@@ -23,7 +23,8 @@ simulated function PostBeginPlay()
 	
 	foreach AllActors(Class'MCTile', Tile)
 	{
-		if (Location.X == Tile.Location.X && Location.Y == Tile.Location.Y)
+		if ( vsize(Location - Tile.Location) < 70 )
+//		if (Location.X == Tile.Location.X && Location.Y == Tile.Location.Y)
 		{
 			//`log("MCTile" @ Tile @ "at" @ Location);
 			break;
@@ -32,6 +33,10 @@ simulated function PostBeginPlay()
 	APValueSetting();
 }
 
+simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
+{
+	`log("crap");
+}
 simulated function APValueSetting()
 {
 	switch (APValue)

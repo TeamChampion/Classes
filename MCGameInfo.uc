@@ -134,21 +134,183 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 
 
 
+/*
+
+//
+// This state is when the match has not yet started, and players are choosing their heros or waiting to be started
+// @network		Server
+//
+auto state PendingMatch
+{
+	//
+	 //Checks if the match should start or not
+	 //
+	 // @network		Server
+	 //
+	function CheckMatchStart()
+	{
+		local int i;
+		local MCPlayerReplication MCPlayerReplicationInfo;
+		local MCGameReplication MCGrep;
+
+		MCGrep = MCGameReplication(GameReplicationInfo);
+
+		// Check we have access to the game replication info and the PRI array
+		if (GameReplicationInfo == None || GameReplicationInfo.PRIArray.Length < 0)
+		{
+			return;
+		}
+
+		// Iterate through the player replication info
+		for (i = 0; i < MCGrep.MCPRIArray.Length; ++i)
+		{
+			UDKMOBAPlayerReplicationInfo = UDKMOBAPlayerReplicationInfo(GameReplicationInfo.PRIArray[i]);			
+			if (UDKMOBAPlayerReplicationInfo != None)
+			{
+				// Return if this player has not picked a team yet
+				// Return if this player has not picked a hero yet
+				if (UDKMOBAPlayerReplicationInfo.Team == None || UDKMOBAPlayerReplicationInfo.HeroArchetype == None)
+				{
+					return;
+				}
+			}
+		}
+
+		// Everyone has picked, start the game
+		StartMatch();
+	}
+}
 
 
 
+///
+//Called when the game should start the match
+// @network		Server
+//
+function StartMatch()
+{
+	local MCGameReplication MCGRI;
+
+	Super.StartMatch();
+
+	MCGRI = MCGameReplication(GameReplicationInfo);
+	MCGRI.GameRound = 0;
+	MCGRI.SetMatchModeOn();
+
+	// Go to the match in progress state
+	GotoState('MatchInProgress');
+}
 
 
+///
+// This state is used when the match is in progress
+//
+// @network		Server
+//
+state MatchInProgress
+{
+	//
+	//
+	function Tick(float DeltaTime)
+	{
+		local MCPlayerReplication MCPlayerReplicationInfo;
+		local MCPlayerController MCPC;
+		local MCGameReplication MCGRI;
+		local int i;
+
+		Super.Tick(DeltaTime);
+
+		MCGRI = MCGameReplication(GameReplicationInfo);
+
+		if (GameReplicationInfo != None && GameReplicationInfo.PRIArray.Length > 0)
+		{
+			for (i = 0; i < MCGRI.MCPRIArray.Length; ++i)
+			{
+				MCPlayerReplicationInfo = MCPlayerReplication(GameReplicationInfo.PRIArray[i]);
+			}
+		}
+	}
+}
+*/
 
 
+//
+// Called every time the game is updated
+// @param		DeltaTime		Time since the last update was called
+// @network						Server
+function Tick (float DeltaTime)
+{
+	Super.Tick(DeltaTime);
+}
+
+///
+//Called when the game should start the match
+// @network		Server
+//
+function StartMatch()
+{
+	local MCGameReplication MCGRI;
+
+	Super.StartMatch();
+
+	MCGRI = MCGameReplication(GameReplicationInfo);
+	MCGRI.GameRound = 0;
+	// Turn Camera ON
+	MCGRI.SetMatchModeOn();
+	SetMatchModeOn();
+
+	// Go to the match in progress state
+	GotoState('MatchInProgress');
+}
 
 
+auto state PendingMatch
+{
 
+	function Tick(float DeltaTime)
+	{
+		local MCGameReplication MCGrep;
 
+		MCGrep = MCGameReplication(GameReplicationInfo);
 
+		// Check we have access to the game replication info and the PRI array
+		if (MCGrep == None || MCGrep.MCPRIArray.Length < 1)
+		{
+			//`log("waiting");
+			return;
+		}else
+		{
+			StartMatch();
+			GotoState('MatchInProgress');
+		}
+	}	
+}
 
+state MatchInProgress
+{
+	function Tick(float DeltaTime)
+	{
+		local MCGameReplication MCGRI;
 
+		Super.Tick(DeltaTime);
 
+		MCGRI = MCGameReplication(GameReplicationInfo);
+
+		if (GameReplicationInfo != None && MCGRI.MCPRIArray.Length > 0)
+		{
+			//`log("Play ball");
+			/*
+			for (i = 0; i < MCGRI.MCPRIArray.Length; ++i)
+			{
+				MCPlayerReplicationInfo = MCPlayerReplication(GameReplicationInfo.PRIArray[i]);
+			}
+			*/
+		}else
+		{
+			GotoState('PendingMatch');
+		}
+	}
+}
 
 
 
@@ -165,6 +327,12 @@ exec function SetMatchModeOff()
 {
 	`log("Not match mode");
 	CameraProperties.bSetToMatch = false;
+}
+
+exec function SetMatchModeOn()
+{
+	`log("match mode");
+	CameraProperties.bSetToMatch = true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

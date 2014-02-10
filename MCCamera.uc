@@ -61,12 +61,12 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 				// Left
 				if (MousePosition.X >= 0 && MousePosition.X < 8)
 				{
-					CameraMoveDirection.X = -1.f;
+					CameraMoveDirection.X = -CameraProperties.MouseSpeed;
 				}
 				// Right
 				else if (MousePosition.X > PCOwner.MyHUD.SizeX - 8 && MousePosition.X <= PCOwner.MyHUD.SizeX)
 				{
-					CameraMoveDirection.X = 1.f;
+					CameraMoveDirection.X = CameraProperties.MouseSpeed;
 				}
 				else
 				{
@@ -76,12 +76,12 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 				// Top
 				if (MousePosition.Y >= 0 && MousePosition.Y < 8)
 				{
-					CameraMoveDirection.Y = -1.f;
+					CameraMoveDirection.Y = -CameraProperties.MouseSpeed;
 				}
 				// Bottom
 				else if (MousePosition.Y > PCOwner.MyHUD.SizeY - 8 && MousePosition.Y <= PCOwner.MyHUD.SizeY)
 				{
-					CameraMoveDirection.Y = 1.f;
+					CameraMoveDirection.Y = CameraProperties.MouseSpeed;
 				}
 				else
 				{

@@ -1,6 +1,7 @@
 class MCGameReplication extends GameReplicationInfo;
 
 var int GameRound;
+var MCCameraProperties CameraProperties;
 
 /** Array of all PlayerReplicationInfos, maintained on both server and clients (PRIs are always relevant) */
 var		array<MCPlayerReplication> MCPRIArray;
@@ -71,15 +72,25 @@ simulated function RemovePRI(PlayerReplicationInfo PRI)
 	super.RemovePRI(PRI);
 }
 
-<<<<<<< HEAD
-=======
+
+simulated function SetMatchModeOff()
+{
+	`log("Not match mode");
+	CameraProperties.bSetToMatch = false;
+}
+
+simulated function SetMatchModeOn()
+{
+	`log("match mode");
+	CameraProperties.bSetToMatch = true;
+}
 
 simulated function FindBoth()
 {
 	`log("FindONBOTH!!!!!!!!!!!!");
 }
->>>>>>> 69ca7878fffce8c34d2deff5d3f03d64175dddaf
+
 defaultproperties
 {
-	
+	CameraProperties=MCCameraProperties'mystraschampionsettings.Camera.CameraProperties'
 }
