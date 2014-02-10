@@ -52,6 +52,7 @@ DefaultProperties
 	End Object
 	Begin Object class=StaticMeshComponent name=RockMesh
 		StaticMesh=StaticMesh'mystrasmain.StaticMesh.RockBlocker'
+		Scale=1.5
 	End Object
 
 	Components.Add(RockMesh)

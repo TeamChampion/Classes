@@ -69,7 +69,7 @@ event PostRender()
 	if (GFxBattleUI != None && GFxBattleUI.bMovieIsOpen)
 	{
 		GFxBattleUI.Tick(RenderDelta);
-		debugMenuHUD();
+	//	debugMenuHUD();
 	}
 
 }

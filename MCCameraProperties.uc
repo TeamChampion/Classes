@@ -27,6 +27,8 @@ var(Camera, Zoom) const float MinZoom;
 
 // Speed at which the camera blends from one place to another
 var(Camera) const float BlendSpeed;
+// Mouse move speed with touching borders
+var(Camera) const float MouseSpeed;
 
 // Tracking hero
 var bool IsTrackingHeroPawn;
@@ -54,11 +56,13 @@ defaultproperties
 	MinZoom=256
 
 	BlendSpeed=3.125f
+	MouseSpeed = 0.5f
 
 	IsTrackingEnemyPawn = false
 	IsTrackingHeroPawn = false
 	bSetToMatch = true
 	bStartPosition = true
-	bSetMouseMovement = false
+	bSetMouseMovement = true
 	bSetKeyboardMovement = false
+
 }

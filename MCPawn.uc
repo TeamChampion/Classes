@@ -46,6 +46,7 @@ var(MystSpells) array <string> MyDynamicSpells;
 var MCPlayerController PC;
 // Decal for showing something under a pawn
 var DecalComponent MyDecal;
+var MCTile TouchingTile;
 
 var repnotify float APf;
 
@@ -97,6 +98,8 @@ simulated event ReplicatedEvent(name VarName)
   {
     changePlayerColor();
     SpawnDecal();
+  //  MCPlayerReplication(PlayerReplicationInfo).Health = HealthMax;
+  //  MCPlayerReplication(PlayerReplicationInfo).Health = Health;
   }
   if (varname == 'APf')
   {
@@ -177,6 +180,7 @@ simulated function SpawnDecal()
 simulated function Tick(float DeltaTime)
 {
   super.Tick(DeltaTime);
+
   ///
 }
 
@@ -273,6 +277,33 @@ function GFxResetChar()
   SaveConfig();
 }
 
+event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
+{
+  if(MCTile(Other) != none && MCTile(Other).damage > 5)
+  {
+    //MCTile(Other).damage
+    TouchingTile = MCTile(Other);
+    TakeDamage(MCTile(Other).damage, none, Location,vect(0,0,0),class'UTDmgType_LinkPlasma');
+//    `log("My HP" @ Health);
+//    `log("Damage = " @ MCTile(Other).damage);
+  }
+
+  super.Touch(Other, OtherComp, HitLocation, HitNormal);
+  //
+}
+
+
+
+event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
+{
+  super.TakeDamage(Damage, EventInstigator, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
+  // Damage
+  Health -= Damage;
+
+  MCPlayerReplication(PlayerReplicationInfo).Health = HealthMax;
+  MCPlayerReplication(PlayerReplicationInfo).Health = Health;
+  ///
+}
 
 // Is not using anymore since I removed big file
 /*
@@ -333,7 +364,6 @@ function GfxGetSet(SeqAct_createGetSet GFxSG)
 
 defaultproperties
 {
-//	APf=2.0f
 
   // sets what state the Pawn should start with
   // Locomotion
@@ -344,15 +374,4 @@ defaultproperties
 
   Role = ROLE_Authority
   RemoteRole = ROLE_SimulatedProxy
-
-/*
-  Begin Object class=DecalComponent Name=NewDecalComponent
-    //DecalMaterial=DecalMaterial'Dark_UI.Decal_Mat.Aim_V2'
-    Translation=(X=500,Y=500,Z=0)
-    DecalTransform = DecalTransform_OwnerRelative
-      ParentRelativeOrientation = (Pitch=-16384,Yaw=0,Roll=0)
-  End Object
-  // add new vcomponent
-  Components.Add(NewDecalComponent)
-*/
 }

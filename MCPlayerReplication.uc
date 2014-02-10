@@ -5,6 +5,7 @@ var float APf;
 var string PawnName;
 
 var int Health;
+var int HealthMax;
 var bool bHaveAp;
 // Replication block
 replication
