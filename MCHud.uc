@@ -2,6 +2,14 @@ class MCHud extends MouseInterfaceHUD;
 
 var GFxBattleUI GFxBattleUI;
 
+var GFxMainMenu GFxMainMenu;
+var GFxSelectScreen GFxSelectScreen;
+var GFxCreateScreen GFxCreateScreen;
+
+
+// When create button is pushed it set's this Character as the one we will create
+var MCPawn CreateThisCharacter;
+
 simulated event PostBeginPlay()
 {
 	Super.PostBeginPlay();
@@ -41,6 +49,7 @@ event PostRender()
 
 	Super.PostRender();
 
+//	CheckMapForStartingVideo();
 
 	// Set up battle HUD
 	if (GFxBattleUI == none && PC.MCPlayer != none && MCPR.MCPRIArray.Length >= 1)
@@ -65,16 +74,176 @@ event PostRender()
 
 	}
 
-	// Tick the HUD Movie
+	// Tick BattleHud Movie
 	if (GFxBattleUI != None && GFxBattleUI.bMovieIsOpen)
 	{
 		GFxBattleUI.Tick(RenderDelta);
 	//	debugMenuHUD();
 	}
 
+	// Select Screen Tick
+	if (GFxSelectScreen != None && GFxSelectScreen.bMovieIsOpen)
+	{
+		GFxSelectScreen.Tick(RenderDelta);
+	}
+
+
+
+}
+
+/*
+// Function that checks what map we are on so we can start the correct map with the correct Scaleform Video
+*/
+function CheckMapForStartingVideo()
+{
+	switch (WorldInfo.GetMapName())
+	{
+		case "MCStartMenu":
+			`log("I luckely got here to the Menu");
+			StartMovieMCStartMenu();
+			break;
+		case "town01":
+			`log("Entered the town");
+			break;
+			
+		default:
+			
+	}
+}
+
+function StartMovieMCStartMenu()
+{
+
+	if (GFxMainMenu == none)
+	{
+		// create new class
+		GFxMainMenu = new class'GFxMainMenu';
+		if (GFxMainMenu != none)
+		{
+		//	GFxMainMenu.MouseInterfaceHUD = self;
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			GFxMainMenu.SetTimingMode(TM_Real);
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			GFxMainMenu.bAllowFocus = true;
+
+			/** TRUE after Start() is called, FALSE after Close() is called. */
+			if (!GFxMainMenu.bMovieIsOpen)
+			{
+				GFxMainMenu.Start();
+			}
+		}
+	}
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+// Will open the select screen
+*/
+exec function StartSelectScreen()
+{
+	if (GFxSelectScreen == none)
+	{
+		// create new class
+		GFxSelectScreen = new class'GFxSelectScreen';
+		if (GFxSelectScreen != none)
+		{
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			GFxSelectScreen.SetTimingMode(TM_Game);
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			GFxSelectScreen.bAllowFocus = true;
+
+			/** TRUE after Start() is called, FALSE after Close() is called. */
+			if (!GFxSelectScreen.bMovieIsOpen)
+			{
+				GFxSelectScreen.Start();
+			}
+		}
+	}
+}
+exec function CloseSelectScreen()
+{
+	if (GFxSelectScreen != None)
+	{
+		// Closes down movie
+		GFxSelectScreen.Close(true);
+		// Sets the movie to none so it doesn't fail
+		GFxSelectScreen = none;
+	}
+}
+
+//
+/*
+// Will open the select screen
+*/
+exec function StartCreateScreen()
+{
+	if (GFxCreateScreen == none)
+	{
+		// create new class
+		GFxCreateScreen = new class'GFxCreateScreen';
+		if (GFxCreateScreen != none)
+		{
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			GFxCreateScreen.SetTimingMode(TM_Game);
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			GFxCreateScreen.bAllowFocus = true;
+
+			/** TRUE after Start() is called, FALSE after Close() is called. */
+			if (!GFxCreateScreen.bMovieIsOpen)
+			{
+				GFxCreateScreen.Start();
+			}
+		}
+	}
+}
+
+exec function CloseCreateScreen()
+{
+	if (GFxCreateScreen != None)
+	{
+		// Closes down movie
+		GFxCreateScreen.Close(true);
+		// Sets the movie to none so it doesn't fail
+		GFxCreateScreen = none;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Debug for fighting characters
 function debugMenuHUD()
 {
 	local MCPlayerController PC;
@@ -170,7 +339,7 @@ function debugMenuHUD()
 	}
 }
 
-
+// Debug screen for Multiplayer
 function TrackHeroes()
 {
 	local MCGameReplication MCPR;
@@ -243,43 +412,6 @@ function TrackHeroes()
 			}
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-/*
-		Canvas.SetPos(5, 165);
-		Canvas.DrawText("Player Name    :" @ PC.MCPlayer.PawnName);
-
-		Canvas.SetPos(5, 180);
-		Canvas.DrawText("Player AP      :" @ PC.MCPlayer.APf);
-
-		Canvas.SetPos(5, 195);
-		Canvas.DrawText("Unique ID     :" @ PC.MCPlayer.PlayerUniqueID);
-
-		Canvas.SetPos(5, 210);
-		Canvas.DrawText("Current State :" @ PC.GetStateName());
-
-
-
-
-		Canvas.SetPos(5, 225);
-		Canvas.DrawText("BlueTiles  :" @ PC.BlueTiles.length);
-
-		Canvas.SetPos(5, 240);
-		Canvas.DrawText("bCanTurnBlue  :" @ PC.bCanTurnBlue);
-
-		Canvas.SetPos(5, 255);
-		Canvas.DrawText("PathCost :" @ PC.getPathAPCost());
-*/
-	
-
 }
 
 defaultproperties

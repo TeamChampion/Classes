@@ -277,6 +277,11 @@ function GFxResetChar()
   SaveConfig();
 }
 
+function CrapFire()
+{
+  `log("The crap");
+}
+
 event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
 {
   if(MCTile(Other) != none && MCTile(Other).damage > 5)
