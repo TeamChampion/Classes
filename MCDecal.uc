@@ -12,20 +12,13 @@ class MCDecal extends DecalComponent;
 
 
 
-
-
-
-
 /*
 class SimpleBlobShadowPawn extends UTPawn
   placeable;
 
 // The spawned simple blob shadow.
 var PrivateWrite DecalActorSpawnable SimpleBlobShadowDecal;
-// A reference to the archetyped simple blob shadow actor that we will be spawning.
-var(Shadow) const DecalActorSpawnable SimpleBlobShadowDecalArchetype;
-
-simulated function PostBeginPlay()
+// A reference to the archetyped simple blob shadow simulated function PostBeginPlay()
 {
   local MaterialInstanceConstant DecalMaterialInstanceConstant;
 

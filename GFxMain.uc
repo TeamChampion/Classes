@@ -1,8 +1,12 @@
 class GFxMain extends GFxMoviePlayer;
 
+// Just check if it has started
+var bool bInitialized;
+
 var MCPawn MCP;
 var GFxObject RootMC;
 var() MCShop WeaponShop;
+
 
 function Init(optional LocalPlayer LocalPlayer)
 {
