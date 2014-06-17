@@ -37,8 +37,10 @@ var float Modifier;
 var(MystStats) array <Sequence> SpellList;
 var(MystStats) int AP;
 var(MystStats) int MaxAP;
-var(MystSpells) string MySpells[4];
+//var(MystSpells) string MySpells[4];
 var(MystSpells) array <string> MyDynamicSpells;
+var(MystSpells) const archetype array <MCSpell> MyArchetypeSpells;
+var(MystSpells) array<MCSpell> Spells;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -302,8 +304,8 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vecto
 event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
 {
   super.TakeDamage(Damage, EventInstigator, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
-  // Damage
-  Health -= Damage;
+
+  `log("In MCPawn.uc - Current HP =" @ Health @ "   Current Damage =" @ Damage);
 
   MCPlayerReplication(PlayerReplicationInfo).Health = HealthMax;
   MCPlayerReplication(PlayerReplicationInfo).Health = Health;

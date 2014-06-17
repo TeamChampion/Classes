@@ -2,8 +2,10 @@ class MCGameInfo extends MouseInterfaceGameInfo
     config(MystrasConfig);
 
 var MCPawn Wizard;
-var archetype Player01 WizardArhetype01;
-var archetype Player02 WizardArhetype02;
+var archetype Player01 WizardArche01;
+var archetype Player02 WizardArche02;
+var archetype Player03 WizardArche03;
+var archetype Player04 WizardArche04;
 var archetype MCShop WeaponShop;
 
 // ScaleForm Movies
@@ -79,16 +81,29 @@ GFxInventory.SetUpWeaponShop(WeaponShop);
  
 function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpot)
 {
-	local MCPawn FindPawn;
-	local NavigationPoint StartSpot2;
+	local MCPawn FindPawn;					// Pawn by this Pc
+	local NavigationPoint FindStartNavi;	// Start Positions Placements
+	local GFxSelectScreen MySelectScreen;	// Where we store the current selected character
+	local int i;							// for loop value
+	local int iPlayersMAX;					// Current Players we can Max have
+
+	// Get Stored Selected Caharacter class
+	if (MySelectScreen == none)
+	{
+		MySelectScreen = new class'GFxSelectScreen';
+	}
+
+	// Set Player amount
+	iPlayersMAX = 4;
 
 	// Abort if the default pawn archetype is none
-	if (WizardArhetype01 == None || WizardArhetype02 == None)
+	if (WizardArche01 == None || WizardArche02 == None || WizardArche03 == None || WizardArche04 == None)
 	{
 		`log("Couldn't spawn player of type ??? at "$StartSpot);
 		return None;
 	}
 
+	// find the main pawn
 	foreach AllActors(Class'MCPawn', FindPawn)
 	{
 		if (FindPawn != none)
@@ -98,35 +113,51 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 		}
 	}
 
-	foreach AllActors(Class'NavigationPoint', StartSpot2)
+	// Go threw the Start Spawn positions and see if we have can spawn a character
+	foreach AllActors(Class'NavigationPoint', FindStartNavi)
 	{
-		if (StartSpot2.Name == 'PlayerStart_0')
-		{
-			if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f || FindPawn.PlayerUniqueID == 1)
-			{
-				`log("he be here bitch!!!");
-				
-			}else
-			{
-				return Spawn(WizardArhetype01.Class,,, StartSpot2.Location,, WizardArhetype01);
-			}
-		}
-		
-		if (StartSpot2.Name == 'PlayerStart_1')
-		{
-			if (VSize(FindPawn.Location - StartSpot2.Location) < 70.0f || FindPawn.PlayerUniqueID == 2)
-			{
-				`log("he be here bitch!!!");
-				
-			}else
-			{
-				return Spawn(WizardArhetype02.Class,,, StartSpot2.Location,, WizardArhetype02);
-			}
-		}
-		continue;
-	}
 
-//	return Spawn(WizardArhetype.Class,,, StartSpot.Location,, WizardArhetype);
+		if (FindStartNavi.Name == 'PlayerStart_0' || FindStartNavi.Name == 'PlayerStart_1')
+		{
+			for (i = 0; i < iPlayersMAX; i++)
+			{
+				// If a Pawn is withing 70 feet from spawn && his unique id already exists in the game
+				if (VSize(FindPawn.Location - FindStartNavi.Location) < 70.0f || FindPawn.PlayerUniqueID == i)
+				{
+				//	`log("Someone Already here");
+				}else
+				{
+					// Find the character selected in selection scren and spawn him, default archetype 1
+					if(MySelectScreen.setCharacterSelect == 1)
+						return Spawn(WizardArche01.Class,,, FindStartNavi.Location,, WizardArche01);
+					else if(MySelectScreen.setCharacterSelect == 2)
+						return Spawn(WizardArche02.Class,,, FindStartNavi.Location,, WizardArche02);
+					else if(MySelectScreen.setCharacterSelect == 3)
+						return Spawn(WizardArche03.Class,,, FindStartNavi.Location,, WizardArche03);
+					else if(MySelectScreen.setCharacterSelect == 4)
+						return Spawn(WizardArche04.Class,,, FindStartNavi.Location,, WizardArche04);
+					else
+						return Spawn(WizardArche01.Class,,, FindStartNavi.Location,, WizardArche01);
+				}
+			}
+		}
+		/*
+		if (FindStartNavi.Name == 'PlayerStart_1')
+		{
+			if (VSize(FindPawn.Location - FindStartNavi.Location) < 70.0f || FindPawn.PlayerUniqueID == 2)
+			{
+				`log("he be here bitch!!!");
+				
+			}else
+			{
+				return Spawn(WizardArche02.Class,,, FindStartNavi.Location,, WizardArche02);
+			}
+		}
+		*/
+		continue;	// do again for next spawn point
+	}
+// Tag: PlayerSpawn00, Name: PlayerStart_0 
+// Tag: PlayerSpawn01, Name: PlayerStart_1	
 }
 
 
@@ -350,7 +381,7 @@ exec function startWeaponShop()
 		}
 	}
 	//Set up weapons
-	GFxWeaponShop.SetUpInventory(WizardArhetype01);
+	GFxWeaponShop.SetUpInventory(WizardArche01);
 	GFxWeaponShop.SetUpWeaponShop(WeaponShop);
 }
 exec function closeWeaponShop()
@@ -374,7 +405,7 @@ exec function startAccessoriesShop()
 		}
 	}
 	//Set up weapons
-	GFxAccessoriesShop.SetUpInventory(WizardArhetype01);
+	GFxAccessoriesShop.SetUpInventory(WizardArche01);
 	GFxAccessoriesShop.SetUpWeaponShop(WeaponShop);
 }
 exec function closeAccessoriesShop()
@@ -397,7 +428,7 @@ exec function startEnchantmentShop()
 		}
 	}
 	//Set up weapons
-	GFxEnchantmentShop.SetUpInventory(WizardArhetype01);
+	GFxEnchantmentShop.SetUpInventory(WizardArche01);
 	GFxEnchantmentShop.SetUpWeaponShop(WeaponShop);
 
 }
@@ -421,7 +452,7 @@ exec function startResearchMaterialShop()
 		}
 	}
 	//Set up weapons
-	GFxResearchMaterialShop.SetUpInventory(WizardArhetype01);
+	GFxResearchMaterialShop.SetUpInventory(WizardArche01);
 	GFxResearchMaterialShop.SetUpWeaponShop(WeaponShop);
 
 }
@@ -442,8 +473,10 @@ defaultproperties
 	// Camera Properties
 	CameraProperties=MCCameraProperties'mystraschampionsettings.Camera.CameraProperties'
 
-	WizardArhetype01=Player01'mystraschampionsettings.Character.P01'
-	WizardArhetype02=Player02'mystraschampionsettings.Character.P02'
+	WizardArche01=Player01'mystraschampionsettings.Character.P01'
+	WizardArche02=Player02'mystraschampionsettings.Character.P02'
+	WizardArche03=Player03'mystraschampionsettings.Character.P03'
+	WizardArche04=Player04'mystraschampionsettings.Character.P04'
 	WeaponShop=MCShop'MystrasChampionContent.TownShops.MCShop'
 
 

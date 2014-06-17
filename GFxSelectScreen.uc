@@ -1,4 +1,5 @@
-class GFxSelectScreen extends GFxMain;
+class GFxSelectScreen extends GFxMain
+    config(MystrasConfig);
 
 // Select Player Area
 var GFxObject P01SelectAreaMC;
@@ -11,6 +12,16 @@ var GFxObject P01SelectNameTF;
 var GFxObject P02SelectNameTF;
 var GFxObject P03SelectNameTF;
 var GFxObject P04SelectNameTF;
+
+
+// shop buttons
+//var GFxObject InShopMC, InShopReturnMC, InShopGoMC, InShopReturnMainMC;
+// Button Clicks for Selecting
+var GFxCLIKWidget P01Button, P02Button, P03Button, P04Button;
+// Switch for Characters
+var int setSwitch;
+// Save Character for Spawning
+var config int setCharacterSelect;
 
 // Characters
 var archetype Player01 P01;
@@ -29,7 +40,7 @@ function bool Start(optional bool StartPaused = false)
     {
         ConfigHUD();
     `log("-----------------------------------------------------------------------");
-    `log("-------------------------------MainMenu--------------------------------");
+    `log("-----------------------------Select Menu-------------------------------");
     `log("-----------------------------------------------------------------------");
     }
     
@@ -80,6 +91,9 @@ function ConfigSelectMenu()
     
 }
 
+/*
+// Create a new character, Call from Flash file
+*/
 function createChar(int CreateDelete)
 {
     local MCHud MCHudAccess;
@@ -91,9 +105,11 @@ function createChar(int CreateDelete)
     if (CreateDelete == 2){     MCHudAccess.CreateThisCharacter = P02;  }
     if (CreateDelete == 3){     MCHudAccess.CreateThisCharacter = P03;  }
     if (CreateDelete == 4){     MCHudAccess.CreateThisCharacter = P04;  }
-
 }
-// Deleting a char if bool is true
+
+/*
+// Deleting a char if bool is true, Call from Flash file
+*/
 function deleteChar(int CreateDelete)
 {
     `log("Deleting" @ CreateDelete);
@@ -123,6 +139,8 @@ function Tick(float DeltaTime)
     ActionScriptVoid("root.updateBool");
     // Updates Character
     SetCharacterCreate();
+    // Updates Box
+    SetShowPlayerSelectBox();
 }
 
 
@@ -144,7 +162,89 @@ function SetCharacterCreate()
     if (P04SelectNameTF != none){   P04SelectNameTF.SetString("text", P04.PawnName);    }
 }
 
+/*
+// Sets Character Names
+*/
+function SetShowPlayerSelectBox()
+{
+    // If we have a Select Box && if the character is made
+    if(P01.bSetLevelLoadChar)
+        P01SelectAreaMC.SetVisible(true);
+    else
+        P01SelectAreaMC.SetVisible(false);
+    // Plyaer 2
+    if(P02.bSetLevelLoadChar)
+        P02SelectAreaMC.SetVisible(true);
+    else
+        P02SelectAreaMC.SetVisible(false);
+    // Plyaer 3
+    if(P03.bSetLevelLoadChar)
+        P03SelectAreaMC.SetVisible(true);
+    else
+        P03SelectAreaMC.SetVisible(false);
+    // Plyaer 4
+    if(P04.bSetLevelLoadChar)
+        P04SelectAreaMC.SetVisible(true);
+    else
+        P04SelectAreaMC.SetVisible(false);
+}
 
+// Callback automatically called for each object in the movie with enableInitCallback enabled
+event bool WidgetInitialized(name WidgetName, name WidgetPath, GFxObject Widget)
+{
+    // Determine which widget is being initialized and handle it accordingly
+    switch(Widgetname)
+    {
+        case 'Player01':
+            P01Button = GFxCLIKWidget(Widget);
+            // Set switch for next GoToFrame function
+            P01Button.AddEventListener('CLIK_click', ReturnPlayer01);
+            break;
+        case 'Player02':
+            P02Button = GFxCLIKWidget(Widget);
+            P02Button.AddEventListener('CLIK_click', ReturnPlayer02);
+            break;
+        case 'Player03':
+            P03Button = GFxCLIKWidget(Widget);
+            P03Button.AddEventListener('CLIK_click', ReturnPlayer03);
+            break;
+        case 'Player04':
+            P04Button = GFxCLIKWidget(Widget);
+            P04Button.AddEventListener('CLIK_click', ReturnPlayer04);
+            break;
+       default:
+           break;
+    }
+    return true;
+}
+
+function ReturnPlayer01(EventData data){
+    setCharacterSelect = 1;
+    GoToNextStep();
+}
+
+function ReturnPlayer02(EventData data){
+    setCharacterSelect = 2;
+    GoToNextStep();
+}
+
+function ReturnPlayer03(EventData data){
+    setCharacterSelect = 3;
+    GoToNextStep();
+}
+
+function ReturnPlayer04(EventData data){
+    setCharacterSelect = 4;
+    GoToNextStep();
+}
+
+function GoToNextStep()
+{
+    // Save stored character
+    SaveConfig();
+    // Open specific map
+    ConsoleCommand("open chapter01_gate");
+}
 
 DefaultProperties
 {
@@ -153,8 +253,14 @@ DefaultProperties
     P03 = Player03'mystraschampionsettings.Character.P03';
     P04 = Player04'mystraschampionsettings.Character.P04';
     
+    // ScaleForm widgets being used for WidgetInitialized
+    WidgetBindings.Add((WidgetName="Player01",    WidgetClass=class'GFxCLIKWidget'))
+    WidgetBindings.Add((WidgetName="Player02",    WidgetClass=class'GFxCLIKWidget'))
+    WidgetBindings.Add((WidgetName="Player03",    WidgetClass=class'GFxCLIKWidget'))
+    WidgetBindings.Add((WidgetName="Player04",    WidgetClass=class'GFxCLIKWidget'))
+
     // Sets s that you can type names correctly
-    bCaptureInput=true
+//    bCaptureInput=true
     bDisplayWithHudOff=false
     TimingMode=TM_Game
 	//MovieInfo=SwfMovie'UDNHud.array_test'

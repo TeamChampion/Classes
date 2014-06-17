@@ -31,11 +31,6 @@ defaultproperties
    Health=100 // Bots HP
    Name=Player01_Pawn
 
-  MySpells[0] = "kaleidoscope"
-  MySpells[1] = "firefan"
-  MySpells[2] = "fireball"
-  MySpells[3] = "firefountain"
-
   MyDynamicSpells[0] = "kaleidoscope"
   MyDynamicSpells[1] = "firefan"
   MyDynamicSpells[2] = "fireball"
