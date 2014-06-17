@@ -43,7 +43,6 @@ var bool bSetMouseMovement;
 // use Keyboard to move camera
 var bool bSetKeyboardMovement;
 
-
 defaultproperties
 {
 	StartRotation=(Yaw=24576, Pitch=51883,Roll=0)
@@ -59,10 +58,10 @@ defaultproperties
 	MouseSpeed = 0.5f
 
 	IsTrackingEnemyPawn = false
-	IsTrackingHeroPawn = false
+	IsTrackingHeroPawn = true
 	bSetToMatch = true
 	bStartPosition = true
-	bSetMouseMovement = true
+	bSetMouseMovement = false
 	bSetKeyboardMovement = false
 
 }

@@ -64,17 +64,17 @@ var bool bIsSelectingStoneWall;
 var bool bIsSpellActive;
 var array <MCTile> FireTiles;
 var MCTile TileColor;
-var bool bButtonClicked;
+var MCTile ClickSpell;	// When spell is clicked this jsut show that we have it
+var bool bButtonHovering;
 
 var bool bDebugFlag;
-//	Others
-///////////////////////////////////////////////
-// Struct that contains all the PathNodes, Triggers and Tiles
-//var MCPawn MyPlayers[2];
-//var int setActivePlayer;
-//var array <MCPawn> MyPawns;
-//var array <PathNode> RouteCacheCheck;	// Where we want to go all the time
-//var array <MCTile> RoutedTiles;	// add Tile Pathnotes Check in here
+
+
+// 
+// New files since 2014-06-14
+// - ////////////////////////////////////////
+var MCSpell InstantiateSpell;		// What we need to spawn the spell + use in PlayerTick, Click function for selecting spells etc
+
 
 // Replication block
 replication
@@ -125,8 +125,8 @@ simulated event PostBeginPlay()
 	}
 
 
-	// Checks for Pawn, when we get him turn this off
-	SetTimer(0.1f, true, 'beforeWeStart');
+	// Checks for Pawn, when we get him turn this off in the SetMyPawn function
+	SetTimer(0.1f, true, 'SetMyPawn');
 }
 
 reliable client function searchThemAll()
@@ -137,13 +137,12 @@ reliable client function searchThemAll()
 /* Step 01
 // Sets The Pawn and then sets the color for them
 */
-simulated function beforeWeStart()
+simulated function SetMyPawn()
 {
 	// If we have any form of Pawn then set him to MCPawn
 	if (Pawn != none)
 	{
 		MCPlayer = MCPawn(Pawn);
-
 	}
 	// If Pawn is found then stop the timer and clear the spam
 	if (MCPlayer != none)
@@ -154,7 +153,7 @@ simulated function beforeWeStart()
 		SetTimer(1.0, false, 'findClosestPlayerStart');
 
 		// Check to see if we have 2 chars so that we can start
-		ClearTimer('beforeWeStart');
+		ClearTimer('SetMyPawn');
 	}
 }
 
@@ -178,7 +177,6 @@ simulated function findClosestPlayerStart()
 	{
 		//make sure default playerstart tag / name has not been altered in UDK
 		//confirm that you are getting these names as possible options
-		//`log("found a playerstart named" @ P.name);
 
 		currentDist = VSize(MCPlayer.Location - P.Location);
 		if (currentDist < dist)
@@ -196,16 +194,12 @@ simulated function findClosestPlayerStart()
 
 	// Update Replication Info so other players know this playerrep's new ID value
 	MCPlayerReplication(PlayerReplicationInfo).PlayerUniqueID = PlayerUniqueID;
-
     MCPlayerReplication(PlayerReplicationInfo).PawnName = MCPlayer.PawnName;
     MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
-
+    // Update own Pawn class with this number
 	MCPlayer.PlayerUniqueID = PlayerUniqueID;
 
-	//setting this var triggers color change for every version 
-    //of YourPawn present in each player's reality.
-
- //   checkForTwoPlayers();
+	// Start looking for Enemy Player
     SetTimer(0.5,true,'checkForTwoPlayers');
 }
 
@@ -220,6 +214,7 @@ simulated function checkForTwoPlayers()
 //	local int goPlus;
 //	local int i;
 
+	// How many Pawns we find
 	HowMany = 0;
 
 	// check how many players we have
@@ -228,7 +223,7 @@ simulated function checkForTwoPlayers()
 		HowMany++;
 		continue;
 	}
-	//`log("in CheckForTwoPlayers");
+
 	// if we have 2 players then add them to the array
 	if (HowMany == 2)
 	{
@@ -255,14 +250,13 @@ simulated function checkForTwoPlayers()
 		}
 		// clear this check
 		ClearTimer('checkForTwoPlayers');
+
 		// Go and set the round so that Player 1 Starts the game
 		// Only use 0 this one time
-
 		TurnBased(0);
 	}
 
 }
-
 
 /*
 // Will set which Player is active and will let him do his move. Then switched to the other Player and so forth.
@@ -270,8 +264,9 @@ simulated function checkForTwoPlayers()
 reliable server function TurnBased(int TurnPlayer)
 {
 	local MCGameReplication MCPR;	// Game Replication
-	local MCPawn WhatPeople;		// All our Pawns in the game
+	local MCPawn WhatPeople;		// All our Pawns in the game to search for
 
+	// Set Game Replication so we can update Rounds
 	MCPR = MCGameReplication(WorldInfo.GRI);
 
 	if (MCPR != none)
@@ -284,7 +279,6 @@ reliable server function TurnBased(int TurnPlayer)
 		// Add a GameRound per turn
 		MCPR.GameRound++;
 	}
-
 
 	MCPlayerReplication(PlayerReplicationInfo).GetPlayerHealth(MCPlayer.Health);
 	// just update all Pawns all once so it doesn't fail later
@@ -461,24 +455,7 @@ simulated function optimize(int whatPlayerID)
 // Function that Turns of the Tiles after lightover
 // @NOT_USING currently not being used
 */
-function TurnOffTiles()
-{
-	local int i;
 
-	for (i = 0; i < MCA.Paths.length ; i++)
-	{
-		MCA.Tiles[i].TurnTileOff();
-		/*
-		if ( VSize(RouteCache[index].Location - MCA.Paths[i].Location) < 70.0f)
-		{
-			//
-		}else
-		{
-			MCA.Tiles[i].TurnTileOff();
-		}
-		*/
-	}
-}
 
 
 
@@ -559,18 +536,26 @@ reliable client function FindPathsWeCanGoTo()
 			else
 			{
 				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
-				MCA.Tiles[i].TurnTileOff();
+				// If it's not spellmode the don;t use
+			//	if(!MCA.Tiles[i].bSpellTileMode)
+			//	{
+					MCA.Tiles[i].TurnTileOff();
+			//	}
+			//	else
+			//	{
+				//	MCA.Tiles[i].SetFireFountain();
+			//	}
 			}
 		}
 
 		// If he Pawn has 0 AP reset adding Tiles until next round
 		if (MCPlayer.APf == 0)
 		{
-			bCanTurnBlue=true;		
+			bCanTurnBlue = true;		
 		}else
 		{	
 			// Otherwise turn of using this function
-			bCanTurnBlue=false;
+			bCanTurnBlue = false;
 		}
 
 		// resets Movetarget to 0 so we don't bug out
@@ -578,6 +563,7 @@ reliable client function FindPathsWeCanGoTo()
 
 		// turn on the added Tiles in the Array
 		TurnTilesOn();
+		TurnTileSpellModeOn();	// If Tile has damage set here
 	}
 }
 
@@ -590,24 +576,37 @@ simulated function TurnTilesOn()
 
 	for (i = 0;i < BlueTiles.length ; i++)
 	{
-		BlueTiles[i].TileTurnBlue();
+		if(BlueTiles[i].bSpellTileMode)
+		{
+		//	BlueTiles[i].TileTurnBlue();
+		//	BlueTiles[i].SetFireFountain();
+			`log("TurnTilesOn NONO" @ BlueTiles[i]);
+		}else
+		{
+			BlueTiles[i].TileTurnBlue();
+		}
 	}
-
 }
 
+/*
+// Turn of Tiles, used in certain spells
+*/
+simulated function TurnOffTiles()
+{
+	local int i;
 
-
-
-
-
-
-
-
-
-
-
-//VSize(MCPlayer.Location - MCA.Tiles[i].Location) < 230.0f
-
+	for (i = 0;i < BlueTiles.length ; i++)
+	{
+		if(BlueTiles[i].bSpellTileMode)
+		{
+			`log("TurnOffTiles NONO" @ BlueTiles[i]);
+		}else
+		{
+			BlueTiles[i].TurnTileOff();
+		}
+		
+	}
+}
 
 /*
 // Function that calculates how much it cost to a certain destination and then
@@ -641,37 +640,25 @@ simulated function int getPathAPCost()
 }
 
 
-/*
-// Enable mouse capturing
-// @param		ev		Event data generated by the CLIKwidget
-// @network				Client
-*/
-function EnableMouseCapture(GFxClikWidget.EventData ev)
+
+
+
+
+reliable client function TurnTileSpellModeOn()
 {
-	//`log("MouseOver");
-	bButtonClicked = true;
+	local int i;
+	for (i = 0; i < MCA.Tiles.Length ; i++)
+	{
+		if(MCA.Tiles[i].bSpellTileMode)
+		{
+			MCA.Tiles[i].SetFireFountain();
+		}
+	}
 }
-
-/*
-// Disable mouse capturing
-// @param		ev		Event data generated by the CLIKwidget
-// @network				Client
-*/
-function DisableMouseCapture(GFxClikWidget.EventData ev)
-{
-	bButtonClicked = false;
-	//`log("MouseOut");
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 // PlayerWalking is the main state (set by mouseinterface controller).
 // Can we go to somewhere with the current AP checks, and the press to
 // go there.
-
 auto state PlayerWalking
 {
 	ignores SeePlayer, HearNoise, Bump;
@@ -682,6 +669,9 @@ auto state PlayerWalking
 		Super.BeginState(PreviousStateName);
 	}
 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// function that will use find mouseover to find what location to go to
 	// if we can use mouse over & out that would be better
 	function PlayerTick(float DeltaTime)
@@ -690,26 +680,38 @@ auto state PlayerWalking
 		local Actor DestActor;
 		local MouseInterfaceHUD MouseInterfaceHUD;	
 		local actor HitActor;			// What Tile we are looking at
-		//local MCTile TileColor;
-		// If we are not moving then please use this
 
+		// For spells
 		if (MCPlayer != none && !bCanStartMoving && bIsSpellActive)
 		{
 			MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
 			HitActor = MouseInterfaceHUD.HitActor2;
 		
+			// If we are placing mouse on this place light up this tile to a special color
 			if (HitActor.tag == 'MouseInterfaceKActor' || HitActor.tag == 'MCTile' )
-				for (i = 0; i < MCA.Tiles.Length; i++)
-					if (MCA.Tiles[i].name == HitActor.name)
-						TileColor = MCA.Tiles[i];
+				for (i = 0; i < FireTiles.Length; i++)
+					if (FireTiles[i].name == HitActor.name)
+						TileColor = FireTiles[i];
 			
 			// Turns Tile color
 			SpellTileTurnOn();
+
+			// debug flag
+			if (bDebugFlag)
+			{				
+				// Debugging direction where we should go to
+				for (i = 0;i < FireTiles.length; i++)
+				{
+					if(FireTiles[i].PathNode != none)
+					{
+						SpawnActor = Spawn(class'MCTestActor', , , FireTiles[i].PathNode.Location,);
+					}
+				}
+			}
 		}
-
-		if (MCPlayer != none && !bCanStartMoving && !bIsSpellActive)
+		// For normal draggin mouse around with movement if click
+		else if (MCPlayer != none && !bCanStartMoving && !bIsSpellActive)
 		{
-
 			// Type cast to get our HUD
 			MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
 			// What tile
@@ -735,9 +737,7 @@ auto state PlayerWalking
 				FindPathsWeCanGoTo();
 			}
 
-
-
-			// For debugging Where we can go
+			// For debugging Where we can go destroys it's flag
 			if (SpawnActor != none && bDebugFlag)
 			{
 				foreach AllActors(Class'MCTestActor', SpawnActor)
@@ -773,18 +773,16 @@ auto state PlayerWalking
 		}
 		global.PlayerTick(DeltaTime);
 	}
-																																	////////////////////
-																																	////////////////////
-																																	////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// sets of the click to move place
 	exec function StartFire(optional byte FireModeNum)
 	{
 		local MouseInterfaceHUD MouseInterfaceHUD;	
 		local actor HitActor;			// What Tile we are looking at
-	//	local MCPathNode TarPathNode;		// PathNode
 		local int i;
-		local MCFireFountain fountain;	// fire fount spell
-		local MCStoneWall stone;		//Stone wall spell
+		local MCSpell_FireFountain fountain;	// fire fount spell
 		local MCTile NewMCTile;
 
 
@@ -820,7 +818,7 @@ auto state PlayerWalking
 								TileColor = MCA.Tiles[i];
 
 				//	TileColor.SetFireFountain();
-					fountain = Spawn(class'MCFireFountain');
+					fountain = Spawn(class'MCSpell_FireFountain');
 
 					MCPlayer.APf =- fountain.AP;
 					ChangeAPWithMove(fountain.AP, MCPlayer.PlayerUniqueID);
@@ -832,51 +830,59 @@ auto state PlayerWalking
 					SetTimer(1.0f,false,'DoWeStillHaveAP');
 				}
 
-				// If Stone Wall
-				if (bIsSelectingStoneWall)
+				//
+				// New since 2014-06-14 New spell press button
+				//
+
+				// Check to see if We have an active Spell && if we have a spell Instansiated
+				if(bIsSpellActive && InstantiateSpell != none && !InstantiateSpell.bIsProjectile)
 				{
 					// Set What Tile is clicked
 					if (HitActor.tag == 'MouseInterfaceKActor' || HitActor.tag == 'MCTile' )
-						for (i = 0; i < MCA.Tiles.Length; i++)
-							if (MCA.Tiles[i].name == HitActor.name)
-								TileColor = MCA.Tiles[i];
-
-					stone = spawn(class'MCStoneWall');
-
-					// Reduce AP
-					MCPlayer.APf =- stone.AP;
-					// Replicate AP
-					ChangeAPWithMove(stone.AP, MCPlayer.PlayerUniqueID);
-
-					// Cast server function to spawn it
-					ServerCastStoneWall(TileColor.Location, TileColor.PathNode);
-					stone.Destroy();
-					SetTimer(1.0f,false,'WeCanMoveAgain');
-	//
-					//bIsSelectingStoneWall
-					/*
-					if (Phase1)
+						for (i = 0; i < FireTiles.Length; i++)
+							if (FireTiles[i].name == HitActor.name && FireTiles[i].PathNode != none)
+							{
+								ClickSpell = FireTiles[i];
+								break;
+							}
+					if(ClickSpell != none)
 					{
-						// PlaceOneStone
-						if (Phase2)
+
+						MCPlayer.APf -= InstantiateSpell.AP;
+						MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
+
+						// Set The spell in motion
+						if (Role == Role_Authority)
 						{
-							//Place StoneDirection && Spawn
-							//TileColor.DoSomethingToSetItToFireFanDamage();
+							`log("Server Inside PlayerPress");
+						}else
+						{
+							`log("Client Inside PlayerPress");
 						}
+					//	InstantiateSpell.CastClickSpell(MCPlayer, ClickSpell, ClickSpell.PathNode);
+						SendSpellToServer(MCPlayer, ClickSpell, ClickSpell.PathNode);
+						SendSpellToClient(MCPlayer, ClickSpell, ClickSpell.PathNode);
+
+						// Set spell mode off && destroy it
+						bIsSpellActive = false;
+						InstantiateSpell.Destroy();
+
+						// Turn of Tiles, Check for remaining AP, Reset Tile we clicked on
+						SpellTileTurnOff();
+						SetTimer(1.0f,false,'DoWeStillHaveAP');
+						ClickSpell = none;
+
+						FireTiles.Remove(0, FireTiles.length);
+					}else
+					{
+					//	`log("No place to set spell");
 					}
-					*/
 				}
 			}
 
-
-
-
-
-
-
 			//  
 			// Moving Press
-			if (MCPlayer != none && !bIsSpellActive && !bButtonClicked && !bCanStartMoving)
+			if (MCPlayer != none && !bIsSpellActive && !bButtonHovering && !bCanStartMoving)
 			{
 				//if you have AP and you can not move
 				if (getPathAPCost() <= MCPlayer.APf) 
@@ -926,6 +932,10 @@ auto state PlayerWalking
 			Pawn.SetMovementPhysics();
 		}
 	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	function PlayerMove(float DeltaTime)
 	{
@@ -994,35 +1004,8 @@ auto state PlayerWalking
 
 		if (MCPlayer.ReachedDestination(ScriptedMoveTarget) && bCanStartMoving)
 		{
-
-
-
-			if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 1 && IsInState('PlayerWalking') && bCanStartMoving)
-			{
-				`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
-				//SetTimer(1.0f, false, 'TurnBasedTwo');
-				SetWhoseTurn(2);
-				//TurnBased(2);
-			}
-
-			if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 2 && IsInState('PlayerWalking') && bCanStartMoving)
-			{
-				`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
-				//SetTimer(1.0f, false, 'TurnBasedOne');
-				SetWhoseTurn(1);
-				//TurnBased(1);
-			}
-
-			bCanTurnBlue = true;		// sets Tiles on
-			// Change so that we update the bBlocked
-		//	ChangePathOn();
-			FindPathsWeCanGoTo();
-			// sets movement off
-			bCanStartMoving = false;
-			ScriptedMoveTarget = none;
-//			`log("Reached a destination so change bCanTurnBlue" @ bCanTurnBlue);
-
-
+			// Check AP Cost to see if we can continue
+			DoWeStillHaveAP();
 ////////////////////////////////////////////////////////////////////////////////////
 			// Step 03
 			// When player has less than 0.90 AP we switch CurrentTurnPawn
@@ -1052,50 +1035,99 @@ auto state PlayerWalking
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
+// Test State for Waiting at start
+*/
+state WaitingForTurn
+{
+	function BeginState(Name PreviousStateName)
 
+	{
+		`log( "Welcome to" @ GetStateName() );
+	//	if (MCPlayer.APf == 0)
+	//	{
+			//ChangePathOn();
+	//	}
+	}
 
+	function PlayerTick(float DeltaTime)
+	{
 
+		if (MCPlayer != none && MCEnemy != none)
+		{
+			if (MCPlayer.APf == 0 && MCEnemy.APf == 0)
+			{
+			//	`log("Let's Go To AdjustCamera Shall we");
+				//GotoState('AdjustCamera');
+			}
 
+			if (MCPlayer.APf == 6 && MCEnemy.APf == 0 && !IsInState('PlayerWalking'))
+			{
+				`log("Let's Go To PlayerWalking Shall we");
+				GotoState('PlayerWalking');
+			}
+		}
+	//	super.PlayerTick(DeltaTime);
+	}
 
+	function EndState(Name NextStateName)
+	{
+		`log( "Bye Bye" @ GetStateName() );
+	//	if (MCPlayer.APf < 6)
+	//	{
+		//	ChangePathOff();
+	//	}
+	}
+}
 
+//
+// When in Waiting state you set the Pawns block and ExtraCost so that the enemy can't touch him
+// @NOTUSING
+reliable client function ChangePathOff()
+{
+	local int i;
 
+	for (i = 0; i < MCA.Paths.Length ; i++)
+	{
+		if ( VSize(MCPlayer.Location - MCA.Paths[i].Location) < 50.0f )
+		{
+//			`log("Where we at" @ MCA.Paths[i]);
+		//	MCA.Paths[i].bBlocked = false;
+			MCA.Paths[i].ExtraCost = 0;
+			break;
+		}
+	}
+}
 
+//
+// Check After movement and Spell use to see if we have AP or we change person
+//
+reliable client function DoWeStillHaveAP()
+{
+	bCanStartMoving = true;
 
+	if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 1 && IsInState('PlayerWalking') && bCanStartMoving)
+	{
+		`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
+		SetWhoseTurn(2);
+	}
+	else if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 2 && IsInState('PlayerWalking') && bCanStartMoving)
+	{
+		`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
+		SetWhoseTurn(1);
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	bCanTurnBlue = true;		// sets Tiles on
+	// Change so that we update the bBlocked
+	FindPathsWeCanGoTo();
+	// sets movement off
+	bCanStartMoving = false;
+	ScriptedMoveTarget = none;
+}
 
 /*
 // Set up Player Stats to link them all with Scaleform
@@ -1117,8 +1149,6 @@ simulated function SetWhoseTurn(int WhoseTurnIsIt)
 		SetTimer(1.0f, false, 'TurnBasedTwo');
 	}
 }
-
-
 
 /*
 // Cooldown until next persons round will be calculated
@@ -1182,150 +1212,9 @@ reliable server function ChangePathOn()
 	}
 }
 
-//
-// When in Waiting state you set the Pawns block and ExtraCost so that the enemy can't touch him
-//
-reliable client function ChangePathOff()
-{
-	local int i;
-
-	for (i = 0; i < MCA.Paths.Length ; i++)
-	{
-		if ( VSize(MCPlayer.Location - MCA.Paths[i].Location) < 50.0f )
-		{
-//			`log("Where we at" @ MCA.Paths[i]);
-		//	MCA.Paths[i].bBlocked = false;
-			MCA.Paths[i].ExtraCost = 0;
-			break;
-		}
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-// Test State for Waiting at start
-*/
-state WaitingForTurn
-{
-	function BeginState(Name PreviousStateName)
-
-	{
-		`log( "Welcome to" @ GetStateName() );
-	//	if (MCPlayer.APf == 0)
-	//	{
-			//ChangePathOn();
-	//	}
-	}
-
-	function PlayerTick(float DeltaTime)
-	{
-
-		if (MCPlayer != none && MCEnemy != none)
-		{
-			if (MCPlayer.APf == 0 && MCEnemy.APf == 0)
-			{
-			//	`log("Let's Go To AdjustCamera Shall we");
-				//GotoState('AdjustCamera');
-			}
-
-			if (MCPlayer.APf == 6 && MCEnemy.APf == 0 && !IsInState('PlayerWalking'))
-			{
-				`log("Let's Go To PlayerWalking Shall we");
-				GotoState('PlayerWalking');
-			}
-		}
-	//	super.PlayerTick(DeltaTime);
-	}
-
-	function EndState(Name NextStateName)
-	{
-		`log( "Bye Bye" @ GetStateName() );
-	//	if (MCPlayer.APf < 6)
-	//	{
-		//	ChangePathOff();
-	//	}
-	}
-}
 
 
 
-
-
-/*
-state AdjustCamera
-{
-	function BeginState(Name PreviousStateName)
-	{
-		`log( "Welcome to" @ GetStateName() );
-	}
-/////////////////////////////////////////////////////////
-
-
-	function PlayerTick(float DeltaTime)
-	{
-		
-		local int i;
-
-		if (	MCPlayer.APf == 6 && MCEnemy.APf == 0 && MCPlayer != none && MCEnemy != none ||
-				MCPlayer.APf == 0 && MCEnemy.APf == 6 && MCPlayer != none && MCEnemy != none)
-		{
-
-
-
-			for (i = 0;i < MCGameReplication(WorldInfo.GRI).MCPRIArray.Length ; i++)
-			{
-				// IF PC MCPawn is me & I have AP
-				if (MCGameReplication(WorldInfo.GRI).MCPRIArray[i].PlayerUniqueID == MCPlayer.PlayerUniqueID &&
-					MCGameReplication(WorldInfo.GRI).MCPRIArray[i].bHaveAp)
-				{
-					CameraProperties.IsTrackingHeroPawn = true;
-					`log("Follow Player CAM cam");
-					PrepairTurnOfCamera();
-					//GotoState('WaitingForTurn');
-					break;
-
-				}else if(	MCGameReplication(WorldInfo.GRI).MCPRIArray[i].PlayerUniqueID == MCPlayer.PlayerUniqueID &&
-							!MCGameReplication(WorldInfo.GRI).MCPRIArray[i].bHaveAp)
-				{
-					CameraProperties.IsTrackingEnemyPawn = true;
-					`log("Follow Enemy cam");
-					PrepairTurnOfCamera();
-					//GotoState('WaitingForTurn');
-					break;
-				}
-			}
-
-		} //if
-	//	Global.PlayerTick(DeltaTime);
-	
-	}
-
-
-/////////////////////////////////////////////////////////
-	function EndState(Name NextStateName)
-	{
-
-		`log( "Bye Bye" @ GetStateName() );
-	}
-}
-
-simulated function PrepairTurnOfCamera()
-{
-	`log("Preparation");
-	GotoState('WaitingForTurn');
-	SetTimer(1.5f, false,'TurnOfCameraTrack');
-}
-
-simulated function TurnOfCameraTrack()
-{
-	//`log("We Stop this now");
-	CameraProperties.IsTrackingHeroPawn = false;
-	CameraProperties.IsTrackingEnemyPawn = false;
-}
-*/
 
 
 
@@ -1414,105 +1303,6 @@ reliable client function OnAIMoveToActor()
 
 
 
-/*
-//
-// Function that check which Tiles we can go to and add them to an Array so that we can Light them Up
-//
-reliable client function FindPathsWeCanGoTo()
-{
-	local int index;	// Where we start to remove/insert ni the array
-	local int i;
-
-	// start by setting start index for adding Tiles to 0
-	index=0;
-	// remove old Tiles so that we can add new Tiles
-	BlueTiles.Remove(index, BlueTiles.length);
-
-	// do we want to add tiles
-	if (bCanTurnBlue)
-	{
-		// Search all of our current Tiles
-		for (i = 0; i < MCA.Tiles.Length ; i++)
-		{
-			// find the Tiles we can move towards
-			MoveTarget = FindPathToward(MCA.Tiles[i]);
-
-			// if we have a Movetarget, AP and if that Tiles PathNode is not blocked then add them to an Array
-			//if (MoveTarget != none && getPathAPCost() <= MCPawn.APf && !MCA.Tiles[i].PathNode.bBlocked)
-			if (MoveTarget != none && getPathAPCost() <= MCPlayer.APf && !MCA.Tiles[i].PathNode.bBlocked && VSize(MCEnemy.Location - MCA.Tiles[i].Location) > 50.0f)
-			{
-				BlueTiles.InsertItem(index++,MCA.Tiles[i]);
-			}
-			else
-			{
-				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
-				MCA.Tiles[i].TurnTileOff();
-			}
-		}
-
-		// If he Pawn has 0 AP reset adding Tiles until next round
-		if (MCPlayer.APf == 0)
-		{
-			bCanTurnBlue=true;		
-		}else
-		{	
-			// Otherwise turn of using this function
-			bCanTurnBlue=false;
-		}
-
-		// resets Movetarget to 0 so we don't bug out
-		MoveTarget = FindPathToward(MCPlayer);
-
-		// turn on the added Tiles in the Array
-		TurnTilesOn();
-	}
-}
-
-//
-// Light up all Tiles that we can move towards
-//
-simulated function TurnTilesOn()
-{
-	local int i;
-
-	for (i = 0;i < BlueTiles.length ; i++)
-	{
-		BlueTiles[i].TileTurnBlue();
-	}
-
-}
-
-//
-// Function that calculates how much it cost to a certain destination and then
-// return a number equal to what AP it should cost
-//
-simulated function int getPathAPCost()
-{
-	local int i,j;
-	local int NewAPCost;	// What will the AP be
-
-	// Search all Paths to get What RouteCache we have
-	for (j = 0;j < MCA.Paths.Length; j++)
-	{
-		for (i = 0; i < RouteCache.Length; i++)
-		{
-			// If they are the same then add the new AP
-			if (RouteCache[i] == MCA.Paths[j])
-			{
-				NewAPCost += MCA.Paths[j].APValue;
-				// If AP is equal to AP or a little bit more then stop the search
-				if (MCPlayer.APf < NewAPCost)
-				{
-					//`warn("You're Cost is Too much"@ NewAPCost);
-				}
-			}
-		}
-	}
-	// Return our new Cost
-	return NewAPCost;
-}
-*/
-
 
 
 /*
@@ -1524,14 +1314,18 @@ simulated function SpellTileTurnOn()
 
 	for (i = 0;i < FireTiles.length ; i++)
 	{
-		if (TileColor == FireTiles[i] && !FireTiles[i].PathNode.bBlocked)
+		// If it has a pathnode in the tile
+		if(FireTiles[i].PathNode != none)
 		{
-			FireTiles[i].SpellTileTurnRed();
-			return;
-		}else
-		{
-			FireTiles[i].SpellTileTurnBlue();
-			return;
+			//
+			if (TileColor == FireTiles[i] && !FireTiles[i].PathNode.bBlocked)
+			{
+				FireTiles[i].SpellTileTurnRed();
+			}
+			else
+			{
+				FireTiles[i].SpellTileTurnGreen();
+			}
 		}
 	}
 }
@@ -1570,15 +1364,11 @@ reliable client function WeCanMoveAgain()
 	}
 
 	// set lightup true
-//	bCanTurnBlue = true;        // We do this in DoWeStillHaveAP
 	// Check if we need to reset round
+	`log("Check AP");
 	DoWeStillHaveAP();
 	// turn of ALL tiles
-//	TurnOffTiles();
-	//check where we can go again
-	//FindPathsWeCanGoTo();
 }
-//SetTimer(1.0f,false,'DoWeStillHaveAP');
 
 
 
@@ -1667,6 +1457,7 @@ reliable client function CheckDistanceNearPlayer()
 		// Search all of our current Tiles
 		for (i = 0; i < MCA.Tiles.Length ; i++)
 		{
+			/*
 			// find the Tiles we can move towards
 			if (bIsSelectingFireFountain && VSize(MCPlayer.Location - MCA.Tiles[i].Location) < 230.0f &&
 				VSize(MCPlayer.Location - MCA.Tiles[i].Location) > 70.0f)
@@ -1688,6 +1479,24 @@ reliable client function CheckDistanceNearPlayer()
 				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
 				MCA.Tiles[i].TurnTileOff();
 			}
+			*/
+
+			// new 2014-06-14
+			// find the Tiles we can spawn something
+			if (InstantiateSpell != none && VSize(MCPlayer.Location - MCA.Tiles[i].Location) < InstantiateSpell.fMaxSpellDistance &&
+				VSize(MCPlayer.Location - MCA.Tiles[i].Location) > InstantiateSpell.fCharacterDistance &&
+				VSize(MCEnemy.Location - MCA.Tiles[i].Location) > InstantiateSpell.fCharacterDistance)
+			{
+				if(!MCA.Tiles[i].PathNode.bBlocked)
+					FireTiles.InsertItem(index++,MCA.Tiles[i]);
+			}else
+			{
+				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
+				if(!MCA.Tiles[i].bSpellTileMode)
+				MCA.Tiles[i].TurnTileOff();
+			}
+
+
 		}
 
 		// turn on the added Tiles in the Array
@@ -1697,31 +1506,6 @@ reliable client function CheckDistanceNearPlayer()
 	}
 }
 
-reliable client function DoWeStillHaveAP()
-{
-//	TurnOffTiles();
-
-	if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 1 && IsInState('PlayerWalking'))
-	{
-		`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
-		SetWhoseTurn(2);
-	}
-
-	if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 2 && IsInState('PlayerWalking'))
-	{
-		`log("we will change AP from" @ MCPlayer.PawnName @ "to" @ MCEnemy);
-		SetWhoseTurn(1);
-	}
-
-	bCanTurnBlue = true;		// sets Tiles on
-	// changes the path for bBlock & extra cost
-//	ChangePathOn();
-	// searches for places we can go
-	FindPathsWeCanGoTo();
-	// sets movement off
-	bCanStartMoving = false;
-	ScriptedMoveTarget = none;
-}
 
 
 
@@ -1731,11 +1515,14 @@ reliable client function DoWeStillHaveAP()
 
 
 
+/*
+// 
+*/
 exec function CastFireball (GFxClikWidget.EventData ev)
 {
-	local MCFireball spell;
+	local MCSpell_Fireball spell;
 	moveCameraEnemy();
-	spell = Spawn(class'MCFireball');
+	spell = Spawn(class'MCSpell_Fireball');
 
 	if (spell.AP <= MCPlayer.APf)
 	{
@@ -1748,23 +1535,20 @@ exec function CastFireball (GFxClikWidget.EventData ev)
 }
 server reliable function ServerCastFireball()
 {
-	local MCFireball spell;
+	local MCSpell_Fireball spell;
 	moveCameraEnemy();
-	spell = Spawn(class'MCFireball');
+	spell = Spawn(class'MCSpell_Fireball');
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
 
-function bool ifbeingcast()
-{
-	
-}
-
-
+/*
+// 
+*/
 exec function CastFireFan (GFxClikWidget.EventData ev)
 {
-	local MCFireFan spell;
-	spell = Spawn(class'MCFireFan');
+	local MCSpell_FireFan spell;
+	spell = Spawn(class'MCSpell_FireFan');
 
 	if (spell.AP <= MCPlayer.APf)
 	{
@@ -1777,19 +1561,19 @@ exec function CastFireFan (GFxClikWidget.EventData ev)
 }
 server reliable function ServerCastFireFan ()
 {
-	local MCFireFan spell;
-	spell = Spawn(class'MCFireFan');
+	local MCSpell_FireFan spell;
+	spell = Spawn(class'MCSpell_FireFan');
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
 
-
-
-
+/*
+// 
+*/
 exec function CastRockAndRoll (GFxClikWidget.EventData ev)
 {
-	local MCRockAndRoll spell;
-	spell = Spawn(class'MCRockAndroll');
+	local MCSpell_RockAndRoll spell;
+	spell = Spawn(class'MCSpell_RockAndRoll');
 
 	if (spell.AP <= MCPlayer.APf)
 	{
@@ -1799,12 +1583,11 @@ exec function CastRockAndRoll (GFxClikWidget.EventData ev)
 		SetTimer(1.0f,false,'DoWeStillHaveAP');
 		ServerCastRockAndRoll();
 	}
-
 }
 reliable server function ServerCastRockAndRoll ()
 {
-	local MCRockAndRoll spell;
-	spell = Spawn(class'MCRockAndroll');
+	local MCSpell_RockAndRoll spell;
+	spell = Spawn(class'MCSpell_RockAndRoll');
 	spell.Cast(MCPlayer, MCEnemy);
 }
 
@@ -1813,17 +1596,19 @@ reliable server function ServerCastRockAndRoll ()
 
 
 
+
+
+/*
+// 
+*/
 // Rock Wall just spawns on the server for both players
 exec function CastStoneWall(GFxClikWidget.EventData ev)
 {
-	local MCStoneWall spell;
+	local MCSpell_StoneWall spell;
 	local int i;
-	//ServerCastStoneWall();
 
-	spell = spawn(class'MCStoneWall');
+	spell = spawn(class'MCSpell_StoneWall');
 
-//	`log("spell.AP"  @ spell.AP);
-//	`log("MCPlayer.APf"  @ MCPlayer.APf);
 	if (spell.AP <= MCPlayer.APf)
 	{
 		for (i = 0;i < BlueTiles.length ; i++)
@@ -1842,13 +1627,11 @@ exec function CastStoneWall(GFxClikWidget.EventData ev)
 		spell.Destroy();
 	}
 }
-
-
 reliable server function ServerCastStoneWall(vector SpawnRockOnTile, MCPathNode PathNode)
 {
-	local MCStoneWall spell;
+	local MCSpell_StoneWall spell;
 
-	spell = spawn(class'MCStoneWall');
+	spell = spawn(class'MCSpell_StoneWall');
 
 	spell.Cast(MCPlayer, SpawnRockOnTile);
 	PathNode.bBlocked = true;
@@ -1856,13 +1639,15 @@ reliable server function ServerCastStoneWall(vector SpawnRockOnTile, MCPathNode 
 }
 
 
-
+/*
+// 
+*/
 exec function SelectFireFountain(GFxClikWidget.EventData ev)
 {
 	local int i;
-	local MCFireFountain fountain;
+	local MCSpell_FireFountain fountain;
 
-	fountain = Spawn(class'MCFireFountain');
+	fountain = Spawn(class'MCSpell_FireFountain');
 
 	if (fountain.AP <= MCPlayer.APf)
 	{
@@ -1880,24 +1665,19 @@ exec function SelectFireFountain(GFxClikWidget.EventData ev)
 		fountain.Destroy();
 	}
 }
-
 reliable server function ServerCastFireFountain(MCTile SpawnHere)
 {
 	SpawnHere.SetFireFountain();
 }
 
 
-
-
-
-
-
-
-
+/*
+// 
+*/
 exec function CastRockFang(GFxClikWidget.EventData ev)
 {
-	local MCRockFang spell;
-	spell = spawn(class'MCRockFang');
+	local MCSpell_RockFang spell;
+	spell = spawn(class'MCSpell_RockFang');
 
 	if (spell.AP <= MCPlayer.APf)
 	{
@@ -1907,13 +1687,216 @@ exec function CastRockFang(GFxClikWidget.EventData ev)
 		spell.Destroy();
 	}
 }
-
 reliable server function ServerCastRockFang()
 {
-	local MCRockFang spell;
-	spell = spawn(class'MCRockFang');
+	local MCSpell_RockFang spell;
+	spell = spawn(class'MCSpell_RockFang');
 	spell.Cast(MCPlayer, MCEnemy.Location);
 }
+
+//01
+exec function MySpell(byte SpellIndex)
+{
+	// check if we have enought AP to use the spell
+	if (MCPlayer.MyArchetypeSpells[SpellIndex].AP <= MCPlayer.APf)
+	{
+		// If this is on the client, then sync with the server
+		if (Role < Role_Authority)
+		{
+			ServerActivateSpell(SpellIndex);
+		}
+
+		// Begin casting the spell
+		BeginActivatingSpell(SpellIndex);
+	}
+	// Show message that says we don&t have enought AP
+	else
+	{
+		`log("Not enought AP, missing" @ MCPlayer.MyArchetypeSpells[SpellIndex].AP - MCPlayer.APf);
+	}
+}
+
+//02
+reliable server function ServerActivateSpell(byte SpellIndex)
+{
+	// Clients can never run this
+	if (Role < Role_Authority)
+	{
+		return;
+	}
+	// check if we have replication etc
+
+	// Begin activating the spell
+	BeginActivatingSpell(SpellIndex);
+}
+
+// 03
+protected simulated function BeginActivatingSpell(byte SpellIndex)
+{
+//	local MCSpell InstantiateSpell;		// What we need to spawn the spell
+
+	// Spawn the spell and Activate it
+	InstantiateSpell = spawn(MCPlayer.MyArchetypeSpells[SpellIndex].Class, , , , , MCPlayer.MyArchetypeSpells[SpellIndex]);
+	InstantiateSpell.Activate(MCPlayer, MCEnemy);
+	InstantiateSpell.Destroy();
+}
+
+/*
+// Takes the Information from ClickButton and sends it in to the spell so it can Spawn on server & client
+*/
+reliable server function SendSpellToServer(MCPawn Caster, MCTile WhatTile, MCPathNode PathNode)
+{
+	if(Role == Role_Authority)
+	{
+		InstantiateSpell.CastClickSpell(Caster, WhatTile, PathNode);
+
+	//	InstantiateSpell.MeSpawn(WhatTile);
+		`log("MCPlayerController -> MCSpell_FireFountain");
+	}
+}
+
+reliable client function SendSpellToClient(MCPawn Caster, MCTile WhatTile, MCPathNode PathNode)
+{
+	if(Role == Role_Authority)
+	{
+	//	InstantiateSpell.CastClickSpell(Caster, WhatTile, PathNode);
+	`log("test send");
+	`log("test send");
+	`log("test send");
+	`log("test send");
+	}else
+	{
+		InstantiateSpell.MeSpawn(WhatTile);
+		`log("test send crap");
+		`log("test send crap");
+		`log("test send crap");
+		`log("test send crap");
+	}
+}
+
+
+
+
+/*
+state AdjustCamera
+{
+	function BeginState(Name PreviousStateName)
+	{
+		`log( "Welcome to" @ GetStateName() );
+	}
+/////////////////////////////////////////////////////////
+
+
+	function PlayerTick(float DeltaTime)
+	{
+		
+		local int i;
+
+		if (	MCPlayer.APf == 6 && MCEnemy.APf == 0 && MCPlayer != none && MCEnemy != none ||
+				MCPlayer.APf == 0 && MCEnemy.APf == 6 && MCPlayer != none && MCEnemy != none)
+		{
+
+
+
+			for (i = 0;i < MCGameReplication(WorldInfo.GRI).MCPRIArray.Length ; i++)
+			{
+				// IF PC MCPawn is me & I have AP
+				if (MCGameReplication(WorldInfo.GRI).MCPRIArray[i].PlayerUniqueID == MCPlayer.PlayerUniqueID &&
+					MCGameReplication(WorldInfo.GRI).MCPRIArray[i].bHaveAp)
+				{
+					CameraProperties.IsTrackingHeroPawn = true;
+					`log("Follow Player CAM cam");
+					PrepairTurnOfCamera();
+					//GotoState('WaitingForTurn');
+					break;
+
+				}else if(	MCGameReplication(WorldInfo.GRI).MCPRIArray[i].PlayerUniqueID == MCPlayer.PlayerUniqueID &&
+							!MCGameReplication(WorldInfo.GRI).MCPRIArray[i].bHaveAp)
+				{
+					CameraProperties.IsTrackingEnemyPawn = true;
+					`log("Follow Enemy cam");
+					PrepairTurnOfCamera();
+					//GotoState('WaitingForTurn');
+					break;
+				}
+			}
+
+		} //if
+	//	Global.PlayerTick(DeltaTime);
+	
+	}
+
+
+/////////////////////////////////////////////////////////
+	function EndState(Name NextStateName)
+	{
+
+		`log( "Bye Bye" @ GetStateName() );
+	}
+}
+
+simulated function PrepairTurnOfCamera()
+{
+	`log("Preparation");
+	GotoState('WaitingForTurn');
+	SetTimer(1.5f, false,'TurnOfCameraTrack');
+}
+
+simulated function TurnOfCameraTrack()
+{
+	//`log("We Stop this now");
+	CameraProperties.IsTrackingHeroPawn = false;
+	CameraProperties.IsTrackingEnemyPawn = false;
+}
+*/
+
+/*
+//
+// Light up all Tiles that we can move towards
+//
+simulated function TurnTilesOn()
+{
+	local int i;
+
+	for (i = 0;i < BlueTiles.length ; i++)
+	{
+		BlueTiles[i].TileTurnBlue();
+	}
+
+}
+
+//
+// Function that calculates how much it cost to a certain destination and then
+// return a number equal to what AP it should cost
+//
+simulated function int getPathAPCost()
+{
+	local int i,j;
+	local int NewAPCost;	// What will the AP be
+
+	// Search all Paths to get What RouteCache we have
+	for (j = 0;j < MCA.Paths.Length; j++)
+	{
+		for (i = 0; i < RouteCache.Length; i++)
+		{
+			// If they are the same then add the new AP
+			if (RouteCache[i] == MCA.Paths[j])
+			{
+				NewAPCost += MCA.Paths[j].APValue;
+				// If AP is equal to AP or a little bit more then stop the search
+				if (MCPlayer.APf < NewAPCost)
+				{
+					//`warn("You're Cost is Too much"@ NewAPCost);
+				}
+			}
+		}
+	}
+	// Return our new Cost
+	return NewAPCost;
+}
+*/
+
+
 
 defaultproperties
 {

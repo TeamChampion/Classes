@@ -1,11 +1,6 @@
 class MCProjectile extends UTProjectile;
 
-/*
-simulated event Touch (Actor Other, PrimitiveComponent OtherComp, Object.Vector HitLocation, Object.Vector HitNormal)
-{
-	`log( "touched" );
-}
-*/
+var MCPawn PawnThatShoots;	// turn of basic information in Destroyed function
 
 // We had to rewrite these two variables and functions to get them to replicate for our custom projectile
 var ParticleSystem MCProjFlightTemplate;
@@ -20,6 +15,20 @@ replication
   // Replicate only if the values are dirty and from server to client
   if (bNetDirty)
     MCProjFlightTemplate, MCProjExplosionTemplate;
+}
+
+simulated function Destroyed()
+{
+	// If a projectile is on, when being Destroyed, turn of Spellmode && check for remaining APs
+
+	if(PawnThatShoots != none)
+	{
+		PawnThatShoots.PC.bIsSpellActive = false;
+		PawnThatShoots.PC.DoWeStillHaveAP();
+		PawnThatShoots = none;
+	}
+
+	super.Destroyed();
 }
 
 simulated function SpawnFlightEffects()

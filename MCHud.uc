@@ -88,7 +88,7 @@ event PostRender()
 	}
 
 
-
+//	CheckTiles();
 }
 
 /*
@@ -412,6 +412,39 @@ function TrackHeroes()
 			}
 		}
 	}
+}
+
+
+// Debug for fighting characters
+function CheckTiles()
+{
+	local MCPlayerController PC;
+	local int i;
+
+	super.DrawHUD();
+
+	foreach DynamicActors(class'MCPlayerController', PC)
+	{
+		break;
+	}
+	
+	if (PC != none)
+	{
+
+		if (PC.MCPlayer != none)
+		{
+			Canvas.DrawColor = WhiteColor;
+			Canvas.Font = class'Engine'.Static.GetSmallFont();
+
+			for(i = 0; i < PC.BlueTiles.length ; i++)
+			{
+				Canvas.SetPos(5, 10 * i);
+				Canvas.DrawText("Camera Hero          :" @ PC.BlueTiles[i]);
+			}
+
+		}
+	}
+
 }
 
 defaultproperties

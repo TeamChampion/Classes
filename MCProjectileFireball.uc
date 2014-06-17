@@ -7,7 +7,6 @@ Simulated function PostBeginPlay()
 	super.PostBeginPlay();
 }
 
-
 defaultproperties
 {
     MCProjFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_DecoyFlare'
@@ -18,7 +17,7 @@ defaultproperties
 	MaxSpeed=2000
 	AccelRate=500
 
-	Damage=25
+	Damage=5
 	DamageRadius=0
 	MomentumTransfer=0
 	CheckRadius=26.0

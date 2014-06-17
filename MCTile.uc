@@ -14,6 +14,7 @@ var Texture2D BorderWhite;
 // If DamageMode Is On This Tile, dont ever Light up this tile
 var Texture2D DamageModeTile;
 var bool bFireFountain;
+var bool bSpellTileMode;
 
 var int damage;
 
@@ -28,11 +29,18 @@ replication
 {
 	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
 //	if (bNetDirty && bNetOwner)
-//		 ;
+//		 MatInst;
+
+	// Variables the server should send ALL clients.
+	if (bNetDirty && Role == ROLE_Authority)
+		bSpellTileMode;
+
+//	if (bNetInitial)
+//		;
 
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
-		PathNode, bFireFountain, damage;
+		PathNode, bFireFountain, MatInst, damage;
 }
 
 
@@ -55,7 +63,7 @@ simulated function TileTurnBlue()
 {
 	local LinearColor MatColor;
 	
-	if (!bFireFountain)
+	if (!bSpellTileMode)
 	{
 		MatInst = new class'MaterialInstanceConstant';
 		MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
@@ -90,7 +98,7 @@ simulated function SpellTileTurnRed()
 {
 	local LinearColor MatColor;
 	
-	if (!bFireFountain)
+	if (!bSpellTileMode)
 	{
 		MatInst = new class'MaterialInstanceConstant';
 		MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
@@ -103,11 +111,11 @@ simulated function SpellTileTurnRed()
 
 }
 
-simulated function SpellTileTurnBlue()
+simulated function SpellTileTurnGreen()
 {
 	local LinearColor MatColor;
 	
-	if (!bFireFountain)
+	if (!bSpellTileMode)
 	{
 		MatInst = new class'MaterialInstanceConstant';
 		MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
@@ -123,19 +131,17 @@ simulated function SpellTileTurnBlue()
 
 simulated function TurnTileOff()
 {	
-	if (!bFireFountain)
+	if (!bSpellTileMode)
 	{	
 		MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);
 	}
 }
 
+// or reliable client works
 simulated function SetFireFountain()
 {
 	local LinearColor MatColor;
-	local MCFireFountain fountain;
-
-	fountain = Spawn(class'MCFireFountain');
-
+	bSpellTileMode = true;
 	bFireFountain = true;
 	if (bFireFountain)
 	{
@@ -147,8 +153,10 @@ simulated function SetFireFountain()
 		MatInst.SetVectorParameterValue('SetColor', MatColor);
 		MatInst.SetTextureParameterValue('SetNumber', NoBorderBlack);
 
-		damage = fountain.damage;
+		damage = 5;
 	}
+
+//	`log("Arrived MCTile");
 }
 
 
@@ -156,6 +164,33 @@ simulated function SetFireFountain()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
+{
+	`log("Touched" @ Other);
+	if (bSpellTileMode)
+	{
+		if (bNetDirty && Role == ROLE_Authority)
+		{
+			`log(Other @ "Server" @ "damage" @damage);
+		}else
+		{
+			`log(Other @ "Client" @ "damage" @damage);
+		}
+	}
+
+	
+	super.Touch(Other,OtherComp,HitLocation,HitNormal);
+}
+
+simulated event UnTouch (Actor Other)
+{
+	ClearTimer('SetBlockedONTimer');
+	//PathNode.bBlocked = false;
+	super.UnTouch(Other);
+}
+
+
 
 
 
@@ -165,19 +200,6 @@ simulated function SetBlockedONTimer()
 {
 	PathNode.bBlocked = true;
 	`log("WE ARE BLOCKED!!!!");
-}
-
-
-simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
-{
-	super.Touch(Other,OtherComp,HitLocation,HitNormal);
-}
-
-simulated event UnTouch (Actor Other)
-{
-	ClearTimer('SetBlockedONTimer');
-	//PathNode.bBlocked = false;
-	super.UnTouch(Other);
 }
 
 /*

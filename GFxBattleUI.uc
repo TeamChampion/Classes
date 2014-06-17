@@ -71,10 +71,10 @@ var GFxCLIKWidget RestartBattleBtn;
 var GFxCLIKWidget ReturnToTownBtn;
 
 // Widget for Spells
-var GFxCLIKWidget Spell1;
-var GFxCLIKWidget Spell2;
-var GFxCLIKWidget Spell3;
-var GFxCLIKWidget Spell4;
+var GFxObject Spell1;	// GFxCLIKWidget
+var GFxObject Spell2;
+var GFxObject Spell3;
+var GFxObject Spell4;
 
 // Just check if it has started
 var bool bInitialized;
@@ -192,7 +192,6 @@ function ConfigHUD()
 */
 function ConfigPlayerStats()
 {
-	`log("Hello PlayerConfigStats");
 
 	// Player 1 Stats
 	// Player 1 Area MovieClip
@@ -248,7 +247,6 @@ function ConfigPlayerStats()
 */
 function ConfigAPButton()
 {
-	`log("Hello ConfigAPButton");
 	
 	// Get the Widget
 	ResetAPBtn = GFxClikWidget(RootMC.GetObject("resetapINS",class'GFxClikWidget'));
@@ -258,7 +256,6 @@ function ConfigAPButton()
 		ResetAPBtn.AddEventListener('CLIK_buttonPress', APResetButton);
 	}
 
-	`log("GoodBye ConfigAPButton");
 }
 
 
@@ -268,7 +265,6 @@ function ConfigAPButton()
 */
 function ConfigOptionButton()
 {
-	`log("Hello OptionButton");
 	
 	// Get the Widget
 	// Main Option button
@@ -305,6 +301,17 @@ function ConfigOptionButton()
 }
 
 
+function SendToUC(string iconimagename)
+{
+	`log("-------------------------------------------");
+	`log("-------------------------------------------");
+	`log("-------------------------------------------");
+	`log("iconimagename =" @ iconimagename);
+	`log("-------------------------------------------");
+	`log("-------------------------------------------");
+	`log("-------------------------------------------");
+}
+
 /*
 // Config the Spell buttons to work with the game
 // @network					Client
@@ -312,145 +319,122 @@ function ConfigOptionButton()
 function ConfigSpells()
 {
 	local MCPawn MyPawn;
-	local MCPlayerController PC;
 	local ASDisplayInfo ASDisplayInfo;
-	local string SpellName;
+	local MCSpell SpellName;
 	local int SpellIndex;
 	local GFxClikWidget ThisClikButton;
+	local GFxObject AbilityMC;
+	local GFxObject InformationMC;
+	local GFxSetIconObject IconMC;
 
 	MyPawn = MCPawn(GetPC().Pawn);
-	PC = MCPlayerController(GetPC());
 	SpellIndex = 0;
 
-
 	// Check all the Spells the Pawn has
-	foreach MyPawn.MyDynamicSpells(SpellName)
+	foreach MyPawn.MyArchetypeSpells(SpellName)
 	{
-		// If the SpellName matches with the case, then assign it please.
-		switch (SpellName)
+		// Get the Object Button 
+		AbilityMC = RootMC.GetObject("HeroSpellAreaIns").AttachMovie("SpellField", "herospell"$SpellIndex);
+	//	AbilityMC = RootMC.AttachMovie("SpellField", "herospell"$SpellIndex);
+		ThisClikButton = GFxClikWidget(AbilityMC.GetObject("SpellButtonIns", class'GFxClikWidget'));
+		if (ThisClikButton != none)		
 		{
-			case "kaleidoscope":
-				// Get the Object Button 
-				ThisClikButton = GFxClikWidget(RootMC.GetObject("kaleidoscopeINS", class'GFxClikWidget'));
-				if (ThisClikButton != none)
-				{
-					// Add the press and rollover
-					// @TODO Add Mouse Capture Features
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
-					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
-					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
-				}
-				break;
-			case "firefan":
-				ThisClikButton = GFxClikWidget(RootMC.GetObject("firefanINS", class'GFxClikWidget'));
-				if (ThisClikButton != none)
-				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastFireFan);
-					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
-					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
-				}
-				break;
-			case "fireball":
-				ThisClikButton = GFxClikWidget(RootMC.GetObject("fireballINS", class'GFxClikWidget'));
-				if (ThisClikButton != none)
-				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastFireball);
-					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
-					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
-				}
-				break;
-			case "firefountain":
-				ThisClikButton = GFxClikWidget(RootMC.GetObject("firefountainINS", class'GFxClikWidget'));
-				if (ThisClikButton != none)
-				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.SelectFireFountain);
-					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
-					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
-				}
-				break;
+			// Adds click buttons, mouse over & mouse out
+			ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpellButton);
+			ThisClikButton.AddEventListener('CLIK_rollOver', EnableMouseCapture);
+			ThisClikButton.AddEventListener('CLIK_rollOut', DisableMouseCapture);
 
+			// Add a number for the button, so we can find out what button we are clicking in PC or for Information Field in mouse over/out
+			ThisClikButton.SetInt("SpellIndex", SpellIndex);
 
-
-			case "stonewall":
-				ThisClikButton = GFxClikWidget(RootMC.GetObject("stonewallINS", class'GFxClikWidget'));
-				if (ThisClikButton != none)
-				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastStoneWall);
-					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
-					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
-				}
-				break;	
-			case "rockandroll":
-				ThisClikButton = GFxClikWidget(RootMC.GetObject("rockandrollINS", class'GFxClikWidget'));
-				if (ThisClikButton != none)
-				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastRockAndRoll);
-					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
-					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
-				}
-				break;	
-			case "rockfang":
-				ThisClikButton = GFxClikWidget(RootMC.GetObject("rockfangINS", class'GFxClikWidget'));
-				if (ThisClikButton != none)
-				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PC.CastRockFang);
-					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
-					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
-				}
-				break;	
-			case "unearthmaterial":
-				ThisClikButton = GFxClikWidget(RootMC.GetObject("unearthmaterialINS", class'GFxClikWidget'));
-				if (ThisClikButton != none)
-				{
-					ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpell);
-					ThisClikButton.AddEventListener('CLIK_rollOver', PC.EnableMouseCapture);
-					ThisClikButton.AddEventListener('CLIK_rollOut', PC.DisableMouseCapture);
-				}
-				break;
-
-			default:
-				//`log("no Spell String");
+			// Set the icon image
+			if(AbilityMC != none)
+			{
+				IconMC = GFxSetIconObject(AbilityMC.GetObject("IconImageIns",  class'GFxSetIconObject'));
+				// Set Icon in AS to something new
+				IconMC.ChangeIconImage(SpellName.spellTextureName);
+			}
 		}
 
-		switch (SpellIndex)
+		// Add a Spell Information Field
+		InformationMC = RootMC.AttachMovie("InformationField", "information"$SpellIndex);
+		if(InformationMC != none)
 		{
-			case 0:
-				// If it's in the first index then make it into Spell NR 1
-				Spell1 = ThisClikButton;
-				// Get where it is at
-				ASDisplayInfo = Spell1.GetDisplayInfo();
-				// Set position
-				ASDisplayInfo.x = 425;
-				ASDisplayInfo.y = 600;
-				Spell1.SetDisplayInfo(ASDisplayInfo);
-				break;
-			case 1:
-				Spell2 = ThisClikButton;
-				ASDisplayInfo = Spell2.GetDisplayInfo();
-				ASDisplayInfo.x = 535;
-				ASDisplayInfo.y = 600;
-				Spell2.SetDisplayInfo(ASDisplayInfo);
-				break;
-			case 2:
-				Spell3 = ThisClikButton;
-				ASDisplayInfo = Spell3.GetDisplayInfo();
-				ASDisplayInfo.x = 645;
-				ASDisplayInfo.y = 600;
-				Spell3.SetDisplayInfo(ASDisplayInfo);
-				break;
-			case 3:
-				Spell4 = ThisClikButton;
-				ASDisplayInfo = Spell4.GetDisplayInfo();
-				ASDisplayInfo.x = 755;
-				ASDisplayInfo.y = 600;
-				Spell4.SetDisplayInfo(ASDisplayInfo);
-				break;
-			default:
-				//`log("no SpellIndex");
+			// Set information for Information Field, Spell Name, AP Cost & Description
+			InformationMC.SetVisible(false);
+			InformationMC.GetObject("SpellNameIns").SetString("text", SpellName.spellName);
+			InformationMC.GetObject("APNameIns").SetInt("text", SpellName.AP);
+			InformationMC.GetObject("DescNameIns").SetString("text", SpellName.Description);
 		}
+
+		// Set button placement
+		ASDisplayInfo = AbilityMC.GetDisplayInfo();
+		ASDisplayInfo.x = 0 + ((100 + 10) * SpellIndex);
+		ASDisplayInfo.y = 0;
+		AbilityMC.SetDisplayInfo(ASDisplayInfo);
+
+		// Set Spell Information Field, Get HeroSpellAreaIns + The Location in there +/- a value
+		ASDisplayInfo = InformationMC.GetDisplayInfo();
+		ASDisplayInfo.x = RootMC.GetObject("HeroSpellAreaIns").GetDisplayInfo().X + AbilityMC.GetDisplayInfo().X + 40;
+		ASDisplayInfo.y = RootMC.GetObject("HeroSpellAreaIns").GetDisplayInfo().Y + AbilityMC.GetDisplayInfo().Y - 140;
+		InformationMC.SetDisplayInfo(ASDisplayInfo);
+
 		// Adds +1 to ForEach Index
 		SpellIndex++;
 	}
+}
+
+function PressSpellButton(GFxClikWidget.EventData ev)
+{
+	local GFxObject Button;
+	
+	Button = ev._this.GetObject("target");
+	ConsoleCommand("MySpell"@Button.GetInt("SpellIndex"));
+}
+
+
+/*
+// Enable mouse capturing from GFxBattleUI.uc
+// @param		ev		Event data generated by the CLIKwidget
+// @network				Client
+*/
+function EnableMouseCapture(GFxClikWidget.EventData ev)
+{
+	local MCPlayerController PC;
+	local GFxObject PopUp;
+
+	// Set button hovering true so we don't walk when we click
+	PC = MCPlayerController(GetPC());
+	PC.bButtonHovering = true;
+
+	// Set Field visible by getting "information0", 1, 2 or 3
+	PopUp = RootMC.GetObject("information"$ev._this.GetObject("target").GetInt("SpellIndex"));
+	if(PopUp != none)
+		PopUp.SetVisible(true);
+
+	bButtonClicked = true;
+}
+
+/*
+// Disable mouse capturing from GFxBattleUI.uc
+// @param		ev		Event data generated by the CLIKwidget
+// @network				Client
+*/
+function DisableMouseCapture(GFxClikWidget.EventData ev)
+{
+	local MCPlayerController PC;
+	local GFxObject PopUp;
+
+	// Set button hovering false so we can walk again when clicked
+	PC = MCPlayerController(GetPC());
+	PC.bButtonHovering = false;
+
+	// Set Field hidden by getting "information0", 1, 2 or 3
+	PopUp = RootMC.GetObject("information"$ev._this.GetObject("target").GetInt("SpellIndex"));
+	if(PopUp != none)
+		PopUp.SetVisible(false);
+
+	bButtonClicked = false;
 }
 
 /*
@@ -587,27 +571,6 @@ function PressSpell(GFxClikWidget.EventData ev)
 }
 
 
-/*
-// Enable mouse capturing
-// @param		ev		Event data generated by the CLIKwidget
-// @network				Client
-*/
-function EnableMouseCapture(GFxClikWidget.EventData ev)
-{
-//	bButtonClicked = true;
-	`log("MouseOver");
-}
-
-/*
-// Disable mouse capturing
-// @param		ev		Event data generated by the CLIKwidget
-// @network				Client
-*/
-function DisableMouseCapture(GFxClikWidget.EventData ev)
-{
-//	bButtonClicked = false;
-	`log("MouseOut");
-}
 
 
 
