@@ -1,6 +1,19 @@
+//----------------------------------------------------------------------------
+// MCSpell_FireFountain
+//
+// Fire Fountain Spell Activator
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCSpell_FireFountain extends MCSpell;
 
-
+/*
+// The Activator for all spells
+// @param	Caster			Who Casts the Spell
+// @param	Enemy			Who the Caster is Aiming for
+// @param	Opt_PathNode	What PathNode we would like to change
+// @param	Opt_Tile		What Tile we would like to change
+*/
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
 	local int i;
@@ -10,16 +23,14 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 	PC = Caster.PC;
 
 	// Turn Off All active tiles
-	for (i = 0;i < PC.BlueTiles.length ; i++)
-		PC.BlueTiles[i].TurnTileOff();
+	for (i = 0;i < PC.CanUseTiles.length ; i++)
+		PC.CanUseTiles[i].ResetTileToNormal();
 
 	// Spell mode active
 	PC.bIsSpellActive = true;
 
 	// Check where we should light up the selecting spell Tiles
 	PC.CheckDistanceNearPlayer();
-
-
 }
 
 /*
@@ -27,23 +38,25 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 *	WhatTile	Selected Tile we use
 *	PathNode
 */
-reliable server function CastClickSpell(MCPawn Caster, MCTile WhatTile, MCPathNode PathNode)
+reliable server function CastClickSpellServer(optional MCPawn Caster, optional MCTile WhatTile, optional MCPathNode PathNode)
 {
 	// Do only on server
 	if (Role == Role_Authority)
 	{
-		WhatTile.SetFireFountain();
-	//	Cast(PC.MCPlayer, WhatTile.Location);
+		// Activate server
+		WhatTile.ActivateFireFountain(damage);
+		// Activate on clients
+		CastClickSpellClient(, WhatTile, );
 	}
 	
-	MeSpawn(WhatTile);
+//	MeSpawn(WhatTile);
 }
 
-simulated function MeSpawn(MCTile WhatTile)
+reliable client function CastClickSpellClient(optional MCPawn Caster, optional MCTile WhatTile, optional MCPathNode PathNode)
 {
-	WhatTile.SetFireFountain();
-	`log("MCSpell_FireFountain -> MCTILE");
+	WhatTile.ActivateFireFountain(damage);
 }
+
 DefaultProperties
 {
 //	name="Fire Fountain"

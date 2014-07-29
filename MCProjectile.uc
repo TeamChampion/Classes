@@ -1,39 +1,54 @@
+//----------------------------------------------------------------------------
+// MCProjectile
+//
+// Projectiles we use for our game, replicate the effects for spells also
+// manually set.
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCProjectile extends UTProjectile;
 
-var MCPawn PawnThatShoots;	// turn of basic information in Destroyed function
-
+// turn of basic information in Destroyed function
+var MCPawn PawnThatShoots;
 // We had to rewrite these two variables and functions to get them to replicate for our custom projectile
 var ParticleSystem MCProjFlightTemplate;
 var ParticleSystem MCProjExplosionTemplate;
+// Status we can give to the Enemy
+var MCStatus Status;
 
 replication
 {
-  // Replicate only if the values are dirty, this replication info is owned by the player and from server to client
-//  if (bNetDirty && bNetOwner)
-//    APf;
-
   // Replicate only if the values are dirty and from server to client
   if (bNetDirty)
-    MCProjFlightTemplate, MCProjExplosionTemplate;
+    MCProjFlightTemplate, MCProjExplosionTemplate, Status;
 }
 
+/*
+// Destroy projectile if it hits something and check if we can continue to play or change character.
+*/
 simulated function Destroyed()
 {
 	// If a projectile is on, when being Destroyed, turn of Spellmode && check for remaining APs
-
 	if(PawnThatShoots != none)
 	{
-		PawnThatShoots.PC.bIsSpellActive = false;
-		PawnThatShoots.PC.DoWeStillHaveAP();
+
+		// Runs on both client and server
+		if (Role > Role_Authority)
+		{
+			//
+		}else
+		{
+			`log("We do this on Server" @ PawnThatShoots);
+	//		PawnThatShoots.PC.bIsSpellActive = false;
+	//		PawnThatShoots.PC.CheckCurrentAPCalculation();
+		}
 		PawnThatShoots = none;
 	}
-
 	super.Destroyed();
 }
 
 simulated function SpawnFlightEffects()
 {
-	//`log("Hello from Spawn flight effects.");
 	if (WorldInfo.NetMode != NM_DedicatedServer && MCProjFlightTemplate != None)
 	{
 		ProjEffects = WorldInfo.MyEmitterPool.SpawnEmitterCustomLifetime(MCProjFlightTemplate);
@@ -52,7 +67,6 @@ simulated function SpawnExplosionEffects(vector HitLocation, vector HitNormal)
 	local ParticleSystemComponent ProjExplosion;
 	local Actor EffectAttachActor;
 	local MaterialInstanceTimeVarying MITV_Decal;
-	//`log("Hello from spawn explosion effects.");
 
 	if (WorldInfo.NetMode != NM_DedicatedServer)
 	{
@@ -103,13 +117,13 @@ simulated function SpawnExplosionEffects(vector HitLocation, vector HitNormal)
 						// hack, since they don't show up on terrain anyway
 						if ( Terrain(ImpactedActor) == None )
 						{
-						MITV_Decal = new(self) class'MaterialInstanceTimeVarying';
-						MITV_Decal.SetParent( ExplosionDecal );
+							MITV_Decal = new(self) class'MaterialInstanceTimeVarying';
+							MITV_Decal.SetParent( ExplosionDecal );
 
-						WorldInfo.MyDecalManager.SpawnDecal(MITV_Decal, HitLocation, rotator(-HitNormal), DecalWidth, DecalHeight, 10.0, FALSE );
-						//here we need to see if we are an MITV and then set the burn out times to occur
-						MITV_Decal.SetScalarStartTime( DecalDissolveParamName, DurationOfDecal );
-					}
+							WorldInfo.MyDecalManager.SpawnDecal(MITV_Decal, HitLocation, rotator(-HitNormal), DecalWidth, DecalHeight, 10.0, FALSE );
+							//here we need to see if we are an MITV and then set the burn out times to occur
+							MITV_Decal.SetScalarStartTime( DecalDissolveParamName, DurationOfDecal );
+						}
 					}
 					else
 					{

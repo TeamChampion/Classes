@@ -1,13 +1,17 @@
+//----------------------------------------------------------------------------
+// MCProjectileRockAndRoll
+//
+// Rock & Roll Projectile base settings
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCProjectileRockAndRoll extends MCProjectile
 	placeable;
-// Fire Fan (burning hands)	: 1 SlotDamage Triangle from Fire Source
 
 Simulated function PostBeginPlay()
 {
-	`log( "Rock and Roll" );
 	super.PostBeginPlay();
 }
-
 
 defaultproperties
 {

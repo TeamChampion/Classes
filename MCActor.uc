@@ -1,45 +1,15 @@
-class MCActor extends Actor
-	placeable;
+//----------------------------------------------------------------------------
+// MCActor
+//
+// Base Actor used for All other actors
+// Also used for searching for a specific actor and then destroy it
+//
+// Gustav 2014-07-29
+//----------------------------------------------------------------------------
+class MCActor extends Actor;
 
-var archetype MCTile		ArcTile;
-var archetype MCTrigger 	ArcTrigger;
-var archetype MCPathNode 	ArcPathNode;
 
-var vector TileLocation;
-var vector TriggerLocation;
-var vector PathNodeLocation;
-
-function PostBeginPlay()
+DefaultProperties
 {
-	`log("We are live!");
-	AttachStuff();
-	super.PostBeginPlay();
-}
-
-function AttachStuff()
-{
-	//WizardArhetype = spawn(class'Player01',,,MySpawnPoint.Location,,WizardArhetype);
-//	ArcTile 	= Spawn(class'MCTile',,, 	TileLocation, 	 Rotation, ArcTile,);
-//	ArcTrigger  = Spawn(class'MCTrigger',,, TriggerLocation, Rotation, ArcTrigger,);
-//	ArcPathNode = Spawn(class'MCPathNode',,,TileLocation, 	 Rotation, ArcPathNode,);
-}
-
-
-
-
-
-
-defaultproperties
-{
-	// Spawn Locations
-	TileLocation =	   (X=0.0f, Y=0.0f, Z=0.0f)
-	TriggerLocation =  (X=0.0f, Y=0.0f, Z=0.0f)
-	PathNodeLocation = (X=0.0f, Y=0.0f, Z=60.0f)
-
-	// Archetypes
-//	ArcTile=MCTile'mystraschampionsettings.Archetype.MCTile'
-//	ArcTrigger=MCTrigger'mystraschampionsettings.Archetype.MCTrigger'
-//	ArcPathNode=MCPathNode'mystraschampionsettings.Archetype.MCPathNode'
-
 
 }

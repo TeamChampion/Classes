@@ -1,4 +1,11 @@
-class MCActor_Fang extends Actor;
+//----------------------------------------------------------------------------
+// MCActor_Fang
+//
+// For MCSpell_RockFang, spawn this actor and do the simulation
+//
+// Xanthos 2014-01-01
+//----------------------------------------------------------------------------
+class MCActor_Fang extends MCActor;
 
 var() float MovementSpeed;
 var() ParticleSystem smoke;

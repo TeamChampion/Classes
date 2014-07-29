@@ -1,5 +1,11 @@
+//----------------------------------------------------------------------------
+// GFxInventory
+//
+// Open Used to setup your Inventory of items
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class GFxInventory extends GFxMain;
-
 
 function Init(optional LocalPlayer LocalPlayer)
 {
@@ -7,7 +13,6 @@ function Init(optional LocalPlayer LocalPlayer)
 	Super.Init(LocalPlayer);
 	Start();
     Advance(0.f);
-
 }
 
 function bool Start(optional bool StartPaused = false)
@@ -19,17 +24,13 @@ function bool Start(optional bool StartPaused = false)
     `log("------------------------------inventory--------------------------------");
     `log("-----------------------------------------------------------------------");
     
-	SetUpInventory(MCP);
+//	SetUpInventory(MCP);
 	return true;
 }
 
-
-
-
 DefaultProperties
 {
-    bDisplayWithHudOff=false
-    TimingMode=TM_Game
-	//MovieInfo=SwfMovie'UDNHud.array_test'
-//    MovieInfo=SwfMovie'MystrasChampionFlash.shops.ShopWeapon'
+	bDisplayWithHudOff=false
+	TimingMode=TM_Game
+//	MovieInfo=SwfMovie'MystrasChampionFlash.shops.ShopWeapon'
 }
