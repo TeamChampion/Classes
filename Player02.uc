@@ -1,37 +1,35 @@
+//----------------------------------------------------------------------------
+// Player02
+//
+// Second Selectable Player and his stats
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class Player02 extends MCPawn;
+
+//var(Inventory) array<MCInventory_Player02> MyInventory;
 
 simulated event PostBeginPlay()
 {
-  `log("Player 02 is active");
-
-  `log("Player 02 Current stats"); 
-
-  `log("PlayerName: "   @ PlayerName); 
-  `log("PawnName: "     @ PawnName); 
-  //`log("School: "       @ School); 
-  `log("FirePoints: "   @ FirePoints); 
-  `log("IcePoints: "    @ IcePoints); 
-  `log("EarthPoints: "  @ EarthPoints); 
-  `log("PosionPoints: " @ PosionPoints); 
-  `log("ThunderPoints: " @ ThunderPoints); 
-
-  `log("         -------------------          "); 
-
-  `log("currentSpells01: " @ currentSpells01); 
-  `log("currentSpells02: " @ currentSpells02); 
-  `log("currentSpells03: " @ currentSpells03); 
-  `log("currentSpells04: " @ currentSpells04);
-  super.PostBeginPlay();
+	`log("-------------------"); 
+	`log("Player 02 is active");
+	`log("PlayerName: "   @ PawnName); 
+	`log("-------------------"); 
+	/*
+	`log("Spells"); 
+	`log("-------------------"); 
+	`log("Archetype spells 01" @ MyArchetypeSpells[0].spellNumber);
+	`log("Archetype spells 02" @ MyArchetypeSpells[1].spellNumber);
+	`log("Archetype spells 03" @ MyArchetypeSpells[2].spellNumber);
+	`log("Archetype spells 04" @ MyArchetypeSpells[3].spellNumber);
+	`log("-------------------");
+	*/
+	super.PostBeginPlay();
 }
 
 defaultproperties
 {
-   Health=100 // Bots HP
-   Name=Player01_Pawn
-
-  MyDynamicSpells[0] = "stonewall"
-  MyDynamicSpells[1] = "rockandroll"
-  MyDynamicSpells[2] = "rockfang"
-  MyDynamicSpells[3] = "unearthmaterial"
-
+	MyInventory = MCInventory_Player02'mystraschampionsettings.Character.P02_Inventory'
+	Health=100 // Bots HP
+//	Name=Player02_Pawn
 }

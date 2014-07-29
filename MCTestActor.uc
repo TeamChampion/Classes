@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------
+// MCTestActor
+//
+// debug Flag we use in PlayerController
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 Class MCTestActor extends Actor
 	placeable;
 
