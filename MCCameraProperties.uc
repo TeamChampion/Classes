@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------
+// MCCameraProperties
+//
+// Stored values we can use inside for adjusting camera settings easily
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCCameraProperties extends Object
 	HideCategories(Object);
 
@@ -50,7 +57,7 @@ defaultproperties
 
 	StartPlane=(X=0,Y=0,Z=1440)
 
-	ZoomSpeed=5.0f
+	ZoomSpeed=20.0f
 	MaxZoom=1500
 	MinZoom=256
 
@@ -58,10 +65,9 @@ defaultproperties
 	MouseSpeed = 0.5f
 
 	IsTrackingEnemyPawn = false
-	IsTrackingHeroPawn = true
+	IsTrackingHeroPawn = false		// follow???
 	bSetToMatch = true
 	bStartPosition = true
-	bSetMouseMovement = false
+	bSetMouseMovement = false		// mouse use
 	bSetKeyboardMovement = false
-
 }

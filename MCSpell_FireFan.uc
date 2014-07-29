@@ -1,36 +1,42 @@
+//----------------------------------------------------------------------------
+// MCSpell_FireFan
+//
+// Fire Fan Spell Activator
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCSpell_FireFan extends MCSpell;
 
 function Cast(MCPawn caster, MCPawn enemy)
 {
-//	local MCProjectileFireFan firefan;
 	local MCProjectile firefan;
 
-	firefan = Spawn(class'MCProjectileFireFan', caster, , caster.Location);
-	// Set Caster in MCProjectile so we can when Destroyed set movement back ON
-	firefan.PawnThatShoots = caster;
-	// Add the damage
-	firefan.Damage = damage;
-	// Fire the Spell
-	firefan.Init(enemy.Location - caster.Location);
-
-/*
-	firefan = Spawn(class'MCProjectileFireFan', caster, , caster.Location);
-	// Set Caster in MCProjectile so we can when Destroyed set movement back ON
-	fireball.PawnThatShoots = caster;
-	// Add the damage
-	fireball.Damage = damage;
-	// Fire the Spell
-	fireball.Init(enemy.Location - caster.Location);
-*/
+	if (Role == Role_Authority)
+	{
+		firefan = Spawn(class'MCProjectileFireFan', caster, , caster.Location);
+		// Set Caster in MCProjectile so we can when Destroyed set movement back ON
+		firefan.PawnThatShoots = caster;
+		// Add the damage
+		firefan.Damage = damage;
+		// Fire the Spell
+		firefan.Init(enemy.Location - caster.Location);
+		// Remove this Class from server
+		Destroy();
+	}
 }
 
 /*
-* Start the spell
+// The Activator for all spells
+// @param	Caster			Who Casts the Spell
+// @param	Enemy			Who the Caster is Aiming for
+// @param	Opt_PathNode	What PathNode we would like to change
+// @param	Opt_Tile		What Tile we would like to change
 */
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
 	local MCPlayerReplication MCPRep;
 
+	`log(name @ "- Activate Spell");
 	// Update Casters AP Cost
 	foreach DynamicActors(Class'MCPlayerReplication', MCPRep)
 	{
@@ -40,17 +46,27 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 			MCPRep.APf = Caster.APf;
 		}
 	}
+
 	// Spell mode active
 	Caster.PC.bIsSpellActive = true;
 	// Turn of Tiles
 	Caster.PC.TurnOffTiles();
-	// Shoot Spell
-	Cast(Caster, Enemy);
+
+	// Shoot Spell, Make sure it's only on the server
+	if ( (WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_ListenServer) )
+	{
+		Cast(Caster, Enemy);
+	}else
+	{
+		// Remove from Client
+		Destroy();
+	}
+
+	// Reset Everything and check if we still have AP
+	caster.PC.bIsSpellActive = false;
+	caster.PC.CheckCurrentAPCalculation();
 }
 
 DefaultProperties
 {
-//	name="Fire Fan"
-//	AP=3
-//	bFire=true
 }

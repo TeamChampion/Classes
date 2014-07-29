@@ -1,10 +1,20 @@
+//----------------------------------------------------------------------------
+// MCHud
+//
+// Draw movies on the screen and even debug information here
+// @TODO change to spawn menus from each flash mvie class isntead of here
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCHud extends MouseInterfaceHUD;
 
 var GFxBattleUI GFxBattleUI;
-
+var GFxBattleUI_PreLoad GFxBattleUI_PreLoad;
 var GFxMainMenu GFxMainMenu;
 var GFxSelectScreen GFxSelectScreen;
 var GFxCreateScreen GFxCreateScreen;
+var GFxTownMain cGFxTownMain;
+var GFxTownShop cGFxTownShop;
 
 
 // When create button is pushed it set's this Character as the one we will create
@@ -14,16 +24,25 @@ simulated event PostBeginPlay()
 {
 	Super.PostBeginPlay();
 
-	// If we are using ScaleForm, then create the ScaleForm movie
-
-	if (MouseInterfaceGFx != None)
+	// Start by closing the MouseInterface Movie
+	if (WorldInfo.GetMapName() == "movement_test16")
 	{
-		MouseInterfaceGFx.Close(true);
+		if (MouseInterfaceGFx != None)
+			MouseInterfaceGFx.Close(true);
+	}else
+	{
+		if (MouseInterfaceGFx != None)
+			MouseInterfaceGFx.Close(true);
 	}
 
-	//SpawnBattleHud();
+
+
+	CheckMapForStartingVideo();		// Finding specific map name here
 }
 
+/*
+// Play Battle Hud
+*/
 function SpawnBattleHud()
 {
 	if (GFxBattleUI == none)
@@ -44,21 +63,23 @@ event PostRender()
 	local MCGameReplication MCPR;
 
 	MCPR = MCGameReplication(WorldInfo.GRI);
-	// Get the PlayerController
 	PC = MCPlayerController(PlayerOwner);
 
 	Super.PostRender();
 
-//	CheckMapForStartingVideo();
+//	CheckMapForStartingVideo();		// Finding specific map name here
 
 	// Set up battle HUD
 	if (GFxBattleUI == none && PC.MCPlayer != none && MCPR.MCPRIArray.Length >= 1)
 	{
+		// Close PreLoad Movie before we start battle
+		if (GFxBattleUI_PreLoad != none)
+			GFxBattleUI_PreLoad.Close(true);
+
 		// create new class
 		GFxBattleUI = new class'GFxBattleUI';
 		if (GFxBattleUI != none)
 		{
-
 			GFxBattleUI.MouseInterfaceHUD = self;
 			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
 			GFxBattleUI.SetTimingMode(TM_Real);
@@ -71,7 +92,25 @@ event PostRender()
 				GFxBattleUI.Start();
 			}
 		}
+	}
 
+	// If it's our battle map and if we don't have a preload flash, then show this.
+	else if (GFxBattleUI_PreLoad == none && WorldInfo.GetMapName() == "movement_test16" && GFxBattleUI == none)
+	{
+		GFxBattleUI_PreLoad = new class'GFxBattleUI_PreLoad';
+		if (GFxBattleUI_PreLoad != none)
+		{
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			GFxBattleUI_PreLoad.SetTimingMode(TM_Real);
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			GFxBattleUI_PreLoad.bAllowFocus = true;
+
+			/** TRUE after Start() is called, FALSE after Close() is called. */
+			if (!GFxBattleUI_PreLoad.bMovieIsOpen)
+			{
+				GFxBattleUI_PreLoad.Start();
+			}
+		}
 	}
 
 	// Tick BattleHud Movie
@@ -87,8 +126,10 @@ event PostRender()
 		GFxSelectScreen.Tick(RenderDelta);
 	}
 
-
-//	CheckTiles();
+	// Debug Area
+	// -----------------------
+	// Debug Multiplayer
+//	TrackHeroes();
 }
 
 /*
@@ -104,23 +145,29 @@ function CheckMapForStartingVideo()
 			break;
 		case "town01":
 			`log("Entered the town");
+			StartMovieTownMain();
+		//	StartMovieTownShops();
 			break;
-			
+		case "ShopTest":
+			`log("Entered the SHOP");
+			StartMovieTownShops();
+			break;
 		default:
 			
 	}
 }
 
+/*
+// Play Start Menu Hud
+*/
 function StartMovieMCStartMenu()
 {
-
 	if (GFxMainMenu == none)
 	{
 		// create new class
 		GFxMainMenu = new class'GFxMainMenu';
 		if (GFxMainMenu != none)
 		{
-		//	GFxMainMenu.MouseInterfaceHUD = self;
 			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
 			GFxMainMenu.SetTimingMode(TM_Real);
 			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
@@ -136,19 +183,79 @@ function StartMovieMCStartMenu()
 }
 
 
+/*
+// Play Town Main File
+*/
+exec function StartMovieTownMain()
+{
+	if (cGFxTownMain == none)
+	{
+		// create new class
+		cGFxTownMain = new class'GFxTownMain';
+		if (cGFxTownMain != none)
+		{
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			cGFxTownMain.SetTimingMode(TM_Real);
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			cGFxTownMain.bAllowFocus = true;
 
+			/** TRUE after Start() is called, FALSE after Close() is called. */
+			if (!cGFxTownMain.bMovieIsOpen)
+			{
+				cGFxTownMain.Start();
+			}
+		}
+	}
+}
+exec function CloseMovieTownMain()
+{
+	if (cGFxTownMain != None)
+	{
+		// Closes down movie
+		cGFxTownMain.Close(true);
+		// Sets the movie to none so it doesn't fail
+		cGFxTownMain = none;
+		`log("CLOSE CloseMovieTownMain");
+	}
+}
+/*
+// Play Town Shop File
+*/
+exec function StartMovieTownShops()
+{
+	if (cGFxTownShop == none)
+	{
+		// create new class
+		cGFxTownShop = new class'GFxTownShop';
+		if (cGFxTownShop != none)
+		{
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			cGFxTownShop.SetTimingMode(TM_Real);
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			cGFxTownShop.bAllowFocus = true;
 
-
-
-
-
-
-
-
-
-
-
-
+			/** TRUE after Start() is called, FALSE after Close() is called. */
+			if (!cGFxTownShop.bMovieIsOpen)
+			{
+				cGFxTownShop.Start();
+			}
+		}
+	}
+}
+exec function CloseMovieTownShops()
+{
+	if (cGFxTownShop != None)
+	{
+		// Closes down movie
+		cGFxTownShop.Close(true);
+		// Sets the movie to none so it doesn't fail
+		cGFxTownShop = none;
+		`log("CLOSE CloseMovieTownShops");
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Change These to open from each script instead from kismet
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
 // Will open the select screen
@@ -222,26 +329,9 @@ exec function CloseCreateScreen()
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Debug Hud settings
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Debug for fighting characters
 function debugMenuHUD()
@@ -273,7 +363,7 @@ function debugMenuHUD()
 	if(MyPawn != none && PC != none)
 	{
 			Canvas.SetPos(5, 260);
-			Canvas.DrawText("This Computer PawnName :" @ MyPawn.PlayerName);
+			Canvas.DrawText("This Computer PawnName :" @ MyPawn.PawnName);
 			Canvas.SetPos(5, 275);
 			Canvas.DrawText("This Computer Pawn        :" @ MyPawn);
 	}
@@ -378,7 +468,7 @@ function TrackHeroes()
 				Canvas.DrawText("PawnName   :" @ MCPR.MCPRIArray[i].PawnName);
 				// PC Name
 				Canvas.SetPos(5, 365);
-				Canvas.DrawText("PlayerName  :" @ MCPR.MCPRIArray[i].PlayerName);
+				Canvas.DrawText("PlayerUniqueID  :" @ MCPR.MCPRIArray[i].PlayerUniqueID);
 				// HP
 				Canvas.SetPos(5, 380);
 				Canvas.DrawText("Health        :" @ MCPR.MCPRIArray[i].Health);
@@ -387,7 +477,20 @@ function TrackHeroes()
 				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].APf);
 				// Has AP
 				Canvas.SetPos(5, 410);
-				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].bHaveAp);
+				Canvas.DrawText("setCharacterSelect        :" @ MCPR.MCPRIArray[i].setCharacterSelect);
+				Canvas.SetPos(5, 425);
+				Canvas.DrawText("----------------------------------------------------------");
+				Canvas.SetPos(5, 440);
+				Canvas.DrawColor = WhiteColor;
+				Canvas.Font = class'Engine'.Static.GetSmallFont();
+				Canvas.DrawText("currentSpells01        :" @ MCPR.MCPRIArray[i].currentSpells01);
+				Canvas.SetPos(5, 455);
+				Canvas.DrawText("currentSpells02        :" @ MCPR.MCPRIArray[i].currentSpells02);
+				Canvas.SetPos(5, 470);
+				Canvas.DrawText("currentSpells03        :" @ MCPR.MCPRIArray[i].currentSpells03);
+				Canvas.SetPos(5, 485);
+				Canvas.DrawText("currentSpells04        :" @ MCPR.MCPRIArray[i].currentSpells04);
+				Canvas.SetPos(5, 500);
 			}
 			// Player 02 to the right
 			if (MCPR.MCPRIArray[i].PlayerUniqueID == 2)
@@ -400,7 +503,7 @@ function TrackHeroes()
 				Canvas.DrawText("PawnName   :" @ MCPR.MCPRIArray[i].PawnName);
 				// PC Name
 				Canvas.SetPos(220, 365);
-				Canvas.DrawText("PlayerName  :" @ MCPR.MCPRIArray[i].PlayerName);
+				Canvas.DrawText("PlayerUniqueID  :" @ MCPR.MCPRIArray[i].PlayerUniqueID);
 				// HP
 				Canvas.SetPos(220, 380);
 				Canvas.DrawText("Health        :" @ MCPR.MCPRIArray[i].Health);
@@ -408,14 +511,27 @@ function TrackHeroes()
 				Canvas.SetPos(220, 395);
 				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].APf);
 				Canvas.SetPos(220, 410);
-				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].bHaveAp);
+				Canvas.DrawText("setCharacterSelect        :" @ MCPR.MCPRIArray[i].setCharacterSelect);
+				//
+				// line here
+				Canvas.DrawColor = WhiteColor;
+				Canvas.Font = class'Engine'.Static.GetSmallFont();
+				Canvas.DrawText("currentSpells01        :" @ MCPR.MCPRIArray[i].currentSpells01);
+				Canvas.SetPos(220, 455);
+				Canvas.DrawText("currentSpells02        :" @ MCPR.MCPRIArray[i].currentSpells02);
+				Canvas.SetPos(220, 470);
+				Canvas.DrawText("currentSpells03        :" @ MCPR.MCPRIArray[i].currentSpells03);
+				Canvas.SetPos(220, 485);
+				Canvas.DrawText("currentSpells04        :" @ MCPR.MCPRIArray[i].currentSpells04);
+				Canvas.SetPos(220, 500);
 			}
 		}
 	}
 }
 
-
+/*
 // Debug for fighting characters
+*/
 function CheckTiles()
 {
 	local MCPlayerController PC;
@@ -436,10 +552,10 @@ function CheckTiles()
 			Canvas.DrawColor = WhiteColor;
 			Canvas.Font = class'Engine'.Static.GetSmallFont();
 
-			for(i = 0; i < PC.BlueTiles.length ; i++)
+			for(i = 0; i < PC.CanUseTiles.length ; i++)
 			{
 				Canvas.SetPos(5, 10 * i);
-				Canvas.DrawText("Camera Hero          :" @ PC.BlueTiles[i]);
+				Canvas.DrawText("Camera Hero          :" @ PC.CanUseTiles[i]);
 			}
 
 		}

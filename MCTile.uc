@@ -1,52 +1,71 @@
+//----------------------------------------------------------------------------
+// MCTile
+//
+// Each Tile lights up, and is able to set a spell on it.
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCTile extends MouseInterfaceKActor
 	hidecategories(Display, Attachment, Physics, Advanced, Debug, Mobile);
-/*
-//Main variables
-*/
-var StaticMeshComponent MyKActorComponent;	// For Setting static mesh on the KActor
+
+// For Setting static mesh on the KActor
+var StaticMeshComponent MyKActorComponent;
+// What material we want this to change into
 var MaterialInstanceConstant MatInst;
 // The PathNode in here
 var MCPathNode PathNode;
-var MCPathNode Pathy;
-// Setting colors
-var Texture2D NoBorderBlack;
-var Texture2D BorderWhite;
-// If DamageMode Is On This Tile, dont ever Light up this tile
-var Texture2D DamageModeTile;
-var bool bFireFountain;
-var bool bSpellTileMode;
+// Setting colors for materials
+var Texture2D Tex2DNoBorder;
+var Texture2D Tex2DBorderWhite;
 
+// ------------------------------ //
+// Spells
+// ------------------------------ //
+// Is any spell active on this Tile
+var bool bSpellTileMode;
+// Spell - 07 - FireFountain
+var bool bFireFountain;
+// Spell - 11 - Wall Of Ice
+var bool bWallOfIce;
+// Spell - 15 - GlassFloor
+var bool bGlassFloor;
+// Spell - 20 - StoneWall
+var bool bStoneWall;
+// Spell - 25 - DissolveElement
+var bool bDissolveElement;
+
+
+// Assign Damage to a Tile
 var int damage;
 
-
-/*
-testing variables
-*/
+// @NOTUSING
+// If DamageMode Is On This Tile, dont ever Light up this tile
+var Texture2D DamageModeTile;
+// Used for Lighting up Tiles by changing it's Alpha Level
 var float addFloat;
 
 // Replication block
 replication
 {
-	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
-//	if (bNetDirty && bNetOwner)
-//		 MatInst;
-
 	// Variables the server should send ALL clients.
 	if (bNetDirty && Role == ROLE_Authority)
 		bSpellTileMode;
 
-//	if (bNetInitial)
-//		;
-
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
-		PathNode, bFireFountain, MatInst, damage;
+		PathNode, MatInst, damage;
+
+	// What Spells
+	if (bNetDirty)
+		bFireFountain, bWallOfIce, bGlassFloor, bStoneWall, bDissolveElement;
 }
 
 
 simulated event PostBeginPlay()
 {
 	super.PostBeginPlay();
+
+	// Add Closest Pathnode to this Tile and Store it here
 	foreach AllActors(Class'MCPathNode', PathNode)
 	{
 		if ( vsize(Location - PathNode.Location) < 70 )
@@ -57,9 +76,9 @@ simulated event PostBeginPlay()
 }
 
 /*
-Turns tile in to a specific color when AP is different
+// Turns tile in to a specific color when AP is different
 */
-simulated function TileTurnBlue()
+simulated function SetActiveTiles()
 {
 	local LinearColor MatColor;
 	
@@ -72,29 +91,34 @@ simulated function TileTurnBlue()
 		//Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG'
 		switch (PathNode.APValue)
 		{
+			// Green Color
 			case 1:
 				MatColor = MakeLinearColor(0.0f, 0.8125f, 0.007688f, 0.5f);
 				MatInst.SetVectorParameterValue('SetColor', MatColor);
-				MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
+				MatInst.SetTextureParameterValue('SetNumber', Tex2DBorderWhite);
 				break;
+			// Yellow Color
 			case 2:
 				MatColor = MakeLinearColor(1.0f, 1.0f, 0.0f, 0.5f);
 				MatInst.SetVectorParameterValue('SetColor', MatColor);
-				MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
+				MatInst.SetTextureParameterValue('SetNumber', Tex2DBorderWhite);
 				break;
+			// Red Color
 			case 3:
 				MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 0.5f);
 				MatInst.SetVectorParameterValue('SetColor', MatColor);
-				MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
+				MatInst.SetTextureParameterValue('SetNumber', Tex2DBorderWhite);
 				break;
 			default:
-				`log("nothing");
+			//	`log("nothing");
 		}
 	}	
-
 }
 
-simulated function SpellTileTurnRed()
+/*
+// Lightup RED for what Tile we are hovering over for Placement Spells
+*/
+simulated function SpellMarkTileMain()
 {
 	local LinearColor MatColor;
 	
@@ -106,12 +130,26 @@ simulated function SpellTileTurnRed()
 
 		MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 0.5f);
 		MatInst.SetVectorParameterValue('SetColor', MatColor);
-		MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
+		MatInst.SetTextureParameterValue('SetNumber', Tex2DBorderWhite);
 	}
+	// If Spell is Dissolved Element, We set in PC.SpellTileTurnOn()
+	else if (bDissolveElement)
+	{
+		MatInst = new class'MaterialInstanceConstant';
+		MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
+		MyKActorComponent.SetMaterial(1, MatInst);
 
+		MatColor = MakeLinearColor(1.0f, 1.0f, 0.0f, 0.5f);
+		MatInst.SetVectorParameterValue('SetColor', MatColor);
+		MatInst.SetTextureParameterValue('SetNumber', Tex2DBorderWhite);
+		bDissolveElement = false;
+	}
 }
 
-simulated function SpellTileTurnGreen()
+/*
+// Lightup where we can Select Tiles for Placement Spells
+*/
+simulated function SpellMarkTileArea()
 {
 	local LinearColor MatColor;
 	
@@ -123,13 +161,35 @@ simulated function SpellTileTurnGreen()
 
 		MatColor = MakeLinearColor(0.0f, 0.3f, 1.0f, 0.5f);
 		MatInst.SetVectorParameterValue('SetColor', MatColor);
-		MatInst.SetTextureParameterValue('SetNumber', BorderWhite);
+		MatInst.SetTextureParameterValue('SetNumber', Tex2DBorderWhite);
 	}
-
+	// If nothing then we reset it to normal, Mostly used for  Dissolved Elements
+	else
+	{
+		MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);
+	}
 }
 
+simulated function SpellMarkDissolveArea()
+{
+	local LinearColor MatColor;
+	
+	if (bSpellTileMode)
+	{
+		MatInst = new class'MaterialInstanceConstant';
+		MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
+		MyKActorComponent.SetMaterial(1, MatInst);
 
-simulated function TurnTileOff()
+		MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 0.5f);
+		MatInst.SetVectorParameterValue('SetColor', MatColor);
+		MatInst.SetTextureParameterValue('SetNumber', Tex2DBorderWhite);
+	}
+}
+
+/*
+// Used in PC & Spells to reset Tiles to it's original state
+*/
+simulated function ResetTileToNormal()
 {	
 	if (!bSpellTileMode)
 	{	
@@ -137,12 +197,21 @@ simulated function TurnTileOff()
 	}
 }
 
-// or reliable client works
-simulated function SetFireFountain()
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// What Spells We Have
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+// Set FireFountain Spell active for use
+*/
+simulated function ActivateFireFountain(int SetDamage)
 {
 	local LinearColor MatColor;
+
 	bSpellTileMode = true;
+//	TurnOfSpellBools();
 	bFireFountain = true;
+
 	if (bFireFountain)
 	{
 		MatInst = new class'MaterialInstanceConstant';
@@ -151,51 +220,206 @@ simulated function SetFireFountain()
 
 		MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
 		MatInst.SetVectorParameterValue('SetColor', MatColor);
-		MatInst.SetTextureParameterValue('SetNumber', NoBorderBlack);
+		MatInst.SetTextureParameterValue('SetNumber', Tex2DNoBorder);
 
-		damage = 5;
+		damage = SetDamage;
 	}
-
-//	`log("Arrived MCTile");
 }
 
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
+/*
+// Set Wall Of Ice Spell active for use
+*/
+simulated function ActivateWallOfIce()
 {
-	`log("Touched" @ Other);
+	bSpellTileMode = true;
+//	TurnOfSpellBools();
+	bWallOfIce = true;
+
+	if (bWallOfIce)
+	{
+		// nothing atm
+	}
+}
+
+/*
+// Set Glass Florr Spell active for use
+*/
+simulated function ActivateGlassFloor()
+{
+	local LinearColor MatColor;
+
+	bSpellTileMode = true;
+//	TurnOfSpellBools();
+	bGlassFloor = true;
+
+	if (bGlassFloor)
+	{
+		MatInst = new class'MaterialInstanceConstant';
+		MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
+		MyKActorComponent.SetMaterial(1, MatInst);
+
+		MatColor = MakeLinearColor(0.0f, 0.0f, 1.0f, 1.0f);
+		MatInst.SetVectorParameterValue('SetColor', MatColor);
+		MatInst.SetTextureParameterValue('SetNumber', Tex2DNoBorder);
+
+		// Change AP Cost
+		PathNode.APValue = 2;
+	}
+}
+
+/*
+// Set StoneWall Spell active for use
+*/
+simulated function ActivateStoneWall()
+{
+	bSpellTileMode = true;
+//	TurnOfSpellBools();
+	bStoneWall = true;
+
+	if (bStoneWall)
+	{
+		// nothing atm
+	}
+}
+
+/*
+// Set Dissolve Element Spell active for use
+*/
+simulated function ActivateDissolveElement()
+{
+	local MCActor FindActor;
+
+	// If Something is here then continue to run this function
 	if (bSpellTileMode)
 	{
-		if (bNetDirty && Role == ROLE_Authority)
+	//	`log("We Start Dissolving it");
+		TurnOfSpellBools();
+		PathNode.bBlocked = false;
+		bDissolveElement = true;
+
+		if (bDissolveElement)
 		{
-			`log(Other @ "Server" @ "damage" @damage);
-		}else
+			// Destroy previous Elements
+			foreach AllActors(Class'MCActor', FindActor)
+			{
+				if ( vsize(Location - FindActor.Location) < 128 )
+				{
+					FindActor.Destroy();
+					break;
+				}
+			}
+			PathNode.APValue = 1;
+			bSpellTileMode = false;
+			bDissolveElement = false;
+		}
+	}else
+	{
+		`log("Nothing to dissolve");
+	}
+}
+
+/*
+// Turn of All Spells
+*/
+simulated function TurnOfSpellBools()
+{
+	bFireFountain = false;
+	bWallOfIce = false;
+	bGlassFloor = false;
+	bStoneWall = false;
+	// reset damage
+	damage = 0;
+}
+
+/*
+// In PC.PlayerTick we show what Tiles we have active Spell
+*/
+simulated function ShowDisplayColor()
+{
+	local LinearColor MatColor;
+	if (bSpellTileMode)
+	{
+		// FireFountain Spell
+		if (bFireFountain)
 		{
-			`log(Other @ "Client" @ "damage" @damage);
+			MatInst = new class'MaterialInstanceConstant';
+			MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
+			MyKActorComponent.SetMaterial(1, MatInst);
+
+			MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
+			MatInst.SetVectorParameterValue('SetColor', MatColor);
+			MatInst.SetTextureParameterValue('SetNumber', Tex2DNoBorder);
+		}
+		// Wall Of Ice Spell
+		else if(bWallOfIce)
+		{
+
+		}
+		// Other Spell
+		else if(bGlassFloor)
+		{
+			MatInst = new class'MaterialInstanceConstant';
+			MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
+			MyKActorComponent.SetMaterial(1, MatInst);
+
+			MatColor = MakeLinearColor(0.0f, 0.0f, 1.0f, 1.0f);
+			MatInst.SetVectorParameterValue('SetColor', MatColor);
+			MatInst.SetTextureParameterValue('SetNumber', Tex2DNoBorder);
+		}
+		// Other Spell
+		else if(bStoneWall)
+		{
+
 		}
 	}
+}
 
-	
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Touch Events inside MCTile
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+// When we Touch this Tile we do damage if Spells are active
+*/
+simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
+{
+	// If We got a spell on, then go in a do damage
+	if (bSpellTileMode)
+	{
+		if (Role == ROLE_Authority)
+		{
+			// Do Damage
+			TileTouchDamage(Other);
+		}
+	}
 	super.Touch(Other,OtherComp,HitLocation,HitNormal);
 }
 
+simulated function TileTouchDamage(Actor Other)
+{
+	local MCPawn MCPlayer;
+	local vector empty;
+	MCPlayer = MCPawn(Other);
+
+	if (bFireFountain)
+	{
+		MCPlayer.TakeDamage(damage, none, MCPlayer.Location, empty, class'DamageType');
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Other functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// @NOTUSING
 simulated event UnTouch (Actor Other)
 {
-	ClearTimer('SetBlockedONTimer');
+//	ClearTimer('SetBlockedONTimer');
 	//PathNode.bBlocked = false;
 	super.UnTouch(Other);
 }
 
-
-
-
-
-
-
+// @NOTUSING
 simulated function SetBlockedONTimer()
 {
 	PathNode.bBlocked = true;
@@ -203,7 +427,8 @@ simulated function SetBlockedONTimer()
 }
 
 /*
-Function that changes the alpha to go from 0 to 1 in 1 second.
+// Function that changes the alpha to go from 0 to 1 in 1 second.
+// @NOTUSING
 */
 simulated function ChangeAlphaUp()
 {
@@ -221,37 +446,6 @@ simulated function ChangeAlphaUp()
 		{
 			ClearTimer('ChangeAlphaUp');
 		}
-}
-
-
-
-simulated function TileTurnGreen()
-{
-	local LinearColor MatColor;
-
-	MatInst = new class'MaterialInstanceConstant';
-	MatInst.SetParent(MyKActorComponent.GetMaterial(1));
-	MyKActorComponent.SetMaterial(1, MatInst);
-
-	MatColor = MakeLinearColor(0.0f, 1.0f, 0.0f, 1.0f);
-	MatInst.SetVectorParameterValue('SetColor', MatColor);
-}
-
-event Bump( Actor Other, PrimitiveComponent OtherComp, Vector HitNormal )
-{
-	`log( "numpzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
-	/*
-	if(Pawn(Other) != None)
-	{
-		MyKActorComponent.SetMaterial(1,TurnGreen);
-		`log( "numpzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
-	}
-	else
-	{
-		MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);
-		`log( "ELSE!!!!!!!!!!!!!!!!!!!!!!!");
-	}
-	*/
 }
 
 /*
@@ -280,7 +474,6 @@ function SetMaterialSwitch()
 	}
 }
 */
-
 
 defaultproperties
 {
@@ -318,6 +511,6 @@ defaultproperties
 	//bCollideWorld=False //false is for nonmoving objects
 	//bWakeOnLevelStart=false
 
-	NoBorderBlack = Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG'
-	BorderWhite = Texture2D'mystraschampionsettings.Texture.WhiteCorner'
+	Tex2DNoBorder = Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG'
+	Tex2DBorderWhite = Texture2D'mystraschampionsettings.Texture.WhiteCorner'
 }

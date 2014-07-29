@@ -1,21 +1,25 @@
+//----------------------------------------------------------------------------
+// MCGameReplication
+//
+// Replicated GameInfo for Players, Adds Players to The Main PRI array so
+// we can find everyone in the game
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCGameReplication extends GameReplicationInfo;
 
+// GameRound in game
 var int GameRound;
+// Camera Settings
 var MCCameraProperties CameraProperties;
-
 /** Array of all PlayerReplicationInfos, maintained on both server and clients (PRIs are always relevant) */
-var		array<MCPlayerReplication> MCPRIArray;
-
+var	array<MCPlayerReplication> MCPRIArray;
 /** This list mirrors the GameInfo's list of inactive PRI objects */
-var		array<MCPlayerReplication> MCInactivePRIArray;
+var	array<MCPlayerReplication> MCInactivePRIArray;
 
 // Replication block
 replication
 {
-	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
-//	if (bNetDirty && bNetOwner)
-//		 GameRound;
-
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
 		 GameRound;
@@ -41,17 +45,19 @@ simulated function AddPRIToMC()
 
 	if (PRIArray.length >= 2)
 	{
-		`log("--------------------------------------------------------------------------------------------------");
+	//	`log("--------------------------------------------------------------------------------------------------");
 		for(i = 0; i < PRIArray.length ; i++)
 		{
 			MCPRIArray.InsertItem(i,PRIArray[i]);
-			`log("Added to " @ MCPRIArray[i]);
+	//		`log("Added to " @ MCPRIArray[i]);
 		}
-		`log("--------------------------------------------------------------------------------------------------");
+	//	`log("--------------------------------------------------------------------------------------------------");
 		ClearTimer('AddPRIToMC');
 	}
 }
-
+/*
+// 
+*/
 simulated function RemovePRI(PlayerReplicationInfo PRI)
 {
 	local int i;
@@ -72,22 +78,22 @@ simulated function RemovePRI(PlayerReplicationInfo PRI)
 	super.RemovePRI(PRI);
 }
 
-
+/*
+// Turn Camera Mode off for all Clients
+// @Client
+*/
 simulated function SetMatchModeOff()
 {
-	`log("Not match mode");
 	CameraProperties.bSetToMatch = false;
 }
 
+/*
+// Turn Camera Mode on for all Clients
+// @Client
+*/
 simulated function SetMatchModeOn()
 {
-	`log("match mode");
 	CameraProperties.bSetToMatch = true;
-}
-
-simulated function FindBoth()
-{
-	`log("FindONBOTH!!!!!!!!!!!!");
 }
 
 defaultproperties
