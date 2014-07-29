@@ -1,3 +1,12 @@
+//----------------------------------------------------------------------------
+// GFxBattleUI
+//
+// Main Battle HUD file, will load character information, load replication
+// information, spawn spell buttons & change items, health etc
+// @TODO P01area etc make a struct
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class GFxBattleUI extends GFxMoviePlayer;
 
 var GFxObject RootMC;
@@ -49,6 +58,7 @@ var GFxObject GameRoundMC;	// Round MovieClip
 var GFxObject GameRoundTF; 	// roundINS
 var GFxObject BackgroundMC;	// Option Background
 
+var GFxObject GameWinMessageMC;
 
 
 // Widgets for spells
@@ -139,30 +149,36 @@ function getActionscript(int find)
 }
 
 
-
-function SaveCodeAS()
+/*
+//
+*/
+function ShowWinMessage(string PlayerName)
 {
-	
-//	RootMC.SetInt("LightUPNumber", setTheNumber);
-//	ActionScriptVoid("root.LightUpIndicator");
-
-
-
-
-
-	// first page
-//	TitleMC = RootMC.GetObject("test0101").GetObject("Title");
-//	TitleMC.SetText(shopText[0]);
-	// second page
-	//RootMC.GotoAndStop("TimeShopText");
-	//TitleMC = RootMC.GetObject("text_mc02").GetObject("TextFieldTitle");    
-	//TitleMC.SetText(shopText[0]);
+	`log("I got a message" @ PlayerName);
+	if (GameWinMessageMC != none)
+	{
+		GameWinMessageMC.SetString("text", PlayerName @ "Wins!");
+	}
 }
 
+/*
+//
+*/
+function ShowLoseMessage(string PlayerName)
+{
+	if (GameWinMessageMC != none)
+	{
+		GameWinMessageMC.SetString("text", PlayerName @ "Lose!");
+	}
+}
 
-
-
-
+/*
+//
+*/
+function ConfigMessages()
+{
+	GameWinMessageMC = RootMC.GetObject("winmessageIns");
+}
 
 
 
@@ -182,6 +198,7 @@ function ConfigHUD()
 	ConfigAPButton();
 	ConfigSpells();
 	ConfigOptionButton();
+	ConfigMessages();
 
 	bInitialized = true;
 }
@@ -198,8 +215,9 @@ function ConfigPlayerStats()
 	P01areaMC = RootMC.GetObject("player01areaINS");
 	if (P01areaMC != none)
 	{
-		// Name
+		// Name @NAME
 		P01NameTF = P01areaMC.GetObject("playernameINS");
+	//	P01NameTF.SetVisible(false);
 		// Health Text
 		P01HPTextTF = P01areaMC.GetObject("healthbartextINS");
 		// AP Area MovieClip
@@ -223,8 +241,9 @@ function ConfigPlayerStats()
 	P02areaMC = RootMC.GetObject("player02areaINS");
 	if (P02areaMC != none)
 	{
-		// Name
+		// Name @NAME
 		P02NameTF = P02areaMC.GetObject("playernameINS");
+	//	P02NameTF.SetVisible(false);
 		// Health Text
 		P02HPTextTF = P02areaMC.GetObject("healthbartextINS");
 		// AP Area MovieClip
@@ -303,6 +322,7 @@ function ConfigOptionButton()
 
 function SendToUC(string iconimagename)
 {
+	/*
 	`log("-------------------------------------------");
 	`log("-------------------------------------------");
 	`log("-------------------------------------------");
@@ -310,6 +330,7 @@ function SendToUC(string iconimagename)
 	`log("-------------------------------------------");
 	`log("-------------------------------------------");
 	`log("-------------------------------------------");
+	*/
 }
 
 /*
@@ -318,7 +339,7 @@ function SendToUC(string iconimagename)
 */
 function ConfigSpells()
 {
-	local MCPawn MyPawn;
+//	local MCPawn MyPawn;
 	local ASDisplayInfo ASDisplayInfo;
 	local MCSpell SpellName;
 	local int SpellIndex;
@@ -326,26 +347,70 @@ function ConfigSpells()
 	local GFxObject AbilityMC;
 	local GFxObject InformationMC;
 	local GFxSetIconObject IconMC;
+	local array <int> CheckSpellAddedNr;
+	local int i;
+	local bool bSameSpell;
+	local MCPlayerController MyPC;
+	local int HowManySameSpell;
 
-	MyPawn = MCPawn(GetPC().Pawn);
+//	MyPawn = MCPawn(GetPC().Pawn);
+	MyPC = MCPlayerController(GetPC());
 	SpellIndex = 0;
 
 	// Check all the Spells the Pawn has
-	foreach MyPawn.MyArchetypeSpells(SpellName)
+	foreach MyPC.MyArchetypeSpells(SpellName)
 	{
+		// Add to spellArray to check if we should spawn this spell or not
+		CheckSpellAddedNr.AddItem(SpellName.spellNumber);
+		// Set Test bool at start false;
+		bSameSpell = false;
+
+		// Search if We already have a spell like that
+		for (i = SpellIndex;i < CheckSpellAddedNr.length ; i++)
+		{
+			// if we have more than 1 spell do this check
+			if (CheckSpellAddedNr.length > 1)
+			{
+				// Check if previous spell has the same ID as this one
+				if(SpellName.spellNumber == CheckSpellAddedNr[i-1])
+				{
+					bSameSpell = true;
+					// Add so that if it's the same spell, we remove that SpellIndex when placing buttons
+					HowManySameSpell++;
+				}
+			}
+		}
+
+		i = 0;
+
 		// Get the Object Button 
 		AbilityMC = RootMC.GetObject("HeroSpellAreaIns").AttachMovie("SpellField", "herospell"$SpellIndex);
-	//	AbilityMC = RootMC.AttachMovie("SpellField", "herospell"$SpellIndex);
 		ThisClikButton = GFxClikWidget(AbilityMC.GetObject("SpellButtonIns", class'GFxClikWidget'));
 		if (ThisClikButton != none)		
 		{
 			// Adds click buttons, mouse over & mouse out
-			ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpellButton);
-			ThisClikButton.AddEventListener('CLIK_rollOver', EnableMouseCapture);
-			ThisClikButton.AddEventListener('CLIK_rollOut', DisableMouseCapture);
+			if (SpellName.bIsEnabled)
+			{
+				ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpellButton);
+				ThisClikButton.AddEventListener('CLIK_rollOver', EnableMouseCapture);
+				ThisClikButton.AddEventListener('CLIK_rollOut', DisableMouseCapture);
+			}else
+			{
+				// If we can't use button set it disabled.
+				ThisClikButton.AddEventListener('CLIK_rollOver', EnableMouseCapture);
+				ThisClikButton.AddEventListener('CLIK_rollOut', DisableMouseCapture);
+				ThisClikButton.SetBool("enabled", false);	// Turns it off but removes all other things
+			//	ThisClikButton.GotoAndStop("disabled");
+			}
 
 			// Add a number for the button, so we can find out what button we are clicking in PC or for Information Field in mouse over/out
 			ThisClikButton.SetInt("SpellIndex", SpellIndex);
+
+			// Hide Button if same spell
+			if (bSameSpell)
+			{
+				ThisClikButton.SetVisible(false);
+			}
 
 			// Set the icon image
 			if(AbilityMC != none)
@@ -353,6 +418,12 @@ function ConfigSpells()
 				IconMC = GFxSetIconObject(AbilityMC.GetObject("IconImageIns",  class'GFxSetIconObject'));
 				// Set Icon in AS to something new
 				IconMC.ChangeIconImage(SpellName.spellTextureName);
+
+				// Hide Icon if same spell
+				if (bSameSpell)
+				{
+					IconMC.SetVisible(false);
+				}
 			}
 		}
 
@@ -362,14 +433,22 @@ function ConfigSpells()
 		{
 			// Set information for Information Field, Spell Name, AP Cost & Description
 			InformationMC.SetVisible(false);
-			InformationMC.GetObject("SpellNameIns").SetString("text", SpellName.spellName);
+			InformationMC.GetObject("SpellNameIns").SetString("text", SpellName.spellName[SpellName.spellNumber]);
 			InformationMC.GetObject("APNameIns").SetInt("text", SpellName.AP);
-			InformationMC.GetObject("DescNameIns").SetString("text", SpellName.Description);
+			InformationMC.GetObject("DescNameIns").SetString("text", SpellName.Description[SpellName.spellNumber]);
+			/*
+			`log("------------------------------------------------");
+			`log(SpellIndex @ "- spellNumber =" @ SpellName.spellNumber);
+			`log(SpellIndex @ "- SpellName   =" @ SpellName.spellName[SpellName.spellNumber]);
+			`log(SpellIndex @ "- APNameIns   =" @ SpellName.AP);
+			`log(SpellIndex @ "- DescNameIns =" @ SpellName.Description[SpellName.spellNumber]);
+			`log("------------------------------------------------");
+			*/
 		}
 
 		// Set button placement
 		ASDisplayInfo = AbilityMC.GetDisplayInfo();
-		ASDisplayInfo.x = 0 + ((100 + 10) * SpellIndex);
+		ASDisplayInfo.x = 0 + ((100 + 10) * (SpellIndex - HowManySameSpell) );	// Sets
 		ASDisplayInfo.y = 0;
 		AbilityMC.SetDisplayInfo(ASDisplayInfo);
 
@@ -381,6 +460,8 @@ function ConfigSpells()
 
 		// Adds +1 to ForEach Index
 		SpellIndex++;
+		
+
 	}
 }
 
@@ -459,7 +540,7 @@ function APResetButton(GFxClikWidget.EventData ev)
 		// Update Replication
 		MCPlayerReplication(PC.PlayerReplicationInfo).APf = MyPawn.APf;
 		// Can we use FindPathsWeCanGoTo() function, yes we can to find paths
-		PC.bCanTurnBlue = true;
+		PC.bIsTileActive = true;
 		PC.FindPathsWeCanGoTo();
 		// Turn off Movement so we don't start walking
 		PC.bCanStartMoving = false;
@@ -471,7 +552,7 @@ function APResetButton(GFxClikWidget.EventData ev)
 		MyPawn.APf = 0;
 		PC.SetWhoseTurn(1);
 		MCPlayerReplication(PC.PlayerReplicationInfo).APf = MyPawn.APf;
-		PC.bCanTurnBlue = true;
+		PC.bIsTileActive = true;
 		PC.FindPathsWeCanGoTo();
 		PC.bCanStartMoving = false;
 		PC.ScriptedMoveTarget = none;
@@ -549,6 +630,7 @@ simulated function ReturnToTownButton(GFxClikWidget.EventData ev)
 */
 function Tick(float DeltaTime)
 {
+//	ConfigPlayerStats();
 	// AP Button
 	SetAPButtonPosition( getWhoseTurn() );
 	// Blue or Red Indicator
@@ -647,30 +729,33 @@ function SetAPButtonPosition(int WhatID)
 	// Get Pawn
 	MyPawn = MCPawn(GetPC().Pawn);
 
-	ResetAPMC = RootMC.GetObject("resetapINS");
-	ASDisplayInfo = ResetAPMC.GetDisplayInfo();
+	if (MyPawn != none)
+	{
+		ResetAPMC = RootMC.GetObject("resetapINS");
+		ASDisplayInfo = ResetAPMC.GetDisplayInfo();
 
-	if (WhatID == MyPawn.PlayerUniqueID)
-	{
-		// If Player 1
-		if (WhatID == 1)
+		if (WhatID == MyPawn.PlayerUniqueID)
 		{
-			// Set Position
-			ASDisplayInfo.x = 5;
-			ASDisplayInfo.y = 180;
-		}
-		// If Player 2
-		if (WhatID == 2)
+			// If Player 1
+			if (WhatID == 1)
+			{
+				// Set Position
+				ASDisplayInfo.x = 5;
+				ASDisplayInfo.y = 180;
+			}
+			// If Player 2
+			if (WhatID == 2)
+			{
+				// Set Position
+				ASDisplayInfo.x = 1158;
+				ASDisplayInfo.y = 180;
+			}
+			ResetAPMC.SetDisplayInfo(ASDisplayInfo);
+			ResetAPMC.SetVisible(true);
+		}else
 		{
-			// Set Position
-			ASDisplayInfo.x = 1158;
-			ASDisplayInfo.y = 180;
+			ResetAPMC.SetVisible(false);
 		}
-		ResetAPMC.SetDisplayInfo(ASDisplayInfo);
-		ResetAPMC.SetVisible(true);
-	}else
-	{
-		ResetAPMC.SetVisible(false);
 	}
 }
 
@@ -714,7 +799,7 @@ function GetPlayerInformation()
 		// Player 1 Stats
 		// if we have the same id then show our stuff
 		// otherwise hide it for other player.
-		if (P01areaMC != none && MCGRep.MCPRIArray[i].PlayerUniqueID == 1)
+		if (P01areaMC != none && MCGRep.MCPRIArray[i].PlayerUniqueID == 1)	// Both Players can Enter here
 		{
 			// Player 01 Name
 			if (P01NameTF != none)
@@ -733,17 +818,23 @@ function GetPlayerInformation()
 			if (P01APareaMC != none)
 			{
 				// AP Number
-				if (P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+			//	if (P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+				if (P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCP.PlayerUniqueID)
 				{
-					P01APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
-				}else
+				//	`log("PlayerUniqueID is =" @ MCGRep.MCPRIArray[i].PlayerUniqueID @ "PC ID=" @ MCPC.PlayerUniqueID);
+				//	P01APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
+					P01APNumbTF.SetString("text", string(int(MCGRep.MCPRIArray[i].APf)));
+
+					
+				}else if(P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID != MCPC.PlayerUniqueID)
 				{
+				//	`log("Other Player has=" @ MCGRep.MCPRIArray[i].APf);
 					P01APNumbTF.SetVisible(false);
 				}
 				// AP Text
 				if (P01APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
 				{
-					//P01APTextTF.SetString("text", "AP");
+					P01APTextTF.SetString("text", "AP");
 				}else
 				{
 					P01APTextTF.SetString("text", "");
@@ -773,17 +864,20 @@ function GetPlayerInformation()
 			if (P02APareaMC != none)
 			{
 				// AP Number
-				if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+			//	if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+				if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCP.PlayerUniqueID)
 				{
-					P02APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
-				}else
+				//	P02APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
+					P02APNumbTF.SetString("text", string(int(MCGRep.MCPRIArray[i].APf)));
+				}else if(P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID != MCPC.PlayerUniqueID)
 				{
+				//	`log("Other Player has=" @ MCGRep.MCPRIArray[i].APf);
 					P02APNumbTF.SetVisible(false);
 				}
 				// AP Text
 				if (P02APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
 				{
-					//P02APTextTF.SetString("text", "AP");
+					P02APTextTF.SetString("text", "AP");
 				}else
 				{
 					P02APTextTF.SetString("text", "");

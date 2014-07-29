@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------
+// MCCustomButtons
+//
+// Does the holding down a button event for zooming, rotating etc
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCCustomButtons extends MouseInterfacePlayerInput within MCPlayerController
     config(Input);
 
@@ -9,6 +16,10 @@ var const MCCameraProperties CameraProperties;
 // Rotating buttons
 var bool bCanRotateLeft;
 var bool bCanRotateRight;
+
+
+// test
+var float velRotation;
 
 function MyButtonActions(float DeltaTime)
 {
@@ -60,6 +71,21 @@ function MyButtonActions(float DeltaTime)
 
 event PlayerInput( float DeltaTime )
 {
+    local float deltaRotation;
+    local Rotator newRotation;
+
+    if (bMyButton && MCPlayer != none && MCPlayer.MyDecal != none)
+    {
+        deltaRotation = velRotation * DeltaTime; 
+
+        newRotation = MCPlayer.MyDecal.Rotation;
+
+        newRotation.Yaw  += deltaRotation;  // round
+
+        MCPlayer.MyDecal.SetRotation(newRotation);
+    }
+
+
     Super.PlayerInput(DeltaTime);
    
     // handle my custom button
@@ -95,12 +121,23 @@ function RotateCamera()
 }
 
 
+
+simulated event Tick( float DeltaTime )
+{
+
+
+    Super.Tick(DeltaTime);
+}
+
 /*
 // Rotate left functions
 */
 function MCRotationLeft()
 {
-    CameraProperties.Rotation.Roll += CameraProperties.RoationSpeed;
+    velRotation = 0;
+    velRotation = -5000;
+
+//    CameraProperties.Rotation.Roll += CameraProperties.RoationSpeed;
 }
 exec function MCRotateLeftON(){
     bMyButton = true;
@@ -116,7 +153,9 @@ exec function MCRotateLeftOff(){
 
 function MCRotationRight()
 {
-    CameraProperties.Rotation.Roll -= CameraProperties.RoationSpeed;
+    velRotation = 0;
+    velRotation = 5000;
+//    CameraProperties.Rotation.Roll -= CameraProperties.RoationSpeed;
 }
 exec function MCRotateRightON(){
     bMyButton = true;

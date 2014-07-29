@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------
+// MCPathNode
+//
+// Used for Pathfinding with out own settings
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCPathNode extends PathNode
 	hidecategories(VehicleUsage, Display, Attachment, Collision, Physics, Advanced, Debug, Mobile);
 
@@ -7,10 +14,6 @@ var MCTile Tile;
 // Replication block
 replication
 {
-	// Replicate only if the values are dirty, this replication info is owned by the player and from server to client
-//	if (bNetDirty && bNetOwner)
-//		 ;
-
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
 		Tile, APValue;
@@ -19,24 +22,21 @@ replication
 simulated function PostBeginPlay()
 {
 	super.PostBeginPlay();
-	///
 	
+	// Start by setting the MCTile in here
 	foreach AllActors(Class'MCTile', Tile)
 	{
 		if ( vsize(Location - Tile.Location) < 70 )
-//		if (Location.X == Tile.Location.X && Location.Y == Tile.Location.Y)
 		{
-			//`log("MCTile" @ Tile @ "at" @ Location);
 			break;
 		}
 	}
 	APValueSetting();
 }
 
-simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
-{
-	`log("crap");
-}
+/*
+// Set specific AP values for each Pathnode, change if we have a special event on this Pathnode
+*/
 simulated function APValueSetting()
 {
 	switch (APValue)
@@ -56,12 +56,6 @@ simulated function APValueSetting()
 		default:
 			
 	}
-}
-
-simulated function bool TurnOfPathNode()
-{
-	
-	return true;
 }
 
 /*
@@ -91,8 +85,6 @@ defaultproperties
 	var bool bBlocked;
 	};
 */
-
-
 	Role=Role_Authority
 	RemoteRole=ROLE_SimulatedProxy
 }

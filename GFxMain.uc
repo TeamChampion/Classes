@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------
+// GFxMain
+//
+// Main File that contains most functions for all other GFx classes
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class GFxMain extends GFxMoviePlayer;
 
 // Just check if it has started
@@ -7,7 +14,6 @@ var MCPawn MCP;
 var GFxObject RootMC;
 var() MCShop WeaponShop;
 
-
 function Init(optional LocalPlayer LocalPlayer)
 {
 	// Initialize the ScaleForm movie
@@ -16,7 +22,6 @@ function Init(optional LocalPlayer LocalPlayer)
     Advance(0.f);
 
  	RootMC = GetVariableObject("root");
-	`log("------------------------------------ Start Movie");
 }
 
 function bool Start(optional bool StartPaused = false)
@@ -24,9 +29,6 @@ function bool Start(optional bool StartPaused = false)
     super.Start();
     Advance(0.f);
 
-    `log("-----------------------------------------------------------------------");
-    `log("---------------------------------main----------------------------------");
-    `log("-----------------------------------------------------------------------");
 	RootMC = GetVariableObject("root");
 	return true;
 }
@@ -34,109 +36,123 @@ function bool Start(optional bool StartPaused = false)
 function thingsThatWork()
 {
 	// Will set the AS var to UC var
-	RootMC.SetString("sNameAS",  MCP.OwnedWeapons[0].itemName); 
-	RootMC.SetInt("sCostAS",  MCP.OwnedWeapons[0].Prize); 
-	RootMC.SetString("sDescAS",  MCP.OwnedWeapons[0].Description); 
+	RootMC.SetString("sNameAS",  MCP.OwnedWeapons[0].sItemName); 
+	RootMC.SetInt("sCostAS",  MCP.OwnedWeapons[0].Cost); 
+	RootMC.SetString("sDescAS",  MCP.OwnedWeapons[0].sDescription); 
 }
 
 /**
  * Sets the Inventory for the pawn
  */
-function SetUpInventory(MCPawn MyMystrasPawn)
+function SetUpInventory(array<MCItem> MyThings, string FlashArrayName)	// old
 {
 	local byte i;
 	local GFxObject DataProvider;
 	local GFxObject TempObj;
-	local array<MCWeapon> OwnedWeapons;
-
-	MCP = MyMystrasPawn;
-	// Characters Weapons
-	OwnedWeapons = MCP.OwnedWeapons;
-
 
 	DataProvider = CreateArray();
-	for (i = 0; i < OwnedWeapons.Length; i++)
+	for (i = 0; i < MyThings.Length; i++)
 	{       
 		// Creates and returns a new GFxObject of a specific ActionScript class.
+		// We send The ID of the item so we know where to set it
 		TempObj = CreateObject("Object");
-		TempObj.SetString("ItemName", OwnedWeapons[i].itemName);
-		TempObj.SetInt("Prize", OwnedWeapons[i].Prize);
-		TempObj.SetString("Description", OwnedWeapons[i].Description);
+		TempObj.SetInt("UCID", MyThings[i].ID);
 		DataProvider.SetElementObject(i, TempObj);
 	}
 
-	RootMC.SetObject("inventoryUC", DataProvider);     
-	ShowInventory();
+	RootMC.SetObject(FlashArrayName, DataProvider);     
+	ShowInventory(FlashArrayName);
+}
 
-	// Log debug UDK
-	for (i = 0; i < OwnedWeapons.Length; i++)
-	{
-		`log("------------- itemName " @ OwnedWeapons[i].itemName @ "    Prize " @ OwnedWeapons[i].Prize @ "    Description " @ OwnedWeapons[i].Description);
+/*
+// Sends the Config File int array to Flash
+*/
+function SetUpInventoryINTArray(array<int> MyThings, string FlashArrayName)
+{
+	local byte i;
+	local GFxObject DataProvider;
+	local GFxObject TempObj;
+
+	DataProvider = CreateArray();
+	for (i = 0; i < MyThings.Length; i++)
+	{       
+		// Creates and returns a new GFxObject of a specific ActionScript class.
+		// We send The ID of the item so we know where to set it
+		TempObj = CreateObject("Object");
+		TempObj.SetInt("UCID", MyThings[i]);
+		DataProvider.SetElementObject(i, TempObj);
 	}
+
+	RootMC.SetObject(FlashArrayName, DataProvider);     
+	ShowInventory(FlashArrayName);
 }
 
 /**
  * Sets The Weapon Shop
  */
-function SetUpWeaponShop(MCShop WShop)
+function SetUpWeaponShop(MCShop WShop, array<MCItem> MyThings, string FlashArrayName)
 {
 	local byte i;
 	local GFxObject DataProvider;
 	local GFxObject TempObj;
 	
 	// Links shop from GameInfo
-	WeaponShop = WShop;
+//	WeaponShop = WShop;
 
 	DataProvider = CreateArray();
-	for (i = 0; i < WeaponShop.AllWeapons.Length; i++)
+	for (i = 0; i < MyThings.Length; i++)
 	{       
 		// Creates and returns a new GFxObject of a specific ActionScript class.
 		TempObj = CreateObject("Object");
-		TempObj.SetString("ItemName", WeaponShop.AllWeapons[i].itemName);
-		TempObj.SetInt("Prize", WeaponShop.AllWeapons[i].Prize);
-		TempObj.SetString("Description", WeaponShop.AllWeapons[i].Description);
+		TempObj.SetString("UCItemName", MyThings[i].sItemName);
+		TempObj.SetInt("UCCost", MyThings[i].Cost);
+		TempObj.SetString("UCDescription", MyThings[i].sDescription);
+		TempObj.SetInt("UCID", MyThings[i].ID);
 		DataProvider.SetElementObject(i, TempObj);
 	}
 
 	// sets to flash array
-	RootMC.SetObject("weaponShopUC", DataProvider);     
-	ShowWeaponShop();
+	RootMC.SetObject(FlashArrayName, DataProvider);     
+	ShowWeaponShop(FlashArrayName);
 
-	`log("------------------------------WeaponShop Inventory");
+//	`log("------------------------------WeaponShop Inventory");
 	// Log debug UDK
-	for (i = 0; i < WeaponShop.AllWeapons.Length; i++)
+	/*
+	for (i = 0; i < WShop.AllWeapons.Length; i++)
 	{
-		`log("------------- itemName " @ WeaponShop.AllWeapons[i].itemName @ "    Prize " @ WeaponShop.AllWeapons[i].Prize @ "    Description " @ WeaponShop.AllWeapons[i].Description);
+		`log("------------- itemName " @ WShop.AllWeapons[i].sItemName @ "    Prize " @ WShop.AllWeapons[i].Cost @ "    Description " @ WShop.AllWeapons[i].sDescription);
 	}
-
+	*/
 }
 
 function TestFlash()
 {
-    `log("---------------------I Can read you");
-    `log("---------------------I Can read you");
-    `log("---------------------I Can read you");
+//	`log("---------------------Searching");
 }
 
-function ShowInventory()
+function ShowInventory(string SetInvItem)
 {
-	ActionScriptVoid("showInventory");
-	`log("------------------------------------ Inventory Sent");
+	ActionScriptVoid("root.Set"$SetInvItem);
+//	ActionScriptVoid("root.showInventory");
+
+//	`log("------------------------------------ Inventory Sent");
 }
 
-function ShowWeaponShop()
+function ShowWeaponShop(string SetShop)
 {
 	// uses this flash function
-	ActionScriptVoid("sd.showWeaponShop");
-	`log("------------------------------------ Weaponshop Sent");
+	// Set Shop name
+	ActionScriptVoid("root.Set"$SetShop);
+//	ActionScriptVoid("root.showWeaponShop");
+//	`log("------------------------------------ Weaponshop Sent");
 }
+
+
 
 
 function InventoryItemNotAdded()
 {
-
-	`log("------------------------------------ InventoryItem not added");
-
+//	`log("------------------------------------ InventoryItem not added");
 }
 
 DefaultProperties

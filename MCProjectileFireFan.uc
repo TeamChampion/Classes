@@ -1,16 +1,19 @@
+//----------------------------------------------------------------------------
+// MCProjectileFireFan
+//
+// Fire Fan Projectile base settings
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCProjectileFireFan extends MCProjectile;
-// Fire Fan (burning hands)	: 1 SlotDamage Triangle from Fire Source
 
 Simulated function PostBeginPlay()
 {
-	`log( "Fire Fan" );
 	super.PostBeginPlay();
 }
 
-
 defaultproperties
 {
-
 // ------------------------------------------------------------------------------------------------------------------------ //
 // Starting Point																											//
 // ------------------------------------------------------------------------------------------------------------------------ //

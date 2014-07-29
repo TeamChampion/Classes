@@ -1,13 +1,23 @@
+//----------------------------------------------------------------------------
+// MCCamera
+//
+// Camera We use for battle & for menues
+//
+// Gustav Knutsson 2014-06-18
+//----------------------------------------------------------------------------
 class MCCamera extends Camera;
 
 // Reference to the camera properties
 var const MCCameraProperties CameraProperties;
 // Desired camera location
 var ProtectedWrite Vector DesiredCameraLocation;
-// If true, then the camera should track the hero pawn until the player attempts to adjust the camera location
-var bool IsTrackingHeroPawn;
-
+// Moving Camera with mouse cursor
 var vector CameraMoveDirection;
+
+simulated event PostBeginPlay()
+{
+    super.PostBeginPlay();
+}
 
 
 /*
@@ -109,7 +119,6 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 			CameraMoveDirection = Normal(CameraMoveDirection);
 		}
 
-
 		// Turn off hero tracking as soon as the player attempts to adjust the camera
 		// IsZero, if that vector is not 0 then camera won't track
 		if (!IsZero(CameraMoveDirection) && CameraProperties.IsTrackingHeroPawn)
@@ -120,10 +129,22 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 		// Tracking Hero Pawn
 		if (CameraProperties.IsTrackingHeroPawn)
 		{
+			
 			MCPC = MCPlayerController(PCOwner);
 			if (MCPC != None && MCPC.Pawn != None)
 			{
-				DesiredCameraLocation = MCPC.Pawn.Location;
+			//	DesiredCameraLocation = MCPC.Pawn.Location;
+				if (MCPC.MCPlayer != none)
+				{
+					// If we have Decal follow that, otherwise Player
+					if (MCPC.MCPlayer.MyDecal != none)
+					{
+						DesiredCameraLocation = MCPC.MCPlayer.MyDecal.Location;
+					}else
+					{
+						DesiredCameraLocation = MCPC.MCPlayer.Location;
+					}
+				}
 			}
 		}
 		// Tracking Enemy Pawn
@@ -154,23 +175,77 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 		}
 
 		// Find the point on the camera movement plane where the camera should be. This ensures that the camera stays at a constant height
-		class'UDKMOBAObject'.static.LinePlaneIntersection(DesiredCameraLocation, DesiredCameraLocation - Vector(CameraProperties.Rotation) * 16384.f, CameraProperties.MovementPlane, CameraProperties.MovementPlaneNormal, CameraIntersectionPoint);
+		LinePlaneIntersection(DesiredCameraLocation, DesiredCameraLocation - Vector(CameraProperties.Rotation) * 16384.f, CameraProperties.MovementPlane, CameraProperties.MovementPlaneNormal, CameraIntersectionPoint);
 
 		// Linearly interpolate to the desired camera location
-		OutVT.POV.Location = VLerp(OutVT.POV.Location, CameraIntersectionPoint, CameraProperties.BlendSpeed * DeltaTime);
+		OutVT.POV.Location = VLerp(OutVT.POV.Location, CameraIntersectionPoint, (CameraProperties.BlendSpeed) * DeltaTime);
+
+
+		if (MCPC != None && MCPC.Pawn != None)
+		{
+		//	DesiredCameraLocation = MCPC.Pawn.Location;
+			if (MCPC.MCPlayer != none)
+			{
+				MCPC = MCPlayerController(PCOwner);
+				// Set the camera rotation
+				if (MCPC.MCPlayer.MyDecal != none)
+				{
+					OutVT.POV.Rotation = RLerp(OutVT.POV.Rotation, (CameraProperties.Rotation + MCPC.MCPlayer.MyDecal.Rotation) , CameraProperties.BlendSpeed * DeltaTime, true);
+				}else
+				{
+					OutVT.POV.Rotation = RLerp(OutVT.POV.Rotation, (CameraProperties.Rotation) , CameraProperties.BlendSpeed * DeltaTime, true);
+				}
+			}
+		}else
+		{
+			OutVT.POV.Rotation = RLerp(OutVT.POV.Rotation, (CameraProperties.Rotation) , CameraProperties.BlendSpeed * DeltaTime, true);
+		}
+	}else if (PCOwner != None && !CameraProperties.bSetToMatch)
+	{
+		`log("NO PAWM NOT bSetToMatch, NO PAWM NOT bSetToMatch, NO PAWM NOT bSetToMatch, NO PAWM NOT bSetToMatch, ");
 	}
 
-	// Set the camera rotation
-	OutVT.POV.Rotation = CameraProperties.Rotation;
 	
 }
 
+/**
+ * Calculates the intersection point between a line and a plane.
+ *
+ * @param		LineA					Point A representing the start or end of the line
+ * @param		LineB					Point B representing the start or end of the line
+ * @param		PlanePoint				Point somewhere on the plane
+ * @param		PlaneNormal				Normal of the plane
+ * @param		IntersectionPoint		Intersection point where the line intersects with the plane
+ * @return								Returns true if there was an interesection between the line and the plane
+ * @network								All
+ */
+function bool LinePlaneIntersection(Vector LineA, Vector LineB, Vector PlanePoint, Vector PlaneNormal, out Vector IntersectionPoint)
+{
+	local Vector U, W;
+	local float D, N, sI;
 
+	U = LineB - LineA;
+	W = LineA - PlanePoint;
 
+    D = PlaneNormal dot U;
+    N = (PlaneNormal dot W) * -1.f;
 
+    if (Abs(D) < 0.000001f)
+	{
+		return false;
+	}
+
+	sI = N / D;
+	if (sI < 0.f || sI > 1.f)
+	{
+		return false;
+	}
+
+	IntersectionPoint = LineA + sI * U;
+	return true;
+}
 
 defaultproperties
 {
-	//FreeCamDistance = 256
 	CameraProperties=MCCameraProperties'mystraschampionsettings.Camera.CameraProperties'
 }
