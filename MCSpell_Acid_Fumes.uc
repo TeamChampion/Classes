@@ -7,10 +7,6 @@
 //----------------------------------------------------------------------------
 class MCSpell_Acid_Fumes extends MCSpell;
 
-function Cast(MCPawn caster, MCPawn enemy)
-{
-
-}
 
 /*
 // The Activator for all spells

@@ -1,12 +1,14 @@
 //----------------------------------------------------------------------------
 // MCCustomButtons
 //
-// Does the holding down a button event for zooming, rotating etc
+// Does the holding down a button event for zooming, rotating the Decal under
+// the Character
 //
-// Gustav Knutsson 2014-06-18
+// Gustav Knutsson 2014-08-17
 //----------------------------------------------------------------------------
-class MCCustomButtons extends MouseInterfacePlayerInput within MCPlayerController
-    config(Input);
+class MCCustomButtons extends MouseInterfacePlayerInput
+	within MCPlayerController
+	config(Input);
 
 var bool bMyButton, bMyButtonPressed, bMyButtonHeld, bMyButtonWasHeld, bMyButtonReleased, bMyButtonDoubletapped, bOld_MyButton;
 var float LastPressedMyButtonTime;
@@ -16,157 +18,125 @@ var const MCCameraProperties CameraProperties;
 // Rotating buttons
 var bool bCanRotateLeft;
 var bool bCanRotateRight;
-
-
-// test
+// Rotatino Speed
 var float velRotation;
 
-function MyButtonActions(float DeltaTime)
+
+function MyButtonActions()
 {
-    bMyButtonPressed = bMyButton && !bOld_MyButton;
-    bMyButtonDoubletapped = false;
-    if (bMyButtonPressed)
-    {
-        if (WorldInfo.TimeSeconds - LastPressedMyButtonTime < DoubleClickTime)
-            bMyButtonDoubletapped = true;
-        else
-            LastPressedMyButtonTime = WorldInfo.TimeSeconds;
-    }
+	bMyButtonPressed = bMyButton && !bOld_MyButton;
+	bMyButtonDoubletapped = false;
+	if (bMyButtonPressed)
+	{
+		if (WorldInfo.TimeSeconds - LastPressedMyButtonTime < DoubleClickTime)
+			bMyButtonDoubletapped = true;
+	else
+		LastPressedMyButtonTime = WorldInfo.TimeSeconds;
+	}
 
-    bMyButtonWasHeld = bMyButtonHeld;
-    if (bMyButton && bOld_MyButton && (WorldInfo.TimeSeconds - LastPressedMyButtonTime >= DoubleClickTime))
-        bMyButtonHeld = true;
-    else
-        bMyButtonHeld = false;
+	bMyButtonWasHeld = bMyButtonHeld;
+	if (bMyButton && bOld_MyButton && (WorldInfo.TimeSeconds - LastPressedMyButtonTime >= DoubleClickTime))
+			bMyButtonHeld = true;
+	else
+		bMyButtonHeld = false;
 
-    bMyButtonReleased = !bMyButton && bOld_MyButton;
+	bMyButtonReleased = !bMyButton && bOld_MyButton;
 
-    if (bMyButtonDoubletapped)
-    {
-            // do something special
-    }
-    else if (bMyButtonPressed)
-    {
-            // do something
-    }
-    else if (bMyButtonHeld)
-    {
-        // do alternate something
-        RotateCamera();
-    }
-    else if (bMyButtonReleased)
-    {        
-        if (!bMyButtonWasHeld)
-        {
-            // do another something
-        }
-        else
-        {
-            // do another alternate something
-        }
-    }
-   
-    bOld_MyButton = bMyButton;
+	if (bMyButtonDoubletapped)
+	{
+		// do something special
+	}
+	else if (bMyButtonPressed)
+	{
+		// do something
+	}
+	else if (bMyButtonHeld)
+	{
+		// do alternate something
+		RotateCamera();
+	}
+	else if (bMyButtonReleased)
+	{        
+		if (!bMyButtonWasHeld)
+		{
+			// do another something
+		}
+		else
+		{
+			// do another alternate something
+		}
+	}
+
+	// Saves setting for button to compare if we are holding it down
+	bOld_MyButton = bMyButton;
 }
 
 event PlayerInput( float DeltaTime )
 {
-    local float deltaRotation;
-    local Rotator newRotation;
+	local float deltaRotation;
+	local Rotator newRotation;
 
-    if (bMyButton && MCPlayer != none && MCPlayer.MyDecal != none)
-    {
-        deltaRotation = velRotation * DeltaTime; 
+	// If We have a button, Player && PlayerDecal
+	if (bMyButton && MCPlayer != none && MCPlayer.MyDecal != none)
+	{
+		// Set rotation to Yaw only
+		newRotation = MCPlayer.MyDecal.Rotation;
+		deltaRotation = velRotation * DeltaTime; 
+		newRotation.Yaw  += deltaRotation;
+		MCPlayer.MyDecal.SetRotation(newRotation);
+	}
 
-        newRotation = MCPlayer.MyDecal.Rotation;
+	Super.PlayerInput(DeltaTime);
 
-        newRotation.Yaw  += deltaRotation;  // round
-
-        MCPlayer.MyDecal.SetRotation(newRotation);
-    }
-
-
-    Super.PlayerInput(DeltaTime);
-   
-    // handle my custom button
-    MyButtonActions(DeltaTime);
+	// handle my custom button
+	MyButtonActions();
 }
 
 /*
-simulated exec function MyButton()
-{
-    bMyButton = true;
-}
-
-// FIXME - stop using 'Un' as a prefix for momentary inputs being released
-simulated exec function UnMyButton()
-{
-    bMyButton = false;
-}
-*/
-
-
-/*
-// Function that rotates the camera depending on button
+// Function that rotates the camera depending on button being pressed
 */
 function RotateCamera()
 {
-    if(bCanRotateLeft)
-    {
-        MCRotationLeft();
-    }else if(bCanRotateRight)
-    {
-        MCRotationRight();
-    }
+	if(bCanRotateLeft)
+	{
+		velRotation = -CameraProperties.RoationSpeed;
+	}else if(bCanRotateRight)
+	{
+		velRotation = CameraProperties.RoationSpeed;
+	}
 }
 
-
-
-simulated event Tick( float DeltaTime )
+// .Bindings=(Name="ThumbMouseButton",Command="MCRotateLeftON | onrelease MCRotateLeftOff")
+// Press to Start to turn Left Rotation ON
+exec function MCRotateLeftON()
 {
-
-
-    Super.Tick(DeltaTime);
+	bMyButton = true;
+	bCanRotateLeft = true;
 }
-
-/*
-// Rotate left functions
-*/
-function MCRotationLeft()
+// Turn Off Rotation
+exec function MCRotateLeftOff()
 {
-    velRotation = 0;
-    velRotation = -5000;
-
-//    CameraProperties.Rotation.Roll += CameraProperties.RoationSpeed;
-}
-exec function MCRotateLeftON(){
-    bMyButton = true;
-    bCanRotateLeft = true;
-}
-exec function MCRotateLeftOff(){
-    bMyButton = false;
-    bCanRotateLeft = false;
+	bMyButton = false;
+	bCanRotateLeft = false;
+	velRotation = 0;
 }
 
-
-
-
-function MCRotationRight()
+// .Bindings=(Name="ThumbMouseButton2",Command="MCRotateRightON | onrelease MCRotateRightOff")
+// Press to Start to turn Right Rotation ON
+exec function MCRotateRightON()
 {
-    velRotation = 0;
-    velRotation = 5000;
-//    CameraProperties.Rotation.Roll -= CameraProperties.RoationSpeed;
+	bMyButton = true;
+	bCanRotateRight = true;
 }
-exec function MCRotateRightON(){
-    bMyButton = true;
-    bCanRotateRight = true;
-}
-exec function MCRotateRightOff(){
-    bMyButton = false;
-    bCanRotateRight = false;
+// Turn Off Rotation
+exec function MCRotateRightOff()
+{
+	bMyButton = false;
+	bCanRotateRight = false;
+	velRotation = 0;
 }
 
 defaultproperties
 {
-    CameraProperties=MCCameraProperties'mystraschampionsettings.Camera.CameraProperties'
+	CameraProperties=MCCameraProperties'mystraschampionsettings.Camera.CameraProperties'
 }

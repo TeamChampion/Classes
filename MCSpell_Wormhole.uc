@@ -7,11 +7,6 @@
 //----------------------------------------------------------------------------
 class MCSpell_Wormhole extends MCSpell;
 
-function Cast(MCPawn caster, MCPawn enemy)
-{
-
-}
-
 /*
 // The Activator for all spells
 // @param	Caster			Who Casts the Spell

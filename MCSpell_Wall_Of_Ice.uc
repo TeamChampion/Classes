@@ -7,7 +7,7 @@
 //----------------------------------------------------------------------------
 class MCSpell_Wall_Of_Ice extends MCSpell;
 
-function Cast(MCPawn caster, Vector target)
+function CastArea(MCPawn caster, Vector target)
 {
 	local Vector CorrectionVector;
 
@@ -27,30 +27,30 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 {
 	local int i;
 	local MCPlayerController PC;
+	
+	// This does AP Check first so we can check if we can do the spell 
+	super.Activate(Caster, Enemy, PathNode, Tile);
+
+	if (Caster == none || Enemy == none)
+	{
+		`log(self @ " - Failed so Destroy() && return;");
+		Destroy();
+		return;
+	}
 
 	`log(name @ "- Activate Spell");
 	// Cast nesscesary Classes
 	PC = Caster.PC;
 
 	// Turn Off All active tiles
-	for (i = 0;i < PC.CanUseTiles.length ; i++)
-		PC.CanUseTiles[i].ResetTileToNormal();
+	for (i = 0;i < PC.TilesWeCanMoveOn.length ; i++)
+		PC.TilesWeCanMoveOn[i].ResetTileToNormal();
 
 	// Spell mode active
 	PC.bIsSpellActive = true;
 
 	// Check where we shoudl light up the selecting spell Tiles
 	PC.CheckDistanceNearPlayer();
-
-	// Shoot Spell, Make sure it's only on the server
-	if ( (WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_ListenServer) )
-	{
-	//	Cast(Caster, Enemy);
-	}else
-	{
-		// Remove from Client
-	//	Destroy();
-	}
 }
 
 /*
@@ -61,11 +61,12 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 */
 reliable server function CastClickSpellServer(optional MCPawn Caster, optional MCTile WhatTile, optional MCPathNode PathNode)
 {
+	`log(self @ "CastClickSpellServer");
 	// Do only on server
 	if (Role == Role_Authority)
 	{
 		// Activate Server
-		Cast(Caster, WhatTile.Location);
+		CastArea(Caster, WhatTile.Location);
 		PathNode.bBlocked = true;
 		WhatTile.ActivateWallOfIce();
 		// Activate on clients
@@ -76,6 +77,7 @@ reliable server function CastClickSpellServer(optional MCPawn Caster, optional M
 
 reliable client function CastClickSpellClient(optional MCPawn Caster, optional MCTile WhatTile, optional MCPathNode PathNode)
 {
+	`log(self @ "CastClickSpellClient");
 	WhatTile.ActivateWallOfIce();
 	Destroy();
 }

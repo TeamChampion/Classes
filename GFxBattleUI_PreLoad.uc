@@ -115,8 +115,14 @@ function ContinueButton(GFxClikWidget.EventData ev)
 */
 function ReturnToTownButton(GFxClikWidget.EventData ev)
 {
+	local MCPlayerController cMCPC;
+
+	cMCPC = MCPlayerController(GetPC());
+	
+	// Turn off Hud
 	Close(true);
-	ConsoleCommand("open town01");
+	// Go in to PC and reset Mu;tiplayer game
+	cMCPC.QuitToMainMenu();
 }
 
 DefaultProperties

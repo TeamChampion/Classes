@@ -10,52 +10,47 @@
 class MCPawn extends UTPawn
 	config(MystrasConfig);
 
-
+/*
 // Character Information
-var repnotify config string PawnName;
-var config string PawnName2;
-var(MystStats) int MaxAP;
-// His PlayerController
-var MCPlayerController PC;
-// Decal for showing something under a pawn
-var DecalComponent MyDecal;
-var MCTile TouchingTile;
-// Spells
-var(MystSpells) archetype array <MCSpell> MyArchetypeSpells;
-// All Spells in a list
-var archetype MCSpellArchetypeList MySpellList;
-// Inventory
-var(Inventory) array<MCItem_Weapon> OwnedWeapons;
-var(Inventory) archetype MCInventory MyInventory;	// @TODO set it to something, like archetype
-// Is Character created
-var config bool bSetLevelLoadChar;
-
+*/
+var repnotify config string PawnName;				// Character Name
+var config string PawnName2;						// Other Character Name
+var config bool bSetLevelLoadChar;					// Is Character created
+var int MaxAP;										// MaxAP
+var(Inventory) archetype MCInventory MyInventory;	// @TODO set it to something, like archetype, @TODO2 Put this in MCPlayerController
 // Stats Character is using 
-var config int FirePoints, IcePoints, EarthPoints, PosionPoints, ThunderPoints, currentSpells01, currentSpells02, currentSpells03, currentSpells04;
-enum ESchool
-{
-	SCHOOL_Volcano,
-	SCHOOL_FrozenLake,
-	SCHOOL_IronTower,
-	SCHOOL_HeavensGate,
-	SCHOOL_CrystalMist,
-	SCHOOL_None
-};
+//var config int FirePoints, IcePoints, EarthPoints, AcidPoints, ThunderPoints, currentSpells01, currentSpells02, currentSpells03, currentSpells04;
 
+/*
+// Other
+*/
+var archetype MCSpellArchetypeList MySpellList;	// All Spells in a list
+var MCPlayerController PC;						// His PlayerController
+var DecalComponent MyDecal;						// Decal for showing something under a pawn
+
+/*
 // For Multiplayer replication
-var repnotify float APf;
+*/
+var repnotify float APf;			// Current AP
 var repnotify int PlayerUniqueID;	// when this value changes ReplicatedEvent below is fired
-var repnotify bool bHaveAp;
 var float APfMax;					// set max AP
-var int Level;
-var repnotify bool bSetTiles;
+
+/*
+// Don't Know yet. maybe remove
+*/
+var float CurrentStartAPf;		// Show What Current AP we have from PC.TurnBased()
+var bool bHaveAp;				// used for seeing which player has AP to show Reset AP button in battlehud, @NOTBEING_USED
+var int Level;					// Current Level for charachter @NOTBEING_USED
+//enum ESchool{	SCHOOL_Volcano,	SCHOOL_FrozenLake,	SCHOOL_IronTower,	SCHOOL_HeavensGate,	SCHOOL_CrystalMist,	SCHOOL_None		}; //  @NOTBEING_USED
+//var(MystSpells) archetype array <MCSpell> MyArchetypeSpells;
+
 
 // Replication block
 replication
 {
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
-		PawnName, PlayerUniqueID, APf, bHaveAp, MyDecal, bSetTiles;
+		PawnName, PlayerUniqueID, APf, bHaveAp, MyDecal, CurrentStartAPf;
 
 	// Replicate on first replication update
 	if(bNetInitial)
@@ -64,8 +59,7 @@ replication
 }
 
 simulated event ReplicatedEvent(name VarName)
-{
-	//very important line
+{	
 	super.ReplicatedEvent( VarName ); 
 
 	//update mesh color, as color is based on ID value
@@ -74,6 +68,7 @@ simulated event ReplicatedEvent(name VarName)
 		changePlayerColor();
 		SpawnDecal();
 	}
+	// Handle AP calculation
 	if (varname == 'APf')
 	{
 		if (APf < 30 )
@@ -86,121 +81,12 @@ simulated event ReplicatedEvent(name VarName)
 			bHaveAp = false;
 			MCPlayerReplication(PlayerReplicationInfo).bHaveAP = bHaveAp;
 		}
-	//	MCPlayerReplication(PlayerReplicationInfo).APf = APf;
 	}
 	if (varname == 'PawnName')
 	{
 		`log("CHANGE IN NAME" @ PawnName);
 	//	MCPlayerReplication(PlayerReplicationInfo).PawnName = PawnName;
 	}
-	if (varname == 'bHaveAp')
-	{
-	//	MCPlayerReplication(PlayerReplicationInfo).bHaveAP = bHaveAp;
-	}
-	if (VarName == 'bSetTiles')
-	{
-		if (bSetTiles)
-		{
-		//	MCPlayerReplication(PlayerReplicationInfo).SetTilesInsidePC(PlayerUniqueID);
-			// Use function in PlayerReplication
-			`log("bSetTiles="@bSetTiles@"- We Use a function Inside PlayerReplication" @ PC.PlayerUniqueID);	// Don't have this yet????
-			`log("bSetTiles="@bSetTiles@"- We Use a function Inside PlayerReplication" @ PlayerUniqueID);
-		//	MCPlayerReplication(PlayerReplicationInfo).SetTilesInsidePC(PlayerUniqueID);
-			// Turn this off after Function Use
-		//	bSetTiles = false;
-		}else
-		{
-			// Do nothing
-			`log("bSetTiles="@bSetTiles@"- We Use nothing "@ PC.PlayerUniqueID);
-		}
-		bSetTiles = false;
-	}
-}
-
-simulated event PostBeginPlay()
-{
-	// @OUTOFBOUNDS
-	/*
-	// Adding arhetypes
-	AddSpells(currentSpells01, 0);
-	AddSpells(currentSpells02, 1);
-	AddSpells(currentSpells03, 2);
-	AddSpells(currentSpells04, 3);
-	*/
-
-//	PawnName = PawnName2;
-
-	// Debug check weapons list
-//	debugWeapon();
-	super.PostBeginPlay();
-}
-
-simulated function AddSpells(int SpellNumber, int SpellSlot)
-{
-	local MCSpell SpellName;
-
-	// Search for Spells in List we have in an Archetype
-	foreach MySpellList.AllArchetypeSpells(SpellName)
-	{
-		// If searched result is the same as created spell, save it in the character
-		if (SpellName.spellNumber == SpellNumber)
-		{
-			//  `log("found Spell" @ SpellName.spellNumber);
-			MyArchetypeSpells[SpellSlot] = SpellName;
-		}
-	}
-}
-
-function AddInventory(array<string> MyInventoryThing)
-{
-	
-}
-
-/*
-// Spawn a Decal Under the Pawn to show where he is
-*/
-simulated function SpawnDecal()
-{
-	local Vector newPlace;
-	local Rotator newRotation;
-	local MaterialInstanceConstant MyDecalColor;
-	local LinearColor MatColor;
-
-	MyDecalColor = MaterialInstanceConstant'mystraschampionsettings.Decals.CharacterDecal_INST';
-
-	newRotation.Roll = 0;
-	newRotation.Yaw = 0;
-	newRotation.Pitch = -16384;
-
-//	newPlace.x = 0.0f;
-//	newPlace.y = 0.0f;
-//	newPlace.z = 0.0f;
-											// 		1 			2 		3 			4 		 5 		6 		7			15
-	// Spawn decal for 10 mins = 600.0f
-	MyDecal = WorldInfo.MyDecalManager.SpawnDecal(MyDecalColor,newPlace,newRotation,200.0f, 200.0f,500.0f,false,,,,,,,,600.0f);
-	MyDecal.bMovableDecal = true;
-
-	MyDecalColor = MaterialInstanceConstant'mystraschampionsettings.Decals.CharacterDecal_INST';
-	if (MyDecal != None)
-	{
-		if (MyDecal.GetDecalMaterial() != None)
-		{
-			MyDecalColor = new class'MaterialInstanceConstant';
-			MyDecalColor.SetParent(MyDecal.GetDecalMaterial());
-
-			if (PlayerUniqueID == 1)
-			{
-				MatColor = MakeLinearColor(0.0f, 0.0f, 1.0f, 1.0f);
-			}else if (PlayerUniqueID == 2)
-			{
-				MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
-			}
-			MyDecalColor.SetVectorParameterValue('SetColor', MatColor);
-			MyDecal.SetDecalMaterial(MyDecalColor);
-		}
-	}
-	AttachComponent(MyDecal);
-
 }
 
 /**
@@ -213,7 +99,6 @@ simulated function SpawnDecal()
 simulated function Tick(float DeltaTime)
 {
 	local MCPlayerReplication MCPRep;
-
 	Super.Tick(DeltaTime);
 
 	// Set extra name to Pawn Name
@@ -250,9 +135,88 @@ simulated function Tick(float DeltaTime)
 
 		// Update PawnName
 //		MCPRep.PawnName = PawnName;
+
+
+			
 	}
+}
+
+
+simulated event PostBeginPlay()
+{
+	// @OUTOFBOUNDS
+	/*
+	// Adding arhetypes
+	AddSpells(currentSpells01, 0);
+	AddSpells(currentSpells02, 1);
+	AddSpells(currentSpells03, 2);
+	AddSpells(currentSpells04, 3);
+	*/
+
+	super.PostBeginPlay();
+}
+/*
+simulated function AddSpells(int SpellNumber, int SpellSlot)
+{
+	local MCSpell SpellName;
+
+	// Search for Spells in List we have in an Archetype
+	foreach MySpellList.AllArchetypeSpells(SpellName)
+	{
+		// If searched result is the same as created spell, save it in the character
+		if (SpellName.spellNumber == SpellNumber)
+		{
+			//  `log("found Spell" @ SpellName.spellNumber);
+			MyArchetypeSpells[SpellSlot] = SpellName;
+		}
+	}
+}
+*/
+
+
+/*
+// Spawn a Decal Under the Pawn to show where he is
+*/
+simulated function SpawnDecal()
+{
+	local Vector newPlace;
+	local Rotator newRotation;
+	local MaterialInstanceConstant MyDecalColor;
+	local LinearColor MatColor;
+
+	MyDecalColor = MaterialInstanceConstant'mystraschampionsettings.Decals.CharacterDecal_INST';
+
+	newRotation.Roll = 0;
+	newRotation.Yaw = 0;
+	newRotation.Pitch = -16384;
+
+	// Spawn decal for 10 mins = 600.0f
+	MyDecal = WorldInfo.MyDecalManager.SpawnDecal(MyDecalColor,newPlace,newRotation,200.0f, 200.0f,500.0f,false,,,,,,,,600.0f);
+	MyDecal.bMovableDecal = true;
+
+	MyDecalColor = MaterialInstanceConstant'mystraschampionsettings.Decals.CharacterDecal_INST';
+	if (MyDecal != None)
+	{
+		if (MyDecal.GetDecalMaterial() != None)
+		{
+			MyDecalColor = new class'MaterialInstanceConstant';
+			MyDecalColor.SetParent(MyDecal.GetDecalMaterial());
+
+			if (PlayerUniqueID == 1)
+			{
+				MatColor = MakeLinearColor(0.0f, 0.0f, 1.0f, 1.0f);
+			}else if (PlayerUniqueID == 2)
+			{
+				MatColor = MakeLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
+			}
+			MyDecalColor.SetVectorParameterValue('SetColor', MatColor);
+			MyDecal.SetDecalMaterial(MyDecalColor);
+		}
+	}
+	AttachComponent(MyDecal);
 
 }
+
 
 
 /*
@@ -304,16 +268,6 @@ simulated function changePlayerColor()
 	mesh.SetMaterial(8, mainMat);   //hands
 }
 
-function debugWeapon()
-{
-	local int i;
-
-	for (i = 0; i < OwnedWeapons.Length; i++)
-	{
-		`log("------------- itemName " @ OwnedWeapons[i].sItemName @ "    Prize " @ OwnedWeapons[i].Cost @ "    Description " @ OwnedWeapons[i].sDescription);
-	}
-}
-
 /*
 // Functions that says what PlayerController this Pawn is using
 */
@@ -326,26 +280,32 @@ simulated function setYourPC(MCPlayerController pci)
 // Take Damage from projectiles when being hit
 // In MCTile also set Pawn to take damage when walking over a spell affected Tile
 */
-event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
+simulated event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
 {
 	super.TakeDamage(Damage, EventInstigator, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
-
-	`log("In MCPawn.uc - Current HP =" @ Health @ "   Current Damage =" @ Damage);
-
-	// Only Works from PC PlayerReplication && Server atm
-	if (PlayerReplicationInfo != none)
+	
+	if (Role == Role_Authority)
 	{
-		MCPlayerReplication(PlayerReplicationInfo).Health = Health;
+		if (Health <= 0)
+		{
+			MCPlayerReplication(PC.PlayerReplicationInfo).Health = 0;
+			MCPlayerReplication(PlayerReplicationInfo).Health = 0;
+			Health = 0;
+			PC.SendWinLoseToReplication();
+		}
 	}
-
 }
 
 
 // Server only
 simulated event Destroyed()
 {
+	/*
 	// Because this guy in here dies before it replicates the health. Inside of PC update his health so it says 0
 	MCPlayerReplication(PC.PlayerReplicationInfo).Health = 0;
+	MCPlayerReplication(PlayerReplicationInfo).Health = 0;
+	Health = 0;
+	*/
 	// Send Message
 	PC.SendWinLoseToReplication();
 
@@ -353,44 +313,6 @@ simulated event Destroyed()
 	///
 }
 
-/*
-simulated function SetMeshVisibility(bool bVisible)
-{
-	super.SetMeshVisibility(bVisible);
-	Mesh.SetOwnerNoSee(false);
-}
-
-function GFxResetChar()
-{
-	PlayerName = "none";
-	PawnName   = "none";;
-	bSetLevelLoadChar = false;
-	SaveConfig();
-}
-
-public function TouchedATileWithCost(float Cost)
-{
-	`log("Check AP");
-}
-
-event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
-{
-	if(MCTile(Other) != none && MCTile(Other).damage > 5)
-	{
-		//MCTile(Other).damage
-		TouchingTile = MCTile(Other);
-		TakeDamage(MCTile(Other).damage, none, Location,vect(0,0,0),class'UTDmgType_LinkPlasma');
-		//    `log("My HP" @ Health);
-		//    `log("Damage = " @ MCTile(Other).damage);
-	}
-	super.Touch(Other, OtherComp, HitLocation, HitNormal);
-}
-
-simulated function Tick(float DeltaTime)
-{
-	super.Tick(DeltaTime);
-}
-*/
 DefaultProperties
 {
 	// Spell List

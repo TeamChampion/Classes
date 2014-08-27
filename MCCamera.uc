@@ -181,12 +181,12 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 		OutVT.POV.Location = VLerp(OutVT.POV.Location, CameraIntersectionPoint, (CameraProperties.BlendSpeed) * DeltaTime);
 
 
+		MCPC = MCPlayerController(PCOwner);
 		if (MCPC != None && MCPC.Pawn != None)
 		{
 		//	DesiredCameraLocation = MCPC.Pawn.Location;
 			if (MCPC.MCPlayer != none)
 			{
-				MCPC = MCPlayerController(PCOwner);
 				// Set the camera rotation
 				if (MCPC.MCPlayer.MyDecal != none)
 				{

@@ -21,6 +21,9 @@ var MCCameraProperties CameraProperties;
 
 function PostBeginPlay()
 {
+	// What Score we want it to be, when this is true it also removes the restart when died
+	GoalScore = 1;
+
 	// Sets replications client Enemies left equal to servers Enemiesleft
 	if (MCGameReplication(GameReplicationInfo) != none)
 	{
@@ -40,30 +43,18 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 {
 	local MCPawn FindPawn;					// Pawn by this Pc
 	local NavigationPoint FindStartNavi;	// Start Positions Placements
-	local GFxSelectScreen MySelectScreen;	// Where we store the current selected character
 	local int i;							// for loop value
 	local int iPlayersMAX;					// Current Players we can Max have
 	local MCPlayerController MyPC;
-	local MCPawn MyPawn;
 	local MCPlayerReplication MCPRep;
-	// Get Stored Selected Caharacter class
-	if (MySelectScreen == none)
-	{
-		MySelectScreen = new class'GFxSelectScreen';
-	}
 
 	// Set Controller
 	if (MyPC == none)
 	{
 		MyPC = MCPlayerController(NewPlayer);
 	}
-	// Set Pawn
-	if (MyPawn == none)
-	{
-		MyPawn = MCPawn(MyPC.Pawn);
-	}
 
-	if (WorldInfo.GetMapName() == "movement_test16")
+	if (WorldInfo.GetMapName() == "movement_test16" || WorldInfo.GetMapName() == "TestMoveAlot")
 	{
 		// get player rep
 		MCPRep = MCPlayerReplication(MyPC.PlayerReplicationInfo);
@@ -96,6 +87,27 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 	}
 
 
+	if ( (WorldInfo.NetMode == NM_ListenServer) )
+	{
+		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+	}else if ( (WorldInfo.NetMode == NM_DedicatedServer) )
+	{
+		`log("Dedica - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Dedica - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Dedica - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Dedica - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+	}else if ( (WorldInfo.NetMode == NM_Client) )
+	{
+		`log("Client - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Client - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Client - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+		`log("Client - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
+	}
+	
 
 	// Go threw the Start Spawn positions and see if we have can spawn a character
 	foreach AllActors(Class'NavigationPoint', FindStartNavi)
@@ -108,7 +120,7 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 				// If a Pawn is withing 70 feet from spawn && his unique id already exists in the game
 				if (VSize(FindPawn.Location - FindStartNavi.Location) < 70.0f || FindPawn.PlayerUniqueID == i)
 				{
-				//	`log("Someone Already here");
+					`log("Someone Already here");
 				}else
 				{
 					// Set PlayerReplication archetype
@@ -118,8 +130,14 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 					}
 
 					// Spawn a Character for Town so that we can access the Shops to store our inventory
-					if (WorldInfo.GetMapName() == "town01")
+					else
+				//	if (WorldInfo.GetMapName() == "town01")
 					{
+						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
+						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
+						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
+						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
+						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
 						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
 
 						if (MyPC.setCharacterSelect == 1)
@@ -159,6 +177,10 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 		continue;	// do again for next spawn point
 	}
 }
+
+
+
+
 
 /*
 // Called every time the game is updated
@@ -280,4 +302,6 @@ defaultproperties
 	PlayerReplicationInfoClass=class'MystrasChampion.MCPlayerReplication'
 
 	GameRound = 0;
+
+	Tag=Myst
 }

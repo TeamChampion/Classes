@@ -15,6 +15,7 @@ var GFxSelectScreen GFxSelectScreen;
 var GFxCreateScreen GFxCreateScreen;
 var GFxTownMain cGFxTownMain;
 var GFxTownShop cGFxTownShop;
+//var GFxMultiplayer cGFxMultiplayer;
 
 
 // When create button is pushed it set's this Character as the one we will create
@@ -62,10 +63,94 @@ event PostRender()
 	local MCPlayerController PC;
 	local MCGameReplication MCPR;
 
+	local MouseInterfaceInteractionInterface MouseInteractionInterface;
+	local Vector HitLocation, HitNormal;
+
 	MCPR = MCGameReplication(WorldInfo.GRI);
 	PC = MCPlayerController(PlayerOwner);
 
+	super.DrawHUD();
 	Super.PostRender();
+
+	// Get the current mouse interaction interface
+	MouseInteractionInterface = GetMouseActor(HitLocation, HitNormal);
+	
+	HitLocation2 = HitLocation;
+	HitNormal2 = HitNormal;
+
+// Did we previously had a mouse interaction interface?
+	if (LastMouseInteractionInterface != None)
+	{
+	//	`log("We have nothing, NOTHING!!!!!");
+//
+//		`log("What does it" @ GetMouseActor(HitLocation, HitNormal) );
+		// If the last mouse interaction interface differs to the current mouse interaction
+		if (LastMouseInteractionInterface != MouseInteractionInterface)
+		{
+			`log("MouseInteractionInterface!!!");
+			// Call the mouse out function
+			LastMouseInteractionInterface.MouseOut(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+			// Assign the new mouse interaction interface
+			LastMouseInteractionInterface = MouseInteractionInterface; 
+
+			// If the last mouse interaction interface is not none
+			if (LastMouseInteractionInterface != None)
+			{
+				// Call the mouse over function
+				LastMouseInteractionInterface.MouseOver(CachedMouseWorldOrigin, CachedMouseWorldDirection); // Call mouse over
+				`log("MouseOver MouseOver");
+			}
+		}
+	}
+	else if (MouseInteractionInterface != None)
+	{
+		// Assign the new mouse interaction interface
+		LastMouseInteractionInterface = MouseInteractionInterface; 
+		// Call the mouse over function
+		LastMouseInteractionInterface.MouseOver(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+		`log("Mouse Out!");
+	}
+	if (LastMouseInteractionInterface != None)
+	{
+		// Handle left mouse button
+		if (PendingLeftPressed)
+		{
+			if (PendingLeftReleased)
+			{
+				// This is a left click, so discard
+				PendingLeftPressed = false;
+				PendingLeftReleased = false;
+			}
+			else
+			{
+				// Left is pressed
+				PendingLeftPressed = false;
+				LastMouseInteractionInterface.MouseLeftPressed(CachedMouseWorldOrigin, CachedMouseWorldDirection, HitLocation, HitNormal);
+				`log("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss");
+				/*
+				`log("CachedMouseWorldOrigin" @ CachedMouseWorldOrigin);
+				`log("CachedMouseWorldDirection" @ CachedMouseWorldDirection);
+				`log("HitLocation" @ HitLocation);
+				`log("HitLocation2" @ HitLocation2);
+				`log("HitNormal" @ HitNormal);
+				*/
+			}
+		}
+		else if (PendingLeftReleased)
+		{
+			// Left is released
+			PendingLeftReleased = false;
+			LastMouseInteractionInterface.MouseLeftReleased(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+		}
+	}
+
+
+
+
+
+
+
+
 
 //	CheckMapForStartingVideo();		// Finding specific map name here
 
@@ -130,6 +215,7 @@ event PostRender()
 	// -----------------------
 	// Debug Multiplayer
 //	TrackHeroes();
+	TrackStatuses();
 }
 
 /*
@@ -151,6 +237,10 @@ function CheckMapForStartingVideo()
 		case "ShopTest":
 			`log("Entered the SHOP");
 			StartMovieTownShops();
+			break;
+		case "MultiplayerSearch":
+			`log("Entered the Multiplayer");
+		//	StartMultiplayer();
 			break;
 		default:
 			
@@ -329,6 +419,35 @@ exec function CloseCreateScreen()
 	}
 }
 
+/*
+// Will open Multiplayer Menu
+*/
+/*
+function StartMultiplayer()
+{
+	if (cGFxMultiplayer == none)
+	{
+		// create new class
+		cGFxMultiplayer = new class'GFxMultiplayer';
+		if (cGFxMultiplayer != none)
+		{
+			// Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation)
+			cGFxMultiplayer.SetTimingMode(TM_Real);
+			// If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE 
+			cGFxMultiplayer.bAllowFocus = true;
+
+			// TRUE after Start() is called, FALSE after Close() is called.
+			if (!cGFxMultiplayer.bMovieIsOpen)
+			{
+				cGFxMultiplayer.Start();
+			}
+		}
+	}
+}
+*/
+
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Debug Hud settings
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -474,7 +593,7 @@ function TrackHeroes()
 				Canvas.DrawText("Health        :" @ MCPR.MCPRIArray[i].Health);
 				// AP
 				Canvas.SetPos(5, 395);
-				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].APf);
+				Canvas.DrawText("Player AP     :" @ MCPR.MCPRIArray[i].APf);
 				// Has AP
 				Canvas.SetPos(5, 410);
 				Canvas.DrawText("setCharacterSelect        :" @ MCPR.MCPRIArray[i].setCharacterSelect);
@@ -491,6 +610,22 @@ function TrackHeroes()
 				Canvas.SetPos(5, 485);
 				Canvas.DrawText("currentSpells04        :" @ MCPR.MCPRIArray[i].currentSpells04);
 				Canvas.SetPos(5, 500);
+
+				/*
+				// Resistance
+				Canvas.SetPos(5, 530);
+				Canvas.DrawText("----------------------------------------------------------");
+				Canvas.SetPos(5, 545);
+				Canvas.DrawText("Res Fire =" @ MCPR.MCPRIArray[i].ResistanceValues[0]);
+				Canvas.SetPos(5, 560);
+				Canvas.DrawText("Res Ice  =" @ MCPR.MCPRIArray[i].ResistanceValues[1]);
+				Canvas.SetPos(5, 575);
+				Canvas.DrawText("Res Eart =" @ MCPR.MCPRIArray[i].ResistanceValues[2]);
+				Canvas.SetPos(5, 590);
+				Canvas.DrawText("Res Acid =" @ MCPR.MCPRIArray[i].ResistanceValues[3]);
+				Canvas.SetPos(5, 605);
+				Canvas.DrawText("Res Thun =" @ MCPR.MCPRIArray[i].ResistanceValues[4]);
+				*/
 			}
 			// Player 02 to the right
 			if (MCPR.MCPRIArray[i].PlayerUniqueID == 2)
@@ -509,7 +644,7 @@ function TrackHeroes()
 				Canvas.DrawText("Health        :" @ MCPR.MCPRIArray[i].Health);
 				// Has AP
 				Canvas.SetPos(220, 395);
-				Canvas.DrawText("Player        :" @ MCPR.MCPRIArray[i].APf);
+				Canvas.DrawText("Player AP     :" @ MCPR.MCPRIArray[i].APf);
 				Canvas.SetPos(220, 410);
 				Canvas.DrawText("setCharacterSelect        :" @ MCPR.MCPRIArray[i].setCharacterSelect);
 				//
@@ -524,6 +659,84 @@ function TrackHeroes()
 				Canvas.SetPos(220, 485);
 				Canvas.DrawText("currentSpells04        :" @ MCPR.MCPRIArray[i].currentSpells04);
 				Canvas.SetPos(220, 500);
+				/*
+				// Resistance
+				Canvas.SetPos(220, 545);
+				Canvas.DrawText("Res Fire =" @ MCPR.MCPRIArray[i].ResistanceValues[0]);
+				Canvas.SetPos(220, 560);
+				Canvas.DrawText("Res Ice  =" @ MCPR.MCPRIArray[i].ResistanceValues[1]);
+				Canvas.SetPos(220, 575);
+				Canvas.DrawText("Res Eart =" @ MCPR.MCPRIArray[i].ResistanceValues[2]);
+				Canvas.SetPos(220, 590);
+				Canvas.DrawText("Res Acid =" @ MCPR.MCPRIArray[i].ResistanceValues[3]);
+				Canvas.SetPos(220, 605);
+				Canvas.DrawText("Res Thun =" @ MCPR.MCPRIArray[i].ResistanceValues[4]);
+				*/
+			}
+		}
+	}
+}
+
+// Debug screen for Multiplayer
+function TrackStatuses()
+{
+	local MCGameReplication MCPR;
+	local int i;
+	local int bu;
+
+	MCPR = MCGameReplication(WorldInfo.GRI);
+
+	super.DrawHUD();
+
+	if (MCPR != none)
+	{
+		Canvas.DrawColor = WhiteColor;
+		Canvas.Font = class'Engine'.Static.GetSmallFont();
+
+
+		if (MCPR.MCPRIArray.length < 0)
+		{
+	//		return;
+		}
+
+		for (i = 0; i < MCPR.MCPRIArray.length ; i++)
+		{
+			// Player 01 to the left
+			if (MCPR.MCPRIArray[i].PlayerUniqueID == 1)
+			{
+				Canvas.DrawColor = WhiteColor;
+				Canvas.Font = class'Engine'.Static.GetSmallFont();
+
+
+				Canvas.SetPos(5, 200);
+				Canvas.DrawText("MCStatus Left");
+				
+				for (bu = 0; bu < 10 ; bu++)
+				{
+					if (MCPR.MCPRIArray[i].MyStatus[bu].StatusName != "")
+					{
+						Canvas.DrawText((bu+1)@"- StatusDur = " @ MCPR.MCPRIArray[i].MyStatus[bu].StatusDuration @ "-" @ MCPR.MCPRIArray[i].MyStatus[bu].StatusName );
+						Canvas.SetPos(5, 230 + (15 * bu) );
+					}
+				}
+			}
+			// Player 02 to the right
+			else if (MCPR.MCPRIArray[i].PlayerUniqueID == 2)
+			{
+				Canvas.DrawColor = WhiteColor;
+				Canvas.Font = class'Engine'.Static.GetSmallFont();
+
+				Canvas.SetPos(1000, 200);
+				Canvas.DrawText("MCStatus Right");
+				
+				for (bu = 0; bu < 10 ; bu++)
+				{
+					if (MCPR.MCPRIArray[i].MyStatus[bu].StatusName != "")
+					{
+						Canvas.DrawText((bu+1)@"- StatusDur = " @ MCPR.MCPRIArray[i].MyStatus[bu].StatusDuration @ "-" @ MCPR.MCPRIArray[i].MyStatus[bu].StatusName );
+						Canvas.SetPos(1000, 230 + (15 * bu) );
+					}	
+				}
 			}
 		}
 	}
@@ -552,10 +765,10 @@ function CheckTiles()
 			Canvas.DrawColor = WhiteColor;
 			Canvas.Font = class'Engine'.Static.GetSmallFont();
 
-			for(i = 0; i < PC.CanUseTiles.length ; i++)
+			for(i = 0; i < PC.TilesWeCanMoveOn.length ; i++)
 			{
 				Canvas.SetPos(5, 10 * i);
-				Canvas.DrawText("Camera Hero          :" @ PC.CanUseTiles[i]);
+				Canvas.DrawText("Camera Hero          :" @ PC.TilesWeCanMoveOn[i]);
 			}
 
 		}

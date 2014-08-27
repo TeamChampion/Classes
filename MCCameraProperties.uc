@@ -53,7 +53,7 @@ var bool bSetKeyboardMovement;
 defaultproperties
 {
 	StartRotation=(Yaw=24576, Pitch=51883,Roll=0)
-	RoationSpeed=100
+	RoationSpeed=10000
 
 	StartPlane=(X=0,Y=0,Z=1440)
 

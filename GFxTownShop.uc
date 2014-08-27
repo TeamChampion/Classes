@@ -38,6 +38,8 @@ function ConfigHUD()
 	SetShops();
 	// Send Inventory
 	SetInventory();
+	// Set Money
+	SetMoney();
 //	PrintInventory();
 	bInitialized = true;
 }
@@ -48,6 +50,113 @@ function ConfigHUD()
 */
 function Tick(float DeltaTime)
 {
+	// Menu buttons
+/*
+	var emptyText01:String = "武器";
+	var emptyText02:String = "アクセサリー";
+	var emptyText03:String = "エンチャント管理";
+	var emptyText04:String = "研究材料";
+
+	weaponBtn.   textFields.text = emptyText01;
+	accessoryBtn.textFields.text = emptyText02;
+	enchantBtn.  textFields.text = emptyText03;
+	researchBtn. textFields.text = emptyText04;
+*/
+
+
+}
+
+function SetMoney()
+{
+	local MCPlayerController MCPC;
+	local int moneyGrab;
+
+	MCPC = MCPlayerController(GetPC());
+
+	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
+	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
+	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
+	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
+//	RootMC.SetInt("MoneyUC", 999);
+	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
+	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
+	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
+
+	if (MCPC != none)
+	{
+		// get selected Player
+		if (MCPC.setCharacterSelect == 1)
+		{
+			RootMC.SetInt("MoneyUC", MCPC.PlayerStruct01.Money);
+			moneyGrab = MCPC.PlayerStruct01.Money;
+		}
+		else if (MCPC.setCharacterSelect == 2)
+		{
+			RootMC.SetInt("MoneyUC", MCPC.PlayerStruct02.Money);
+			moneyGrab = MCPC.PlayerStruct02.Money;
+		}
+		else if (MCPC.setCharacterSelect == 3)
+		{
+			RootMC.SetInt("MoneyUC", MCPC.PlayerStruct03.Money);
+			moneyGrab = MCPC.PlayerStruct03.Money;
+		}
+		else if (MCPC.setCharacterSelect == 4)
+		{
+			RootMC.SetInt("MoneyUC", MCPC.PlayerStruct04.Money);
+			moneyGrab = MCPC.PlayerStruct04.Money;
+		}
+
+		`log("Money Grab is =" @ moneyGrab);
+	}
+}
+
+/*
+// Recieves Money from AS when we bought something, we then send it back to Actionscript to update the money
+*/
+function SendMoneyToUC(int RecievedMoney)
+{
+	local MCPlayerController MCPC;
+
+	MCPC = MCPlayerController(GetPC());
+
+	`log("We got something from Actionscript, Money =" @ RecievedMoney);
+
+	if (MCPC != none)
+	{
+		// get selected Player
+		if (MCPC.setCharacterSelect == 1)
+		{
+			// set money to him
+			MCPC.PlayerStruct01.Money = RecievedMoney;
+			// save his status
+			MCPC.SaveConfig();
+			// Set Money
+			RootMC.SetInt("MoneyUC", MCPC.PlayerStruct01.Money);
+		}
+		else if (MCPC.setCharacterSelect == 2)
+		{
+			MCPC.PlayerStruct02.Money = RecievedMoney;
+			MCPC.SaveConfig();
+			RootMC.SetInt("MoneyUC", MCPC.PlayerStruct02.Money);
+		}
+		else if (MCPC.setCharacterSelect == 3)
+		{
+			MCPC.PlayerStruct03.Money = RecievedMoney;
+			MCPC.SaveConfig();
+			RootMC.SetInt("MoneyUC", MCPC.PlayerStruct03.Money);
+		}
+		else if (MCPC.setCharacterSelect == 4)
+		{
+			MCPC.PlayerStruct04.Money = RecievedMoney;
+			MCPC.SaveConfig();
+			RootMC.SetInt("MoneyUC", MCPC.PlayerStruct04.Money);
+		}
+
+		`log("We Send it back to AS!");
+
+		// send back to AS function that updates it
+		ActionScriptVoid("root.SendMoneyToAS");
+	}
 
 }
 
