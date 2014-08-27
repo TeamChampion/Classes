@@ -34,6 +34,47 @@ simulated event PostBeginPlay()
 
 }
 
+simulated function RecieveMessage(int PlayerNumber)
+{
+	local int i;
+	if (Role == Role_Authority)
+	{
+		`log("Server in GameRep=" @PlayerNumber);
+	}
+	else
+	{
+		`log("Client in GameRep=" @PlayerNumber);
+	}
+
+	for (i = 0;i < MCPRIArray.Length ; i++)
+	{
+		`log("Sending to" @MCPRIArray[i].PlayerUniqueID);
+		MCPRIArray[i].RecieveMessage(PlayerNumber);
+	}
+}
+
+reliable server function AddServer(byte WhatPlayer)
+{
+	local int i;
+
+	// If server
+	if (Role == Role_Authority)
+	{
+		for (i = 0;i < MCPRIArray.Length ; i++)
+		{
+			// If player we want to do a change
+			if (MCPRIArray[i].PlayerUniqueID == WhatPlayer)
+			{
+				`log("Sending to" @MCPRIArray[i].PlayerUniqueID);
+				MCPRIArray[i].RecieveMessage(WhatPlayer);
+			}
+		}
+	}
+
+
+}
+
+
 /*
 // Function That adds the PRIArray to our own Array to fetch them for HUD or Battle Flash HUD
 */

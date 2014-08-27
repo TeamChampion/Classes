@@ -12,9 +12,11 @@ Simulated function PostBeginPlay()
 	super.PostBeginPlay();
 }
 
+/*
 simulated event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
 {
 	local MCPawn Target;
+	local MCStatus_Frost AddStatus;
 
 	// Find Attacked Person
 	foreach DynamicActors(Class'MCPawn', Target)
@@ -26,42 +28,86 @@ simulated event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocat
 		}
 	}
 
-	// In here set the Status link, only on Server
-	if (Target != none && (WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_ListenServer) )
+
+	if (Target != none && Status != none)
 	{
-		/*
-		`log("---------------------------------------------");
-		`log("Find PlayerReplication=" @ Target.PlayerReplicationInfo);
-		`log("Find PlayerController =" @ Target.PC);
-		`log("Find AP =" @ Target.APf);
-		`log("---------------------------------------------");
-		`log("Do we have a MCStatus" @ Status);
-		`log("StatusName =" @ Status.StatusName);
-		`log("StatusDamage.AP =" @ Status.StatusDamage.AP);
-		`log("StatusDamage.DamagePercent =" @ Status.StatusDamage.DamagePercent);
-		`log("StatusDamage.Damage =" @ Status.StatusDamage.Damage);
-		`log("StatusDurration =" @ Status.StatusDuration);
-		`log("---------------------------------------------");
-		*/
+		// Initialize it
+		AddStatus = Spawn(Class'MCStatus_Frost');
+
+		// Add the archetype inside here
+		AddStatus.StatusName = Status.StatusName;
+		AddStatus.StatusDamage = Status.StatusDamage;
+		AddStatus.StatusDuration = Status.StatusDuration;
+
+		// In here set the Status link, only on Server
+		if ((WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_ListenServer) )
+		{
 
 
-	//	Target.APf = 15;
+			AddingSpell(Target,AddStatus);
+		}else
+		{
+			AddingSpell(Target,AddStatus);
+		}
 	}
 
 	super.Touch(Other, OtherComp, HitLocation, HitNormal);
 }
+*/
+			/*
+			`log("---------------------------------------------");
+			`log("Find PlayerReplication=" @ Target.PlayerReplicationInfo);
+			`log("Find PlayerController =" @ Target.PC);
+			`log("Find AP =" @ Target.APf);
+			`log("---------------------------------------------");
+			`log("Do we have a MCStatus" @ Status);
+			`log("StatusName =" @ Status.StatusName);
+			`log("StatusDamage.AP =" @ Status.StatusDamage.AP);
+			`log("StatusDamage.DamagePercent =" @ Status.StatusDamage.DamagePercent);
+			`log("StatusDamage.Damage =" @ Status.StatusDamage.Damage);
+			`log("StatusDurration =" @ Status.StatusDuration);
+			`log("---------------------------------------------");
+			*/
+
+
+
+/*
+// Adding a certain status on inpact to both Server && Client
+// @param 	TargetChar			
+// @param 	MCStatus_Frost		
+*/
+/*
+simulated function AddingSpell(MCPawn TargetChar, MCStatus_Frost WhatStatus)
+{
+	local int i;			
+
+	// Add it
+	for (i = 0;i < 10 ; i++)
+	{
+		if (TargetChar.MyStatus[i] == none)
+		{
+			TargetChar.AddStatus(WhatStatus,i);
+			break;
+		}else
+		{
+		//	`log(i @ "- WTF SOMETHING HERE in" @ name @ "This=" @ Target.MyStatus[i]);
+		}
+	}
+	
+}
+*/
 
 defaultproperties
 {
 	MCProjFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_DecoyFlare'
 	MCProjExplosionTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_Decoy_Explo'
 
-	Speed=2
-	MaxSpeed=500
+	Speed=100
+	MaxSpeed=900
 	AccelRate=200
 
 	Damage=30
-	DamageRadius=16
+	DamageRadius=50
 	MomentumTransfer=0
 	CheckRadius=36.0
 

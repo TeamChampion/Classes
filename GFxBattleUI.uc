@@ -11,7 +11,7 @@ class GFxBattleUI extends GFxMoviePlayer;
 
 var GFxObject RootMC;
 var MouseInterfaceHUD MouseInterfaceHUD;
-var MCPlayerController MCPC;
+var MCPlayerController MCPC;				// not used, was used in GetPlayerinfo
 var MCPawn MCP;
 
 var int SaveWhoseTurn;
@@ -38,6 +38,7 @@ var GFxObject P01NameTF;	// Set Player Name
 var GFxObject P01HPTextTF;	// Set Player HP
 var GFxObject P01APNumbTF;	// Set His AP Number
 var GFxObject P01APTextTF;	// Set His AP Text
+var GFxObject Player01AreaMC;	// Indicator
 // Send HP to code
 // Send MAXHP to code
 //	- Indicator checks if we have AP, IF AP is more then 0 then show it
@@ -50,6 +51,7 @@ var GFxObject P02NameTF;	// Set Player Name
 var GFxObject P02HPTextTF;	// Set Player HP
 var GFxObject P02APNumbTF;	// Set His AP Number
 var GFxObject P02APTextTF;	// Set His AP Text
+var GFxObject Player02AreaMC;	// Indicator
 // Send HP to code
 // Send MAXHP to code
 //	- Indicator checks if we have AP, IF AP is more then 0 then show it
@@ -58,10 +60,12 @@ var GFxObject GameRoundMC;	// Round MovieClip
 var GFxObject GameRoundTF; 	// roundINS
 var GFxObject BackgroundMC;	// Option Background
 
-var GFxObject GameWinMessageMC;
+var GFxObject GameWinMessageMC;	// Message that shows if we won or not
+var GFxObject TurnMessageMC;
 
 
 // Widgets for spells
+/*
 var GFxCLIKWidget Earth01;
 var GFxCLIKWidget Earth02;
 var GFxCLIKWidget Earth03;
@@ -71,6 +75,7 @@ var GFxCLIKWidget Fire01;
 var GFxCLIKWidget Fire02;
 var GFxCLIKWidget Fire03;
 var GFxCLIKWidget Fire04;
+*/
 
 // Widget for AP Reset button
 var GFxCLIKWidget ResetAPBtn;
@@ -81,27 +86,17 @@ var GFxCLIKWidget RestartBattleBtn;
 var GFxCLIKWidget ReturnToTownBtn;
 
 // Widget for Spells
+/*
 var GFxObject Spell1;	// GFxCLIKWidget
 var GFxObject Spell2;
 var GFxObject Spell3;
 var GFxObject Spell4;
+*/
 
 // Just check if it has started
 var bool bInitialized;
 // If I clicked a button then don't do anything
 var bool bButtonClicked;
-/*
-function Init(optional LocalPlayer LocalPlayer)
-{
-	// Initialize the ScaleForm movie
-	Super.Init(LocalPlayer);
-	Start();
-    Advance(0.f);
-
- 	RootMC = GetVariableObject("root");
-	`log("------------------------------------ Start Movie");
-}
-*/
 
 function bool Start(optional bool StartPaused = false)
 {
@@ -111,12 +106,7 @@ function bool Start(optional bool StartPaused = false)
 	RootMC = GetVariableObject("root");
 
 	if (!bInitialized)
-	{
 		ConfigHUD();
-    `log("-----------------------------------------------------------------------");
-    `log("---------------------------------main----------------------------------");
-    `log("-----------------------------------------------------------------------");
-	}
 	
 	return true;
 }
@@ -136,25 +126,11 @@ event UpdateMousePosition(float X, float Y)
 	}
 }
 
-function findThisInPC()
-{
-	`log("I found you from HUD and PC");
-}
-
-// Sent function from ActionScript
-function getActionscript(int find)
-{
-	//`log(find);
-	//`log("I GOT THE STUPID THING!!!!!!!!!!!!!!!!!");
-}
-
-
 /*
-//
+// Show Win Message
 */
 function ShowWinMessage(string PlayerName)
 {
-	`log("I got a message" @ PlayerName);
 	if (GameWinMessageMC != none)
 	{
 		GameWinMessageMC.SetString("text", PlayerName @ "Wins!");
@@ -162,25 +138,39 @@ function ShowWinMessage(string PlayerName)
 }
 
 /*
-//
+// Show Lose Message
 */
 function ShowLoseMessage(string PlayerName)
 {
 	if (GameWinMessageMC != none)
 	{
-		GameWinMessageMC.SetString("text", PlayerName @ "Lose!");
+		GameWinMessageMC.SetString("text", PlayerName @ "Lost!");
 	}
 }
 
 /*
-//
+// Show Options after certain Timer from PC.ShowOptionTimer()
 */
-function ConfigMessages()
+simulated function ShowOptionsAfterWinOrLose()
 {
-	GameWinMessageMC = RootMC.GetObject("winmessageIns");
+	OptionButtonFunction();
 }
 
+function ShowPlayerTurnMessage(string Message)
+{
+	if (TurnMessageMC != none)
+	{
+		TurnMessageMC.SetString("text", Message);
+	}
+}
 
+function HidePlayerTurnMessage()
+{
+	if (TurnMessageMC != none)
+	{
+		TurnMessageMC.SetString("text", "");
+	}
+}
 
 /*
 // We start off by setting the initial settings
@@ -193,6 +183,11 @@ function ConfigHUD()
 	// Background
 	BackgroundMC = RootMC.GetObject("backgroundINS");
 	BackgroundMC.SetVisible(false);
+	// Indicator
+	Player01AreaMC = RootMC.GetObject("player01areaINS").GetObject("indicatorINS");
+	Player02AreaMC = RootMC.GetObject("player02areaINS").GetObject("indicatorINS");
+	Player01AreaMC.SetVisible(false);
+	Player02AreaMC.SetVisible(false);
 
 	ConfigPlayerStats();
 	ConfigAPButton();
@@ -256,8 +251,6 @@ function ConfigPlayerStats()
 			P02APTextTF = P02APareaMC.GetObject("aptextINS");
 		}
 	}
-
-	`log("GoodBye PlayerConfigStats");
 }
 
 /*
@@ -273,8 +266,9 @@ function ConfigAPButton()
 	{
 		// Add button press, mouse over, mouse out
 		ResetAPBtn.AddEventListener('CLIK_buttonPress', APResetButton);
+		ResetAPBtn.AddEventListener('CLIK_rollOver', EnableMouseCapture);
+		ResetAPBtn.AddEventListener('CLIK_rollOut', DisableMouseCapture);
 	}
-
 }
 
 
@@ -292,12 +286,16 @@ function ConfigOptionButton()
 	{
 		// Add button press, mouse over, mouse out
 		OptionBtn.AddEventListener('CLIK_buttonPress', OptionButton);
+		OptionBtn.AddEventListener('CLIK_rollOver', EnableMouseCapture);
+		OptionBtn.AddEventListener('CLIK_rollOut', DisableMouseCapture);
 	}
 	// Continue Button
 	ContinueBtn = GFxClikWidget(RootMC.GetObject("continueINS",class'GFxClikWidget'));
 	if (ContinueBtn != none)
 	{
 		ContinueBtn.AddEventListener('CLIK_buttonPress', ContinueButton);
+		ContinueBtn.AddEventListener('CLIK_rollOver', EnableMouseCapture);
+		ContinueBtn.AddEventListener('CLIK_rollOut', DisableMouseCapture);
 		ContinueBtn.SetVisible(false);
 	}
 /*
@@ -306,6 +304,8 @@ function ConfigOptionButton()
 	if (RestartBattleBtn != none)
 	{
 		RestartBattleBtn.AddEventListener('CLIK_buttonPress', RestartBattleButton);
+		RestartBattleBtn.AddEventListener('CLIK_rollOver', EnableMouseCapture);
+		RestartBattleBtn.AddEventListener('CLIK_rollOut', DisableMouseCapture);
 		RestartBattleBtn.SetVisible(false);
 	}
 */	
@@ -314,11 +314,20 @@ function ConfigOptionButton()
 	if (ReturnToTownBtn != none)
 	{
 		ReturnToTownBtn.AddEventListener('CLIK_buttonPress', ReturnToTownButton);
+		ReturnToTownBtn.AddEventListener('CLIK_rollOver', EnableMouseCapture);
+		ReturnToTownBtn.AddEventListener('CLIK_rollOut', DisableMouseCapture);
 		ReturnToTownBtn.SetVisible(false);
 	}
-	`log("GoodBye OptionButton");
 }
 
+/*
+// Configs Winning Text Message so that we can send it a message when we win or lose when the game is over.
+*/
+function ConfigMessages()
+{
+	GameWinMessageMC = RootMC.GetObject("winmessageIns");
+	TurnMessageMC = RootMC.GetObject("TurnMessageINS");
+}
 
 function SendToUC(string iconimagename)
 {
@@ -392,13 +401,13 @@ function ConfigSpells()
 			if (SpellName.bIsEnabled)
 			{
 				ThisClikButton.AddEventListener('CLIK_buttonPress', PressSpellButton);
-				ThisClikButton.AddEventListener('CLIK_rollOver', EnableMouseCapture);
-				ThisClikButton.AddEventListener('CLIK_rollOut', DisableMouseCapture);
+				ThisClikButton.AddEventListener('CLIK_rollOver', EnableMouseCaptureSpell);
+				ThisClikButton.AddEventListener('CLIK_rollOut', DisableMouseCaptureSpell);
 			}else
 			{
 				// If we can't use button set it disabled.
-				ThisClikButton.AddEventListener('CLIK_rollOver', EnableMouseCapture);
-				ThisClikButton.AddEventListener('CLIK_rollOut', DisableMouseCapture);
+				ThisClikButton.AddEventListener('CLIK_rollOver', EnableMouseCaptureSpell);
+				ThisClikButton.AddEventListener('CLIK_rollOut', DisableMouseCaptureSpell);
 				ThisClikButton.SetBool("enabled", false);	// Turns it off but removes all other things
 			//	ThisClikButton.GotoAndStop("disabled");
 			}
@@ -436,14 +445,6 @@ function ConfigSpells()
 			InformationMC.GetObject("SpellNameIns").SetString("text", SpellName.spellName[SpellName.spellNumber]);
 			InformationMC.GetObject("APNameIns").SetInt("text", SpellName.AP);
 			InformationMC.GetObject("DescNameIns").SetString("text", SpellName.Description[SpellName.spellNumber]);
-			/*
-			`log("------------------------------------------------");
-			`log(SpellIndex @ "- spellNumber =" @ SpellName.spellNumber);
-			`log(SpellIndex @ "- SpellName   =" @ SpellName.spellName[SpellName.spellNumber]);
-			`log(SpellIndex @ "- APNameIns   =" @ SpellName.AP);
-			`log(SpellIndex @ "- DescNameIns =" @ SpellName.Description[SpellName.spellNumber]);
-			`log("------------------------------------------------");
-			*/
 		}
 
 		// Set button placement
@@ -475,11 +476,10 @@ function PressSpellButton(GFxClikWidget.EventData ev)
 
 
 /*
-// Enable mouse capturing from GFxBattleUI.uc
+// Enable mouse capturing from GFxBattleUI.uc for Spell buttons
 // @param		ev		Event data generated by the CLIKwidget
-// @network				Client
 */
-function EnableMouseCapture(GFxClikWidget.EventData ev)
+function EnableMouseCaptureSpell(GFxClikWidget.EventData ev)
 {
 	local MCPlayerController PC;
 	local GFxObject PopUp;
@@ -497,11 +497,10 @@ function EnableMouseCapture(GFxClikWidget.EventData ev)
 }
 
 /*
-// Disable mouse capturing from GFxBattleUI.uc
+// Disable mouse capturing from GFxBattleUI.uc for Spell buttons
 // @param		ev		Event data generated by the CLIKwidget
-// @network				Client
 */
-function DisableMouseCapture(GFxClikWidget.EventData ev)
+function DisableMouseCaptureSpell(GFxClikWidget.EventData ev)
 {
 	local MCPlayerController PC;
 	local GFxObject PopUp;
@@ -517,6 +516,55 @@ function DisableMouseCapture(GFxClikWidget.EventData ev)
 
 	bButtonClicked = false;
 }
+
+/*
+// Enable mouse capturing from GFxBattleUI.uc for Other Buttons
+// @param		ev		Event data generated by the CLIKwidget
+*/
+function EnableMouseCapture(GFxClikWidget.EventData ev)
+{
+	local MCPlayerController PC;
+
+	// Set button hovering true so we don't walk when we click
+	PC = MCPlayerController(GetPC());
+	PC.bButtonHovering = true;
+
+	bButtonClicked = true;
+}
+
+/*
+// Disable mouse capturing from GFxBattleUI.uc for Other Buttons
+// @param		ev		Event data generated by the CLIKwidget
+*/
+function DisableMouseCapture(GFxClikWidget.EventData ev)
+{
+	local MCPlayerController PC;
+
+	// Set button hovering false so we can walk again when clicked
+	PC = MCPlayerController(GetPC());
+	PC.bButtonHovering = false;
+
+	bButtonClicked = false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
 // Set up Player Stats to link them all with Scaleform
@@ -535,50 +583,82 @@ function APResetButton(GFxClikWidget.EventData ev)
 	if (MyPawn.APf > 0.90 && MyPawn.PlayerUniqueID == 1 && !PC.bCanStartMoving)
 	{
 		MyPawn.APf = 0;
-		// Activate the Timer for next round
-		PC.SetWhoseTurn(2);
 		// Update Replication
 		MCPlayerReplication(PC.PlayerReplicationInfo).APf = MyPawn.APf;
+		// If we had a Spell here, turn it off, just for safety
+		if (PC.InstantiateSpell != none)
+		{
+			PC.InstantiateSpell.Destroy();
+			PC.InstantiateSpell = none;
+			PC.SpellTileTurnOff();
+			PC.FireTiles.Remove(0, PC.FireTiles.length);
+			PC.ClickSpell = none;
+		}
+		// Activate the Timer for next round
+		PC.SetWhoseTurn(2);
 		// Can we use FindPathsWeCanGoTo() function, yes we can to find paths
 		PC.bIsTileActive = true;
-		PC.FindPathsWeCanGoTo();
+		PC.FindPathsWeCanGoTo(MyPawn.APf);
 		// Turn off Movement so we don't start walking
 		PC.bCanStartMoving = false;
 		// Reset MoveTo Target
 		PC.ScriptedMoveTarget = none;
+		// Turn Of Spell
+		PC.bIsSpellActive = false;
+	//	PC.CheckCurrentAPCalculation();
 
 	}else if(MyPawn.APf > 0.90 && MyPawn.PlayerUniqueID == 2 && !PC.bCanStartMoving)
 	{
 		MyPawn.APf = 0;
-		PC.SetWhoseTurn(1);
 		MCPlayerReplication(PC.PlayerReplicationInfo).APf = MyPawn.APf;
+
+		if (PC.InstantiateSpell != none)
+		{
+			PC.InstantiateSpell.Destroy();
+			PC.InstantiateSpell = none;
+			PC.SpellTileTurnOff();
+			PC.FireTiles.Remove(0, PC.FireTiles.length);
+			PC.ClickSpell = none;	
+		}
+
+		PC.SetWhoseTurn(1);
 		PC.bIsTileActive = true;
-		PC.FindPathsWeCanGoTo();
+		PC.FindPathsWeCanGoTo(MyPawn.APf);
 		PC.bCanStartMoving = false;
 		PC.ScriptedMoveTarget = none;
+		PC.bIsSpellActive = false;
+		
+		
+	//	PC.CheckCurrentAPCalculation();
 	}
 }
 
-simulated function OptionButton(GFxClikWidget.EventData ev)
+function OptionButton(GFxClikWidget.EventData ev)
+{
+	OptionButtonFunction();
+}
+
+function OptionButtonFunction()
 {
 	local MCPlayerController PC;
-
 	if (OptionBtn != None)
 	{
 		PC = MCPlayerController(GetPC());
 
 		if (PC != None)
 		{
+			// Sets hovering over button so we can't use Spells any more
+			PC.bButtonHovering = true;
+			// Pauses the game
 			PC.SetPause(true);
 			// Show Buttons And Background
 			BackgroundMC.SetVisible(true);
 			ReturnToTownBtn.SetVisible(true);
 			ContinueBtn.SetVisible(true);
-			RestartBattleBtn.SetVisible(true);
+		//	RestartBattleBtn.SetVisible(true);
 		}
 	}
 }
-
 
 /*
 // Return Back in to the game
@@ -587,20 +667,21 @@ function ContinueButton(GFxClikWidget.EventData ev)
 {
 	local MCPlayerController PC;
 
-	`log("ContinueButton here");
-
 	if (ContinueBtn != None)
 	{
 		PC = MCPlayerController(GetPC());
 
 		if (PC != None)
 		{
+			// Sets hovering over button so we can't use Spells any more
+			PC.bButtonHovering = false;
+			// Unpause the game
 			PC.SetPause(false);
 			// Show Buttons And Background
 			BackgroundMC.SetVisible(false);
 			ReturnToTownBtn.SetVisible(false);
 			ContinueBtn.SetVisible(false);
-			RestartBattleBtn.SetVisible(false);
+		//	RestartBattleBtn.SetVisible(false);
 		}
 	}
 }
@@ -618,14 +699,21 @@ simulated function RestartBattleButton(GFxClikWidget.EventData ev)
 */
 simulated function ReturnToTownButton(GFxClikWidget.EventData ev)
 {
+	local MCPlayerController cMCPC;
+
+	cMCPC = MCPlayerController(GetPC());
+	
+	// Turn off Hud
 	Close(true);
-	ConsoleCommand("open town01");
-	`log("ReturnToTownButton here");
+	// Go in to PC and reset Mu;tiplayer game
+	cMCPC.QuitToMainMenu();
+
+//	ConsoleCommand("open town01");
 }
 
 
 /*
-// Updates the The Hud the entire time
+// Updates in the The Hud the entire time
 // @network					Client
 */
 function Tick(float DeltaTime)
@@ -649,7 +737,7 @@ function Tick(float DeltaTime)
 */
 function PressSpell(GFxClikWidget.EventData ev)
 {
-	`log("Something Pressed!");
+//	`log("Something Pressed!");
 }
 
 
@@ -676,8 +764,9 @@ function int getWhoseTurn()
 
 	for (i = 0; i < MyGMRep.MCPRIArray.Length ; i++)
 	{
-		// If A Player has BHaveAP true then assign him the UniqueID and return it
-		if (MyGMRep.MCPRIArray[i].bHaveAp)
+		// If A Player has BHaveAP true then assign him the UniqueID and return it, @ADDED changed to check if a player has AP instead
+	//	if (MyGMRep.MCPRIArray[i].bHaveAp)
+		if (MyGMRep.MCPRIArray[i].APf > 0)
 		{
 			setTheNumber = MyGMRep.MCPRIArray[i].PlayerUniqueID;
 			// Save this as a Global int and return later, fixes a bug so it doesn't turn to 0 when BHaveAP is switching
@@ -695,12 +784,6 @@ function int getWhoseTurn()
 */
 function setPlayerLightUpPosition(int WhatID)
 {
-	local GFxObject Player01AreaMC;;
-	local GFxObject Player02AreaMC;;
-
-	Player01AreaMC = RootMC.GetObject("player01areaINS").GetObject("indicatorINS");
-	Player02AreaMC = RootMC.GetObject("player02areaINS").GetObject("indicatorINS");
-
 	// If Player 1 then Light up his
 	if (WhatID == 1)
 	{
@@ -769,13 +852,15 @@ function SetAPButtonPosition(int WhatID)
 function GetPlayerInformation()
 {
 	local MCGameReplication MCGRep;
+	local MCPlayerController MyPC;
+	local MCPawn MyPawn;
 	local int i;
 
 
 	// Get PlayerControoler
-	MCPC = MCPlayerController(GetPC());
+	MyPC = MCPlayerController(GetPC());
 	// Get Pawn
-	MCP = MCPawn(GetPC().Pawn);
+	MyPawn = MCPawn(GetPC().Pawn);
 	// Get GameReplication
 	MCGRep = MCGameReplication(class'WorldInfo'.static.GetWorldInfo().GRI);
 
@@ -807,10 +892,10 @@ function GetPlayerInformation()
 				P01NameTF.SetString("text", MCGRep.MCPRIArray[i].PawnName);
 			}
 			// Player 01 Health Text
-			if (P01HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+			if (P01HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPC.PlayerUniqueID)
 			{
 				P01HPTextTF.SetInt("text", MCGRep.MCPRIArray[i].Health);
-			}else
+			}else if(P01HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID != MyPC.PlayerUniqueID)
 			{
 				P01HPTextTF.SetVisible(false);
 			}
@@ -818,21 +903,20 @@ function GetPlayerInformation()
 			if (P01APareaMC != none)
 			{
 				// AP Number
-			//	if (P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
-				if (P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCP.PlayerUniqueID)
+				if (MyPawn != none)
 				{
-				//	`log("PlayerUniqueID is =" @ MCGRep.MCPRIArray[i].PlayerUniqueID @ "PC ID=" @ MCPC.PlayerUniqueID);
-				//	P01APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
-					P01APNumbTF.SetString("text", string(int(MCGRep.MCPRIArray[i].APf)));
-
-					
-				}else if(P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID != MCPC.PlayerUniqueID)
-				{
-				//	`log("Other Player has=" @ MCGRep.MCPRIArray[i].APf);
-					P01APNumbTF.SetVisible(false);
+//					if (P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPC.PlayerUniqueID)
+					if (P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPawn.PlayerUniqueID)
+					{
+						P01APNumbTF.SetString("text", string(int(MCGRep.MCPRIArray[i].APf)));
+					}
+					else if(P01APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID != MyPC.PlayerUniqueID)
+					{
+						P01APNumbTF.SetVisible(false);
+					}
 				}
 				// AP Text
-				if (P01APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+				if (P01APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPC.PlayerUniqueID)
 				{
 					P01APTextTF.SetString("text", "AP");
 				}else
@@ -853,29 +937,31 @@ function GetPlayerInformation()
 				P02NameTF.SetString("text", MCGRep.MCPRIArray[i].PawnName);
 			}
 			// Player 02 Health Text
-			if (P02HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+			if (P02HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPC.PlayerUniqueID)
 			{
+			//	`log("My ID= " @ MyPC.PlayerUniqueID);
 				P02HPTextTF.SetInt("text", MCGRep.MCPRIArray[i].Health);
-			}else
+			}else if(P02HPTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID != MyPC.PlayerUniqueID)
 			{
 				P02HPTextTF.SetVisible(false);
 			}
 			// Player 02 AP Text
 			if (P02APareaMC != none)
 			{
-				// AP Number
-			//	if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
-				if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCP.PlayerUniqueID)
+				if (MyPawn != none)
 				{
-				//	P02APNumbTF.SetInt("text", MCGRep.MCPRIArray[i].APf);
-					P02APNumbTF.SetString("text", string(int(MCGRep.MCPRIArray[i].APf)));
-				}else if(P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID != MCPC.PlayerUniqueID)
-				{
-				//	`log("Other Player has=" @ MCGRep.MCPRIArray[i].APf);
-					P02APNumbTF.SetVisible(false);
+					// AP Number
+//					if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPC.PlayerUniqueID)
+					if (P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPawn.PlayerUniqueID)
+					{
+						P02APNumbTF.SetString("text", string(int(MCGRep.MCPRIArray[i].APf)));
+					}else if(P02APNumbTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID != MyPC.PlayerUniqueID)
+					{
+						P02APNumbTF.SetVisible(false);
+					}
 				}
 				// AP Text
-				if (P02APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MCPC.PlayerUniqueID)
+				if (P02APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPC.PlayerUniqueID)
 				{
 					P02APTextTF.SetString("text", "AP");
 				}else
@@ -896,9 +982,22 @@ function GetPlayerInformation()
 			RootMC.SetInt("P02currentHP", MCGRep.MCPRIArray[i].Health);
 		}
 	}
+
 }
 
 
+/*
+function findThisInPC()
+{
+	`log("I found you from HUD and PC");
+}
+
+// Sent function from ActionScript
+function getActionscript(int find)
+{
+	//`log(find);
+}
+*/
 
 
 

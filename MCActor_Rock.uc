@@ -21,7 +21,7 @@ simulated function PostBeginPlay()
 	local Vector newLocation;
 	super.PostBeginPlay();
 	newLocation = Location + vect(0,0,60);
-	if (Role != ROLE_Authority)
+	if (Role != ROLE_Authority || (WorldInfo.NetMode == NM_ListenServer) )
 		WorldInfo.MyEmitterPool.SpawnEmitter(smoke, newLocation);	
 }
 
@@ -62,7 +62,7 @@ simulated event Destroyed()
 	local Vector newLocation;
 
 	newLocation = Location + vect(0,0,60);
-	if (Role != ROLE_Authority)
+	if (Role != ROLE_Authority || (WorldInfo.NetMode == NM_ListenServer) )
 		WorldInfo.MyEmitterPool.SpawnEmitter(smoke, newLocation);	
 
 	super.Destroyed();

@@ -33,14 +33,6 @@ function bool Start(optional bool StartPaused = false)
 	return true;
 }
 
-function thingsThatWork()
-{
-	// Will set the AS var to UC var
-	RootMC.SetString("sNameAS",  MCP.OwnedWeapons[0].sItemName); 
-	RootMC.SetInt("sCostAS",  MCP.OwnedWeapons[0].Cost); 
-	RootMC.SetString("sDescAS",  MCP.OwnedWeapons[0].sDescription); 
-}
-
 /**
  * Sets the Inventory for the pawn
  */

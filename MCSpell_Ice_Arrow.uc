@@ -12,8 +12,6 @@ function Cast(MCPawn caster, MCPawn enemy)
 	local MCProjectile cIceArrow;	//	local UDKProjectile cIceArrow;
 	local Vector modifiedStart;
 
-	`log(name @ "- Activate Cast");
-
 	if (Role == Role_Authority)
 	{
 		modifiedStart = caster.Location;
@@ -22,11 +20,26 @@ function Cast(MCPawn caster, MCPawn enemy)
 		cIceArrow = Spawn(class'MCProjectileIceArrow', caster, , modifiedStart);
 		// Set Caster in MCProjectile so we can when Destroyed set movement back ON
 		cIceArrow.PawnThatShoots = caster;
-		// Add the damage
-		cIceArrow.Damage = damage;
-		// Fire the Spell
 
-		cIceArrow.Status = Status;
+		// Resistance Check
+		if (CheckResistance(caster, enemy))
+		{
+			// Add the damage
+		//	`log(self @ " - SUCCESSFUL HIT!");
+			WorldInfo.Game.Broadcast(self, self @ "- SUCCESSFUL HIT!");
+			SendAWorldMessage(spellName[spellNumber], true);
+			cIceArrow.Damage = damage;
+			// Set Status
+			cIceArrow.Status = Status;
+		}else
+		{
+		//	`log(self @ " - RESISTED!");
+			WorldInfo.Game.Broadcast(self, self @ "- RESISTED");
+			SendAWorldMessage(spellName[spellNumber], false);
+			cIceArrow.Damage = 0;
+		}
+
+		// Fire the Spell
 		cIceArrow.Init(enemy.Location - modifiedStart);
 		// Remove this Class from server
 		Destroy();
@@ -43,6 +56,16 @@ function Cast(MCPawn caster, MCPawn enemy)
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
 	local MCPlayerReplication MCPRep;
+	
+	// This does AP Check first so we can check if we can do the spell 
+	super.Activate(Caster, Enemy, PathNode, Tile);
+
+	if (Caster == none || Enemy == none)
+	{
+		`log(self @ " - Failed so Destroy() && return;");
+		Destroy();
+		return;
+	}
 
 	`log(name @ "- Activate Spell");
 	// Update Casters AP Cost
@@ -50,7 +73,7 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 	{
 		if (Caster.PlayerUniqueID == MCPRep.PlayerUniqueID)
 		{
-			Caster.APf -= AP;
+			Caster.APf -= APCost;
 			MCPRep.APf = Caster.APf;
 		}
 	}
@@ -72,8 +95,19 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 	}
 
 	// Reset Everything and check if we still have AP
-	caster.PC.bIsSpellActive = false;
-	caster.PC.CheckCurrentAPCalculation();
+//	caster.PC.bIsSpellActive = false;
+//	caster.PC.CheckCurrentAPCalculation();
+}
+
+simulated function StatusCheck(MCPawn CheckPerson)
+{/*
+	local int i;
+
+	for (i = 0; ; i++)
+	{
+		
+	}
+	*/
 }
 
 DefaultProperties

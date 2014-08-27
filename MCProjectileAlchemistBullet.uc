@@ -44,9 +44,9 @@ defaultproperties
 // ------------------------------------------------------------------------------------------------------------------------ //
 	MaxEffectDistance=7000.0
 
-	Speed=50
-	MaxSpeed=500
-	AccelRate=200
+	Speed=100
+	MaxSpeed=900
+	AccelRate=100
 
 	Damage=1
 	DamageRadius=0

@@ -7,11 +7,6 @@
 //----------------------------------------------------------------------------
 class MCSpell_Zeus_Spear extends MCSpell;
 
-function Cast(MCPawn caster, MCPawn enemy)
-{
-
-}
-
 /*
 // The Activator for all spells
 // @param	Caster			Who Casts the Spell
