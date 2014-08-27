@@ -9,17 +9,30 @@ class MCSpell_FireFan extends MCSpell;
 
 function Cast(MCPawn caster, MCPawn enemy)
 {
-	local MCProjectile firefan;
+	local MCProjectile cFireFan;
 
 	if (Role == Role_Authority)
 	{
-		firefan = Spawn(class'MCProjectileFireFan', caster, , caster.Location);
+		cFireFan = Spawn(class'MCProjectileFireFan', caster, , caster.Location);
 		// Set Caster in MCProjectile so we can when Destroyed set movement back ON
-		firefan.PawnThatShoots = caster;
-		// Add the damage
-		firefan.Damage = damage;
+		cFireFan.PawnThatShoots = caster;
+
+		// Resistance Check
+		if (CheckResistance(caster, enemy))
+		{
+			// Add the damage
+		//	`log(self @ " - SUCCESSFUL HIT!");
+			SendAWorldMessage(spellName[spellNumber], true);
+			cFireFan.Damage = damage;
+		}else
+		{
+		//	`log(self @ " - RESISTED!");
+			SendAWorldMessage(spellName[spellNumber], false);
+			cFireFan.Damage = 0;
+		}
+
 		// Fire the Spell
-		firefan.Init(enemy.Location - caster.Location);
+		cFireFan.Init(enemy.Location - caster.Location);
 		// Remove this Class from server
 		Destroy();
 	}
@@ -35,6 +48,16 @@ function Cast(MCPawn caster, MCPawn enemy)
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
 	local MCPlayerReplication MCPRep;
+	
+	// This does AP Check first so we can check if we can do the spell 
+	super.Activate(Caster, Enemy, PathNode, Tile);
+
+	if (Caster == none || Enemy == none)
+	{
+		`log(self @ " - Failed so Destroy() && return;");
+		Destroy();
+		return;
+	}
 
 	`log(name @ "- Activate Spell");
 	// Update Casters AP Cost
@@ -42,7 +65,7 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 	{
 		if (Caster.PlayerUniqueID == MCPRep.PlayerUniqueID)
 		{
-			Caster.APf -= AP;
+			Caster.APf -= APCost;
 			MCPRep.APf = Caster.APf;
 		}
 	}
@@ -63,8 +86,8 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 	}
 
 	// Reset Everything and check if we still have AP
-	caster.PC.bIsSpellActive = false;
-	caster.PC.CheckCurrentAPCalculation();
+//	caster.PC.bIsSpellActive = false;
+//	caster.PC.CheckCurrentAPCalculation();
 }
 
 DefaultProperties

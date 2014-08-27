@@ -27,7 +27,7 @@ simulated event PostBeginPlay()
 	`log("FirePoints: "   @ FirePoints);
 	`log("IcePoints: "   @ IcePoints);
 	`log("EarthPoints: "   @ EarthPoints);
-	`log("PosionPoints: "   @ PosionPoints);
+	`log("AcidPoints: "   @ AcidPoints);
 	`log("ThunderPoints: "   @ ThunderPoints);
 	`log("-------------------"); 
 	`log("currentSpells01: "   @ currentSpells01);

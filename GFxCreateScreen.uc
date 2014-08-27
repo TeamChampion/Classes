@@ -56,18 +56,20 @@ function SaveChar(string GfXName, int GfxAcademy, int GfxFire, int GfxIce, int G
 	cMCHud = MCHud(GetPC().MyHUD);
 	cMyPC = MCPlayerController(GetPC());
 
+/*
+// Archetype Pawn
+*/
+
 	// Names & Schools
 	cMCHud.CreateThisCharacter.PawnName = GfxName;
-	`log("CreateThisCharacter=" @ cMCHud.CreateThisCharacter.name @ "or" @ cMCHud.CreateThisCharacter.class @ "or" @ cMCHud.CreateThisCharacter);
-
-//	cMyPC.PlayerStruct01.PawnName = GfxName;
+	cMCHud.CreateThisCharacter.PawnName2 = GfxName;
 //	cMCHud.CreateThisCharacter.School = GfxAcademy;
-
+/*
 	// Skill Points
 	cMCHud.CreateThisCharacter.FirePoints = GfxFire;
 	cMCHud.CreateThisCharacter.IcePoints = GfxIce;
 	cMCHud.CreateThisCharacter.EarthPoints = GfxEarth;
-	cMCHud.CreateThisCharacter.PosionPoints = GfxPoison;
+	cMCHud.CreateThisCharacter.AcidPoints = GfxPoison;
 	cMCHud.CreateThisCharacter.ThunderPoints = GfxThunder;
 
 	// Current Spells
@@ -81,27 +83,31 @@ function SaveChar(string GfXName, int GfxAcademy, int GfxFire, int GfxIce, int G
 	GetSpellArchetype(GfxSpell02, 1);
 	GetSpellArchetype(GfxSpell03, 2);
 	GetSpellArchetype(GfxSpell04, 3);
-
+*/
 	// Set him Active so he spawns, save stats and remove his Hud character link
+	// bSetLevelLoadChar is required for Kismet to Spawn the Character
 	cMCHud.CreateThisCharacter.bSetLevelLoadChar = true;
 	cMCHud.CreateThisCharacter.SaveConfig();
 
-	// Add character to him as well
-	//
-
+/*
+// MCPlayerController Structs
+*/
+	// Add Character Stats From MCPlayerController Structs
 	if(cMCHud.CreateThisCharacter.name == 'P01')
 	{
 		cMyPC.PlayerStruct01.PawnName = GfxName;
 		cMyPC.PlayerStruct01.FirePoints = GfxFire;
 		cMyPC.PlayerStruct01.IcePoints = GfxIce;
 		cMyPC.PlayerStruct01.EarthPoints = GfxEarth;
-		cMyPC.PlayerStruct01.PosionPoints = GfxPoison;
+		cMyPC.PlayerStruct01.AcidPoints = GfxPoison;
 		cMyPC.PlayerStruct01.ThunderPoints = GfxThunder;
 
 		cMyPC.PlayerStruct01.currentSpells01 = GfxSpell01;
 		cMyPC.PlayerStruct01.currentSpells02 = GfxSpell02;
 		cMyPC.PlayerStruct01.currentSpells03 = GfxSpell03;
 		cMyPC.PlayerStruct01.currentSpells04 = GfxSpell04;
+
+		cMyPC.PlayerStruct01.bSetLevelLoadChar = true;
 
 		cMyPC.SaveConfig();
 	}
@@ -111,7 +117,7 @@ function SaveChar(string GfXName, int GfxAcademy, int GfxFire, int GfxIce, int G
 		cMyPC.PlayerStruct02.FirePoints = GfxFire;
 		cMyPC.PlayerStruct02.IcePoints = GfxIce;
 		cMyPC.PlayerStruct02.EarthPoints = GfxEarth;
-		cMyPC.PlayerStruct02.PosionPoints = GfxPoison;
+		cMyPC.PlayerStruct02.AcidPoints = GfxPoison;
 		cMyPC.PlayerStruct02.ThunderPoints = GfxThunder;
 
 		cMyPC.PlayerStruct02.currentSpells01 = GfxSpell01;
@@ -119,15 +125,45 @@ function SaveChar(string GfXName, int GfxAcademy, int GfxFire, int GfxIce, int G
 		cMyPC.PlayerStruct02.currentSpells03 = GfxSpell03;
 		cMyPC.PlayerStruct02.currentSpells04 = GfxSpell04;
 
+		cMyPC.PlayerStruct02.bSetLevelLoadChar = true;
+
 		cMyPC.SaveConfig();
 	}
 	else if(cMCHud.CreateThisCharacter.name == 'P03')
 	{
-		
+		cMyPC.PlayerStruct03.PawnName = GfxName;
+		cMyPC.PlayerStruct03.FirePoints = GfxFire;
+		cMyPC.PlayerStruct03.IcePoints = GfxIce;
+		cMyPC.PlayerStruct03.EarthPoints = GfxEarth;
+		cMyPC.PlayerStruct03.AcidPoints = GfxPoison;
+		cMyPC.PlayerStruct03.ThunderPoints = GfxThunder;
+
+		cMyPC.PlayerStruct03.currentSpells01 = GfxSpell01;
+		cMyPC.PlayerStruct03.currentSpells02 = GfxSpell02;
+		cMyPC.PlayerStruct03.currentSpells03 = GfxSpell03;
+		cMyPC.PlayerStruct03.currentSpells04 = GfxSpell04;
+
+		cMyPC.PlayerStruct03.bSetLevelLoadChar = true;
+
+		cMyPC.SaveConfig();
 	}
 	else if(cMCHud.CreateThisCharacter.name == 'P04')
 	{
-		
+		cMyPC.PlayerStruct04.PawnName = GfxName;
+		cMyPC.PlayerStruct04.FirePoints = GfxFire;
+		cMyPC.PlayerStruct04.IcePoints = GfxIce;
+		cMyPC.PlayerStruct04.EarthPoints = GfxEarth;
+		cMyPC.PlayerStruct04.AcidPoints = GfxPoison;
+		cMyPC.PlayerStruct04.ThunderPoints = GfxThunder;
+
+		cMyPC.PlayerStruct04.currentSpells01 = GfxSpell01;
+		cMyPC.PlayerStruct04.currentSpells02 = GfxSpell02;
+		cMyPC.PlayerStruct04.currentSpells03 = GfxSpell03;
+		cMyPC.PlayerStruct04.currentSpells04 = GfxSpell04;
+
+		cMyPC.PlayerStruct04.bSetLevelLoadChar = true;
+
+		cMyPC.SaveConfig();
 	}
 
 
@@ -143,6 +179,8 @@ function SaveChar(string GfXName, int GfxAcademy, int GfxFire, int GfxIce, int G
 // @param	SpellNumber		What Spell we add
 // @param	SpellSlot		What Slot we add it to
 */
+/*
+// @REMOVE, add spells from Pawn but we have removed it now
 function GetSpellArchetype(int SpellNumber, int SpellSlot)
 {
 	local MCSpell SpellName;
@@ -159,6 +197,7 @@ function GetSpellArchetype(int SpellNumber, int SpellSlot)
 		}
 	}
 }
+*/
 
 defaultproperties
 {

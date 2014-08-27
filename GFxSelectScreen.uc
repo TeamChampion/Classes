@@ -6,30 +6,22 @@
 //
 // Gustav Knutsson 2014-06-18
 //----------------------------------------------------------------------------
-class GFxSelectScreen extends GFxMain
-	config(MystrasConfig);
+class GFxSelectScreen extends GFxMain;
 
 // Select Player Area
 var GFxObject P01SelectAreaMC, P02SelectAreaMC, P03SelectAreaMC, P04SelectAreaMC;
-
 //Set PlayerName inside Player Area - PlayerName_Ins
 var GFxObject P01SelectNameTF, P02SelectNameTF, P03SelectNameTF, P04SelectNameTF;
-
 // Button Clicks for Selecting
 var GFxCLIKWidget P01Button, P02Button, P03Button, P04Button;
 // Switch for Characters
 var int setSwitch;
-// Save Character for Spawning
-var config int setCharacterSelect;
 
 // Characters
 var archetype Player01 P01;
 var archetype Player02 P02;
 var archetype Player03 P03;
 var archetype Player04 P04;
-
-// shop buttons
-//var GFxObject InShopMC, InShopReturnMC, InShopGoMC, InShopReturnMainMC;
 
 function bool Start(optional bool StartPaused = false)
 {
@@ -39,16 +31,13 @@ function bool Start(optional bool StartPaused = false)
 	RootMC = GetVariableObject("root");
 
 	if (!bInitialized)
-	{
 		ConfigHUD();
-	}
 
 	return true;
 }
 
 /*
 // We start off by setting the initial settings
-// @network                 Client
 */
 function ConfigHUD()
 {
@@ -57,8 +46,19 @@ function ConfigHUD()
 }
 
 /*
+// Get Name Object from flash file
+*/
+function ConfigSelectMenu()
+{
+	// Configs Player Text
+	P01SelectAreaMC = RootMC.GetObject("Player01");		if (P01SelectAreaMC != none){	P01SelectNameTF = P01SelectAreaMC.GetObject("PlayerName_Ins");	}
+	P02SelectAreaMC = RootMC.GetObject("Player02");		if (P02SelectAreaMC != none){	P02SelectNameTF = P02SelectAreaMC.GetObject("PlayerName_Ins");	}
+	P03SelectAreaMC = RootMC.GetObject("Player03");		if (P03SelectAreaMC != none){	P03SelectNameTF = P03SelectAreaMC.GetObject("PlayerName_Ins");	}
+	P04SelectAreaMC = RootMC.GetObject("Player04");		if (P04SelectAreaMC != none){	P04SelectNameTF = P04SelectAreaMC.GetObject("PlayerName_Ins");	}
+}
+
+/*
 // Updates the The Hud the entire time
-// @network                 Client
 */
 function Tick(float DeltaTime)
 {
@@ -72,36 +72,81 @@ function Tick(float DeltaTime)
 	UpdateName();
 }
 
+/*
+// Sets Character Names
+*/
+function SetCharacterCreate()
+{
+	local MCPlayerController cMCP;
+
+	cMCP = MCPlayerController(GetPC());
+
+	if (cMCP != none)
+	{
+		// Sets Bool
+		RootMC.SetBool("bDeleteChar01", cMCP.PlayerStruct01.bSetLevelLoadChar);
+		RootMC.SetBool("bDeleteChar02", cMCP.PlayerStruct02.bSetLevelLoadChar);
+		RootMC.SetBool("bDeleteChar03", cMCP.PlayerStruct03.bSetLevelLoadChar);
+		RootMC.SetBool("bDeleteChar04", cMCP.PlayerStruct04.bSetLevelLoadChar);
+
+		// Sets Pawn Name
+		if (P01SelectNameTF != none){	P01SelectNameTF.SetString("text", cMCP.PlayerStruct01.PawnName);	}
+		if (P02SelectNameTF != none){	P02SelectNameTF.SetString("text", cMCP.PlayerStruct02.PawnName);	}
+		if (P03SelectNameTF != none){	P03SelectNameTF.SetString("text", cMCP.PlayerStruct03.PawnName);	}
+		if (P04SelectNameTF != none){	P04SelectNameTF.SetString("text", cMCP.PlayerStruct04.PawnName);	}
+	}
+}
+
+/*
+// Sets Character Button Box if we have a Character, show the box so we can enter
+*/
+function SetShowPlayerSelectBox()
+{
+	local MCPlayerController cMCP;
+
+	cMCP = MCPlayerController(GetPC());
+
+	if (cMCP != none)
+	{
+		// If we have a Select Box && if the character is made
+		if(cMCP.PlayerStruct01.bSetLevelLoadChar)
+			P01SelectAreaMC.SetVisible(true);
+		else
+			P01SelectAreaMC.SetVisible(false);
+		// Player 2
+		if(cMCP.PlayerStruct02.bSetLevelLoadChar)
+			P02SelectAreaMC.SetVisible(true);
+		else
+			P02SelectAreaMC.SetVisible(false);
+		// Player 3
+		if(cMCP.PlayerStruct03.bSetLevelLoadChar)
+			P03SelectAreaMC.SetVisible(true);
+		else
+			P03SelectAreaMC.SetVisible(false);
+		// Player 4
+		if(cMCP.PlayerStruct04.bSetLevelLoadChar)
+			P04SelectAreaMC.SetVisible(true);
+		else
+			P04SelectAreaMC.SetVisible(false);
+	}
+}
+
+/*
+// Updates the Name Title If we have a character
+*/
 function UpdateName()
 {
 	local MCPlayerController cMCP;
 
 	cMCP = MCPlayerController(GetPC());
 
-	if (P01SelectNameTF != none){	P01SelectNameTF.SetString("text", cMCP.PlayerStruct01.PawnName);	}
-	if (P02SelectNameTF != none){	P02SelectNameTF.SetString("text", cMCP.PlayerStruct02.PawnName);	}
-	if (P03SelectNameTF != none){	P03SelectNameTF.SetString("text", cMCP.PlayerStruct03.PawnName);	}
-	if (P04SelectNameTF != none){	P04SelectNameTF.SetString("text", cMCP.PlayerStruct04.PawnName);	}
-
-}
-
-/*
-// Get Name Object from flash file
-*/
-function ConfigSelectMenu()
-{
-	// Configs Player Text
-	P01SelectAreaMC = RootMC.GetObject("Player01");
-	if (P01SelectAreaMC != none){	P01SelectNameTF = P01SelectAreaMC.GetObject("PlayerName_Ins");	}
-
-	P02SelectAreaMC = RootMC.GetObject("Player02");
-	if (P02SelectAreaMC != none){	P02SelectNameTF = P02SelectAreaMC.GetObject("PlayerName_Ins");	}
-
-	P03SelectAreaMC = RootMC.GetObject("Player03");
-	if (P03SelectAreaMC != none){	P03SelectNameTF = P03SelectAreaMC.GetObject("PlayerName_Ins");}
-
-	P04SelectAreaMC = RootMC.GetObject("Player04");
-	if (P04SelectAreaMC != none){	P04SelectNameTF = P04SelectAreaMC.GetObject("PlayerName_Ins");}
+	if (cMCP != none)
+	{
+		if (P01SelectNameTF != none && cMCP.PlayerStruct01.bSetLevelLoadChar){	P01SelectNameTF.SetString("text", cMCP.PlayerStruct01.PawnName);	}
+		if (P02SelectNameTF != none && cMCP.PlayerStruct02.bSetLevelLoadChar){	P02SelectNameTF.SetString("text", cMCP.PlayerStruct02.PawnName);	}
+		if (P03SelectNameTF != none && cMCP.PlayerStruct03.bSetLevelLoadChar){	P03SelectNameTF.SetString("text", cMCP.PlayerStruct03.PawnName);	}
+		if (P04SelectNameTF != none && cMCP.PlayerStruct04.bSetLevelLoadChar){	P04SelectNameTF.SetString("text", cMCP.PlayerStruct04.PawnName);	}
+	}
 }
 
 /*
@@ -133,7 +178,9 @@ function deleteChar(int CreateDelete)
 	if (CreateDelete == 4){		WhatCharToDelete(P04, 4);	}
 }
 
+/*
 // Delete the chars name and show if loaded stats then save
+*/
 function WhatCharToDelete(MCPawn WhatPawn, int PawnNumber)
 {
 	local MCPlayerController cMCP;
@@ -141,6 +188,7 @@ function WhatCharToDelete(MCPawn WhatPawn, int PawnNumber)
 	cMCP = MCPlayerController(GetPC());
 
 	// Remove name and active
+	WhatPawn.PawnName = "";
 	WhatPawn.PawnName2 = "";
 	WhatPawn.bSetLevelLoadChar = false;
 	WhatPawn.SaveConfig();
@@ -160,51 +208,8 @@ function WhatCharToDelete(MCPawn WhatPawn, int PawnNumber)
 }
 
 /*
-// Sets Character Names
-*/
-function SetCharacterCreate()
-{
-	// Sets Bool
-	RootMC.SetBool("bDeleteChar01", P01.bSetLevelLoadChar);
-	RootMC.SetBool("bDeleteChar02", P02.bSetLevelLoadChar);
-	RootMC.SetBool("bDeleteChar03", P03.bSetLevelLoadChar);
-	RootMC.SetBool("bDeleteChar04", P04.bSetLevelLoadChar);
-
-	// Sets Pawn Name
-	if (P01SelectNameTF != none){	P01SelectNameTF.SetString("text", P01.PawnName2);	}
-	if (P02SelectNameTF != none){	P02SelectNameTF.SetString("text", P02.PawnName2);	}
-	if (P03SelectNameTF != none){	P03SelectNameTF.SetString("text", P03.PawnName2);	}
-	if (P04SelectNameTF != none){	P04SelectNameTF.SetString("text", P04.PawnName2);	}
-}
-
-/*
-// Sets Character Names
-*/
-function SetShowPlayerSelectBox()
-{
-	// If we have a Select Box && if the character is made
-	if(P01.bSetLevelLoadChar)
-		P01SelectAreaMC.SetVisible(true);
-	else
-		P01SelectAreaMC.SetVisible(false);
-	// Plyaer 2
-	if(P02.bSetLevelLoadChar)
-		P02SelectAreaMC.SetVisible(true);
-	else
-		P02SelectAreaMC.SetVisible(false);
-	// Plyaer 3
-	if(P03.bSetLevelLoadChar)
-		P03SelectAreaMC.SetVisible(true);
-	else
-		P03SelectAreaMC.SetVisible(false);
-	// Plyaer 4
-	if(P04.bSetLevelLoadChar)
-		P04SelectAreaMC.SetVisible(true);
-	else
-		P04SelectAreaMC.SetVisible(false);
-}
-
 // Callback automatically called for each object in the movie with enableInitCallback enabled
+*/
 event bool WidgetInitialized(name WidgetName, name WidgetPath, GFxObject Widget)
 {
 	// Determine which widget is being initialized and handle it accordingly
@@ -232,7 +237,6 @@ event bool WidgetInitialized(name WidgetName, name WidgetPath, GFxObject Widget)
 	}
 	return true;
 }
-
 
 /*
 // Sets What Character we pressed on
@@ -266,8 +270,6 @@ DefaultProperties
 	WidgetBindings.Add((WidgetName="Player03",    WidgetClass=class'GFxCLIKWidget'))
 	WidgetBindings.Add((WidgetName="Player04",    WidgetClass=class'GFxCLIKWidget'))
 
-	// Sets s that you can type names correctly
-//	bCaptureInput=true
 	bDisplayWithHudOff=false
 	TimingMode=TM_Game
 	MovieInfo=SwfMovie'MystrasChampionFlash.menus.SelectionScreen'

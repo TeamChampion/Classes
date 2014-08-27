@@ -15,10 +15,11 @@ class MCPlayerController extends MouseInterfacePlayerController
 struct PlayerStats
 {
 	var string PawnName;
-	var int FirePoints, IcePoints, EarthPoints, PosionPoints, ThunderPoints;
+	var int FirePoints, IcePoints, EarthPoints, AcidPoints, ThunderPoints;
 	var int currentSpells01, currentSpells02, currentSpells03, currentSpells04;
 	var int Level;
 	var int Money;
+	var bool bSetLevelLoadChar;
 
 	structdefaultproperties
 	{
@@ -61,14 +62,10 @@ var  Player04 WizardArche04;
 
 //	AI Movement Variables
 ///////////////////////////////////////////////
-// Move target from last scripted action
-var Actor ScriptedMoveTarget;
-// Route from last scripted action; if valid, sets ScriptedMoveTarget with the points along the route
-var Route ScriptedRoute;
-// Setting MouseInterfaceActor to this and then assigning it to DescActor
-var Actor NewHitActor;
-// debug Actor for showing where to go
-var MCTestActor SpawnActor;
+var Actor ScriptedMoveTarget;		// Move target from last scripted action
+var Route ScriptedRoute;			// Route from last scripted action; if valid, sets ScriptedMoveTarget with the points along the route
+var Actor NewHitActor;				// Setting MouseInterfaceActor to this and then assigning it to DescActor
+var MCTestActor SpawnActor;			// debug Actor for showing where to go
 
 //	Camera calling
 ///////////////////////////////////////////////
@@ -77,46 +74,48 @@ var const MCCameraProperties CameraProperties;
 
 //	Replication Variables
 ///////////////////////////////////////////////
-// Player Unique ID
-var int PlayerUniqueID;
-var playerstart closestPlayerStart;
-var MCPawn MCPlayer;
-var MCPawn MCEnemy;
+var int PlayerUniqueID;					// Player Unique ID
+var playerstart closestPlayerStart;		// Used to set where our Player spawns and then assign ID
+var MCPawn MCPlayer;					// This Controllers Pawn
+var MCPawn MCEnemy;						// Enemy Pawn
 
 //	Others
 ///////////////////////////////////////////////
-// Struct that contains all the PathNodes, Triggers and Tiles
+// Struct that contains all the PathNodes and Tiles
 struct MCActors
 {
 	var array<MCPathNode> Paths;
-	var array<Trigger> Triggers;
 	var array<MCTile> Tiles;
 };
-// struct object
-var MCActors MCA;
-// used for turning on and off PlayerMove, so they all don\t collide
-var bool bCanStartMoving;
-// If true then we can look for places to
-var bool bIsTileActive;
-// Add Tiles to an array to later check what Tiles we are going to lightup
-var array <MCTile> CanUseTiles;
+var MCActors MCA;						// struct object
+var bool bCanStartMoving;				// used for turning on and off PlayerMove, so they all don\t collide
+var bool bIsTileActive;					// If true then we can look for places to
+var array <MCTile> TilesWeCanMoveOn;	// Add Tiles to an array to later check what Tiles we are going to lightup
 
-
-var bool bIsSpellActive;	// used to check if we have a spell in here, also used in different spells
-var MCTile ClickSpell;		// When spell is clicked this jsut show that we have it
-var bool bButtonHovering;	// From battleHud, used so we don't click on a Tile while clicking button
-var MCTile TileColor;
-var array <MCTile> FireTiles;
-var bool bDebugFlag;		// debugging flag shown, false for hiding it
-
-// 
-// New files since 2014-06-14
-// - ////////////////////////////////////////
+var bool bIsSpellActive;			// used to check if we have a spell in here, also used in different spells
+var MCTile ClickSpell;				// When spell is clicked this jsut show that we have it
+var bool bButtonHovering;			// From battleHud, used so we don't click on a Tile while clicking button
+var MCTile TileColor;				// Used for when marking Spell on an area
+var array <MCTile> FireTiles;		// What Tiles we have in a Spell area
+var bool bDebugFlag;				// debugging flag shown, false for hiding it
 var MCSpell InstantiateSpell;		// What we need to spawn the spell + use in PlayerTick, Click function for selecting spells etc
+var array <MCTile> SpellTiles;		// What Tiles we have a Spell on
 
-// OLD VARIABLES @TODO remove later on
-var bool bIsSelectingFireFountain;
-var bool bIsSelectingStoneWall;
+//----------------------------
+
+/** Whether or not we are quitting to the main menu. */
+var transient bool bQuittingToMainMenu;
+
+/** The disconnect command stored from 'NotifyDisconnect', which is to be called when cleanup is done */
+var string DisconnectCommand;
+
+/** whether or not pre-disconnect cleanup is in progress */
+var bool bCleanupInProgress;
+
+/** whether or not cleanup has finished; if false, 'NotifyDisconnect' blocks disconnection */
+var bool bCleanupComplete;
+
+
 
 // Replication block
 replication
@@ -125,93 +124,33 @@ replication
 	if (bNetDirty)
 		NewHitActor, ScriptedMoveTarget, MCA, MCPlayer, MCEnemy, bIsTileActive, HeroPawn;
 	
-//	bNetOwner && 
 	if(bNetDirty)
 		setCharacterSelect, InstantiateSpell, ClickSpell, bIsSpellActive;
 
 	if(bNetDirty)
 		PlayerEmpty, PlayerStruct01, PlayerStruct02, PlayerStruct03, PlayerStruct04;
-
 }
 
-simulated event ReplicatedEvent(name VarName)
-{
-	if(VarName == 'NewHitActor') //this variable has changed so update the clients
-		`log("changed");
-	if(VarName == 'HeroPawn') //this variable has changed so update the clients
-	{
-	//	`log("changed");
-	}
-}
 
-/*
 // Server only
-*/
 event Possess(Pawn inPawn, bool bVehicleTransition)
 {
-
-//	local UDKMOBAHeroPawnReplicationInfo UDKMOBAHeroPawnReplicationInfo;
-//	local MCPlayerReplication MCPRep;
 	super.Possess(inPawn, bVehicleTransition);
-
-//	`log("Me Get Spawn on server" @ inPawn);
-
 	MCPlayer = MCPawn(inPawn);
-/*
-	// Attempt to assign hero pawn, if it fails then abort
-	HeroPawn = MCPawn(inPawn);
-	MCPlayer = MCPawn(inPawn);
-	if (HeroPawn == None || MCPlayer == none)
-	{
-		return;
-	}
-
-	// Set This Player Replication in Pawns replication
-	HeroPawn.PlayerReplicationInfo = PlayerReplicationInfo;
-	MCPlayer.PlayerReplicationInfo = PlayerReplicationInfo;
-
-*/
-	// Restart the player controller
-//	Restart(bVehicleTransition);
 }
 
-simulated event PostBeginPlay()
+// Just a function to check to see if pawn is spawned in the game, and then sets him to Mystras Champion Pawn
+// Only on Client
+simulated function AcknowledgePossession( Pawn P )
 {
-	local MCPathNode PathNode;
-	local MCTile Tile;
-
-	ResetGame();
-
-	CameraProperties.bSetToMatch = false;
-    super.PostBeginPlay();
-
-	// Adds Tiles and PathNode in to an array if they are close to eachother
-	foreach DynamicActors(Class'MCTile', Tile)
-	{
-		foreach WorldInfo.AllNavigationPoints(Class'MCPathNode', PathNode)
-		{
-			if ( VSize(Tile.Location - PathNode.Location) < 70.0f)
-			{
-			//	`log("Tile" @ Tile @ "PathNode" @ PathNode);
-			//	`log("Tile Location    " @ Tile.Location.X @ " " @ Tile.Location.Y );
-			//	`log("PathNode Location" @ PathNode.Location.X @ " " @ PathNode.Location.Y );
-			//	`log("Vsize bitch" @ VSize(Tile.Location - PathNode.Location) );
-			//	`log("----------------------------------------------------------");
-				PathNode.bBlocked = false;
-				MCA.Paths.AddItem(PathNode);
-				continue;
-			}
-		}
-		Tile.bSpellTileMode = false;
-		Tile.bFireFountain = false;
-		MCA.Tiles.AddItem(Tile);
-		continue;
-	}
-
-	
-	// Set basic client information
-	if (Role < Role_Authority)
-	{
+    super.AcknowledgePossession(P);
+	// If we have any form of Pawn then set him to MCPawn
+    `log("AcknowledgePossession:"@ P);
+}
+reliable client function SetCharStatsClient()
+{
+//	if ( Role < Role_Authority )
+//	{
 		// Set Character Select Number
 		ResetCharSelect = setCharacterSelect;
 
@@ -240,23 +179,48 @@ simulated event PostBeginPlay()
 		// Set Characther Name
 		ResetHeroName = ResetHeroPawn.PawnName2;
 
-	//	`log("MY HERO WILL BE !!!!!!!" @ ResetHeroPawn.PawnName2);
+		`log("We have " @ PlayerEmpty.PawnName);
+		`log("We have " @ PlayerEmpty.PawnName);
+		`log("We have " @ PlayerEmpty.PawnName);
+}
+
+
+
+
+simulated event PostBeginPlay()
+{
+	CameraProperties.bSetToMatch = false;
+    super.PostBeginPlay();
+
+
+	if ( (WorldInfo.NetMode == NM_Client) )
+		SetCharStatsClient();
+	// If this is server && the one that hosted the server
+	else if ( (WorldInfo.NetMode == NM_ListenServer) && self.name == 'MCPlayerController_0')
+		SetCharStatsClient();
+//	else if ( (WorldInfo.NetMode == NM_DedicatedServer) )
+		// log do nothing
+	else if ( (WorldInfo.NetMode == NM_StandAlone) )
+	{
+		// Set hero archetype after Character Select Number
+		if (setCharacterSelect == 1)
+			PlayerEmpty = PlayerStruct01;
+		else if(setCharacterSelect == 2)
+			PlayerEmpty = PlayerStruct02;
+		else if(setCharacterSelect == 3)
+			PlayerEmpty = PlayerStruct03;
+		else if(setCharacterSelect == 4)
+			PlayerEmpty = PlayerStruct04;
+
+		// Set Characther Name
+		ResetHeroName = ResetHeroPawn.PawnName2;
 	}
-	
-/*
-	`log("----------------------------------------------");
-	`log("-- My struct for Player 2");
-	`log("----------------------------------------------");
-	`log("PlayerName: "   @ PlayerStruct02.PawnName); 
-	`log("-------------------"); 
-	`log("Spells");
-	`log("-------------------"); 
-	`log("Archetype spells 01" @ PlayerStruct02.currentSpells01);
-	`log("Archetype spells 02" @ PlayerStruct02.currentSpells02);
-	`log("Archetype spells 03" @ PlayerStruct02.currentSpells03);
-	`log("Archetype spells 04" @ PlayerStruct02.currentSpells04);
-	`log("----------------------------------------------");
-*/
+	// For Standalone game we set Character Name for Scenario
+//	if (WorldInfo.GetMapName() != "movement_test16" || WorldInfo.GetMapName() != "TestMoveAlot" )
+//	{
+
+//	}
+
 	// Adding Spells for MyArchetypeSpells, this won't add for server thou
 	if (setCharacterSelect == 1)
 	{
@@ -287,28 +251,13 @@ simulated event PostBeginPlay()
 		AddSpells(PlayerStruct04.currentSpells04, 3);
 	}
 
-	// Adding arhetypes
-
 	// Checks for Pawn, when we get him turn this off in the SetMyPawn function
-	SetTimer(0.1f, true, 'SetMyPawn');
+	SetTimer(1.0f, true, 'SetMyPawn');
 }
 
-simulated function ResetGame()
-{
-	local MCActor_Rock MyRock;
-
-	// Set Heroes
-	HeroPawn = none;
-	MCPlayer = none;
-	MCEnemy = none;
-
-	// Reset spawned things
-	foreach AllActors(Class'MCActor_Rock', MyRock)
-	{
-		MyRock.destroy();
-	}
-}
-
+/*
+// Adding Spells, @FIX for the time being just 4 spells in PostbeginPlay, make dynamic
+*/
 simulated function AddSpells(int SpellNumber, int MySpellSlot)
 {
 	local MCSpell SpellName;
@@ -325,71 +274,6 @@ simulated function AddSpells(int SpellNumber, int MySpellSlot)
 	}
 }
 
-/*
-// Sends correct Spawn number to server
-*/
-reliable server function SpawnThisNumberCharacter(int setServerChar, MCPawn setServerPawn)
-{
-	// Server only
-	if (Role == Role_Authority)
-	{
-		setCharacterSelect = setServerChar;
-
-		if (PlayerReplicationInfo != none)
-		{
-			MCPlayerReplication(PlayerReplicationInfo).setCharacterSelect = setServerChar;
-//			`log("Replicate Server NOW=" @ MCPlayerReplication(PlayerReplicationInfo).setCharacterSelect);
-		}
-
-
-		// Same thing for Hero Archetype
-		HeroPawn = setServerPawn;
-		
-		if (PlayerReplicationInfo != none)
-		{
-			MCPlayerReplication(PlayerReplicationInfo).HeroArchetype = HeroPawn;
-//			`log("Replicate Server NOW=" @ MCPlayerReplication(PlayerReplicationInfo).HeroArchetype);
-		}
-	}
-}
-
-reliable server function CheckNewData(PlayerStats MyStruct)
-{
-	if (Role == Role_Authority)
-	{
-		PlayerEmpty = MyStruct;
-		/*
-		`log("----------------------------------------------");
-		`log("Sent to Server Mother Fucker!!!!!!!!");
-		`log("----------------------------------------------");
-		`log("-- My struct for Player 2");
-		`log("----------------------------------------------");
-		`log("PlayerName: "   @ PlayerEmpty.PawnName); 
-		`log("-------------------"); 
-		`log("Spells");
-		`log("-------------------"); 
-		`log("Archetype spells 01" @ PlayerEmpty.currentSpells01);
-		`log("Archetype spells 02" @ PlayerEmpty.currentSpells02);
-		`log("Archetype spells 03" @ PlayerEmpty.currentSpells03);
-		`log("Archetype spells 04" @ PlayerEmpty.currentSpells04);
-		`log("----------------------------------------------");
-		*/
-		if (PlayerReplicationInfo != none)
-		{
-			MCPlayerReplication(PlayerReplicationInfo).PawnName = PlayerEmpty.PawnName;
-		//	MCPlayer.PawnName = PlayerEmpty.PawnName;
-
-			MCPlayerReplication(PlayerReplicationInfo).currentSpells01 = PlayerEmpty.currentSpells01;
-			MCPlayerReplication(PlayerReplicationInfo).currentSpells02 = PlayerEmpty.currentSpells02;
-			MCPlayerReplication(PlayerReplicationInfo).currentSpells03 = PlayerEmpty.currentSpells03;
-
-			MCPlayerReplication(PlayerReplicationInfo).currentSpells04 = PlayerEmpty.currentSpells04;
-
-		}
-
-	}
-}
-
 // Send from PlayercontrollerUsed in PlayerController when we set what Character Selected number we should spawn
 reliable server function SetHeroNumberServer(int setServerChar)
 {
@@ -397,7 +281,7 @@ reliable server function SetHeroNumberServer(int setServerChar)
 	{
 		setCharacterSelect = setServerChar;
 	//	SetHero();
-	//	`log("SETTING HERO!!!!!!!!!");
+		`log("SETTING SetHeroNumberServer!!!!!!!!!");
 	}
 }
 
@@ -412,42 +296,31 @@ function MCPawn MyPawnReturn(MCPawn ReturnHim)
 */
 simulated function SetMyPawn()
 {
-//	local int i;
-	local MCPawn SendToServer;
-	// During Client, send the new char to server and replicate it there
-	if (Role < Role_Authority)
-	{
-		setCharacterSelect = ResetCharSelect;
 
-		// Set Archertype
-		// Says it's P01.waas for MAC
-		// Says it's P02.Randalof for PC
-		HeroPawn = ResetHeroPawn;
-		SendToServer = MyPawnReturn(ResetHeroPawn);
-
-		SpawnThisNumberCharacter(setCharacterSelect, SendToServer);
-		CheckNewData(PlayerEmpty);
-	}
-
-	if(PlayerReplicationInfo != none)
-	{
-		if (MCPlayerReplication(PlayerReplicationInfo).PlayerUniqueID == PlayerUniqueID)
-		{
-			
-		}
-	//	MCPlayerReplication(PlayerReplicationInfo).setCharacterSelect = setCharacterSelect;
-	//	SetHero();
-	}
+	// Send Charachter Information
+	if ( (WorldInfo.NetMode == NM_Client) )
+		SendPawnInfoToServer();
+	else if ( (WorldInfo.NetMode == NM_ListenServer && self.name == 'MCPlayerController_0') )
+		SendPawnInfoToServer();
+//	else if ( (WorldInfo.NetMode == NM_DedicatedServer) )
+		// nothing
 
 	// If we have any form of Pawn then set him to MCPawn
 	if (Pawn != none)
-	{
 		MCPlayer = MCPawn(Pawn);
-	}
 
 	// If Pawn is found then stop the timer and clear the spam
 	if (MCPlayer != none)
 	{
+		// For Standalone game we set Character Name for Scenario
+		if (WorldInfo.GetMapName() != "movement_test16" || WorldInfo.GetMapName() != "TestMoveAlot")
+		{
+			if ( (WorldInfo.NetMode == NM_StandAlone) )
+			{
+				MCPlayer.PawnName = PlayerEmpty.PawnName;
+				MCPlayer.PawnName2 = PlayerEmpty.PawnName;
+			}
+		}
 		// Set PC in Pawn class
 		MCPlayer.setYourPC(self);
 		// Set unique ID to Players
@@ -455,6 +328,67 @@ simulated function SetMyPawn()
 
 		// Check to see if we have 2 chars so that we can start
 		ClearTimer('SetMyPawn');
+	}
+}
+
+reliable client function SendPawnInfoToServer()
+{
+	setCharacterSelect = ResetCharSelect;
+
+	// Set Archertype
+	HeroPawn = ResetHeroPawn;
+//	SendToServer = MyPawnReturn(ResetHeroPawn);
+
+	SpawnThisNumberCharacter(setCharacterSelect, ResetHeroPawn);	//@FIX remove this prob, not being used, but test on both comps to confirm that it is not required
+	CheckNewData(PlayerEmpty);
+}
+
+/*
+// Sends correct Spawn number to server
+// @param 		setServerChar		What charachter is selected from 1 - 4 in Select Screen
+// @param 		setServerPawn		
+*/
+reliable server function SpawnThisNumberCharacter(int setServerChar, MCPawn setServerPawn)
+{
+	// Server only
+	if (Role == Role_Authority)
+	{
+		setCharacterSelect = setServerChar;
+
+		if (PlayerReplicationInfo != none)
+			MCPlayerReplication(PlayerReplicationInfo).setCharacterSelect = setServerChar;
+
+		// Same thing for Hero Archetype
+		HeroPawn = setServerPawn;
+		
+		if (PlayerReplicationInfo != none)
+			MCPlayerReplication(PlayerReplicationInfo).HeroArchetype = HeroPawn;
+	}
+}
+
+reliable server function CheckNewData(PlayerStats MyStruct)
+{
+	if (Role == Role_Authority)
+	{
+		PlayerEmpty = MyStruct;
+		if (PlayerReplicationInfo != none)
+		{
+			// Send Name
+			MCPlayerReplication(PlayerReplicationInfo).PawnName = PlayerEmpty.PawnName;
+
+			// Send Spells
+			MCPlayerReplication(PlayerReplicationInfo).currentSpells01 = PlayerEmpty.currentSpells01;
+			MCPlayerReplication(PlayerReplicationInfo).currentSpells02 = PlayerEmpty.currentSpells02;
+			MCPlayerReplication(PlayerReplicationInfo).currentSpells03 = PlayerEmpty.currentSpells03;
+			MCPlayerReplication(PlayerReplicationInfo).currentSpells04 = PlayerEmpty.currentSpells04;
+
+			// Send Elemental Stats
+			MCPlayerReplication(PlayerReplicationInfo).ResistanceValues[0] = PlayerEmpty.FirePoints;
+			MCPlayerReplication(PlayerReplicationInfo).ResistanceValues[1] = PlayerEmpty.IcePoints;
+			MCPlayerReplication(PlayerReplicationInfo).ResistanceValues[2] = PlayerEmpty.EarthPoints;
+			MCPlayerReplication(PlayerReplicationInfo).ResistanceValues[3] = PlayerEmpty.AcidPoints;
+			MCPlayerReplication(PlayerReplicationInfo).ResistanceValues[4] = PlayerEmpty.ThunderPoints;
+		}
 	}
 }
 
@@ -469,9 +403,7 @@ simulated function findClosestPlayerStart()
 
 	// if we don't have a pawn then abort
 	if (MCPlayer == none)
-	{
 		return;
-	}
 
 	dist = 100000000000000000;
 	foreach WorldInfo.AllNavigationPoints(Class'PlayerStart', P)
@@ -504,6 +436,27 @@ simulated function findClosestPlayerStart()
 	MCPlayerReplication(PlayerReplicationInfo).APfMax = MCPlayer.APfMax;
 //	MCPlayerReplication(PlayerReplicationInfo).PawnName = MCPlayer.PawnName;
 
+	if ( (WorldInfo.NetMode == NM_ListenServer) )
+	{
+		`log("Listen - findClosestPlayerStart - PC.PlayerUniqueID =" @ PlayerUniqueID );
+		`log("Listen - findClosestPlayerStart - MCPlayer.PlayerUniqueID =" @ MCPlayer.PlayerUniqueID );
+		`log("Listen - findClosestPlayerStart - closestPlayerStart =" @ closestPlayerStart );
+		MCPlayer.changePlayerColor();
+		MCPlayer.SpawnDecal();
+	}
+	else if ( (WorldInfo.NetMode == NM_DedicatedServer) )
+	{
+		`log("Server - findClosestPlayerStart - PC.PlayerUniqueID =" @ PlayerUniqueID );
+		`log("Server - findClosestPlayerStart - MCPlayer.PlayerUniqueID =" @ MCPlayer.PlayerUniqueID );
+		`log("Server - findClosestPlayerStart - closestPlayerStart =" @ closestPlayerStart );
+	}
+	else if ( (WorldInfo.NetMode == NM_Client) )
+	{
+		`log("Client - findClosestPlayerStart - PC.PlayerUniqueID =" @ PlayerUniqueID );
+		`log("Client - findClosestPlayerStart - MCPlayer.PlayerUniqueID =" @ MCPlayer.PlayerUniqueID );
+		`log("Client - findClosestPlayerStart - closestPlayerStart =" @ closestPlayerStart );
+	}
+
 	// Start looking for Enemy Player
     SetTimer(0.5,true,'checkForTwoPlayers');
 }
@@ -515,37 +468,18 @@ function that checks if we have 2 players available at start and if so add them 
 simulated function checkForTwoPlayers()
 {
 	local MCPawn NewMCP;
-//	local int HowMany;
-	//	local int goPlus;
-//	local int i;
 	local MCGameReplication MCGRI;
-
-	// How many Pawns we find
-//	HowMany = 0;
 
 	// Get Game Replication
 	MCGRI = MCGameReplication(WorldInfo.GRI);
 
 	if (MCGRI.MCPRIArray.Length > 1)
 	{
-		// 2 or more
-/*
-		for (i = 0; i < MCGRI.MCPRIArray.length ; i++)
-		{
-			if(MCGRI.MCPRIArray[i].PlayerUniqueID == MCPlayer.PlayerUniqueID)
-			{
-				`log("Found!!!!!!!!!!");
-				MCEnemy = MCGRI.MCPRIArray[i].HeroArchetype;
-			}else
-			{
-				MCEnemy = MCGRI.MCPRIArray[i].HeroArchetype;
-				`log("-------------- no");
-			}
-		}
-*/
-
+		// Find Main Character and Enemy @TODO sometimes Enemy won't get added
 		foreach DynamicActors(class'MCPawn', NewMCP)
 		{
+		//	iFindPlay++;
+
 			if (PlayerUniqueID == NewMCP.PlayerUniqueID)
 			{
 				MCPlayer = NewMCP;
@@ -555,60 +489,23 @@ simulated function checkForTwoPlayers()
 			}
 		}
 
-		// clear this check
-		ClearTimer('checkForTwoPlayers');
-
-		// Camera Settings, set MatchMode ON and follow char at start, then we turn it off
-		CameraProperties.bSetToMatch = true;
-		CameraProperties.IsTrackingHeroPawn = true;
-		SetTimer(1.5,false,'SetCameraSettingsStart');
-
-		// Go and set the round so that Player 1 Starts the game
-		// Only use 0 this one time
-		TurnBased(0);
-	}
-/*
-
-	// check how many players we have
-	foreach AllActors(Class'MCPawn', NewMCP)
-	{
-		HowMany++;
-		continue;
-	}
-
-	// if we have 2 players then add them to the array
-	if (HowMany == 2)
-	{
-*/
-		/*
-		goPlus = 0;
-		foreach AllActors(Class'MCPawn', NewMCP)
+		// If we have an Enemy then we can go to next stage
+		if (MCEnemy != none)
 		{
-			// dynamic array
-			MyPawns.InsertItem(goPlus, NewMCP);
-			// normal array
-			//MyPlayers[goPlus] = NewMCP;
-			goPlus++;
-			continue;
-		}
-		*/
-/*
-		// set Enemy Pawn for Hud etc
-		foreach DynamicActors(class'MCPawn', NewMCP)
-		{
-			if (NewMCP != MCPlayer)
-			{
-				MCEnemy = NewMCP;
-			}
-		}
-		// clear this check
-		ClearTimer('checkForTwoPlayers');
+			// clear this check
+			ClearTimer('checkForTwoPlayers');
 
-		// Go and set the round so that Player 1 Starts the game
-		// Only use 0 this one time
-		TurnBased(0);
+			// Camera Settings, set MatchMode ON and follow char at start, then we turn it off
+			CameraProperties.bSetToMatch = true;
+			CameraProperties.IsTrackingHeroPawn = true;
+			SetTimer(1.5,false,'SetCameraSettingsStart');
+
+			// Go and set the round so that Player 1 Starts the game
+			// Only use 0 this one time	
+			TurnBased(0);
+		}
+
 	}
-*/
 }
 
 /*
@@ -626,8 +523,8 @@ reliable server function TurnBased(int TurnPlayer)
 {
 	local MCGameReplication MCPR;	// Game Replication
 	local MCPawn WhatPeople;		// All our Pawns in the game to search for
-//	local MCPlayerController cMCPC;
-//	local PlayerController PC;
+	local MCPlayerReplication MCPRep;
+	local float StoreAPf;
 
 	// Set Game Replication so we can update Rounds
 	MCPR = MCGameReplication(WorldInfo.GRI);
@@ -636,9 +533,7 @@ reliable server function TurnBased(int TurnPlayer)
 	{
 		// If it's the first round of the game. Set GameRound to 0 (Will become 4 because of 4 Chars)
 		if (TurnPlayer == 0)
-		{
 			MCPR.GameRound = 0;
-		}
 		// Add a GameRound per turn
 		MCPR.GameRound++;
 	}
@@ -646,11 +541,7 @@ reliable server function TurnBased(int TurnPlayer)
 	MCPlayerReplication(PlayerReplicationInfo).GetPlayerHealth(MCPlayer.Health);
 	// just update all Pawns all once so it doesn't fail later
 	foreach DynamicActors(Class'MCPawn', WhatPeople)
-	{
 		MCPlayerReplication(PlayerReplicationInfo).APf = WhatPeople.APf;
-	}
-
-
 
 ////////////////////////////////////////////////////////////////////////////
 	// Step 01
@@ -670,20 +561,27 @@ reliable server function TurnBased(int TurnPlayer)
 			// If we find a Player 1 then give him some AP
 			if (WhatPeople.PlayerUniqueID == TurnPlayer)
 			{
-				WhatPeople.APf = WhatPeople.APfMax;
+				// Give him his Max AP at start
+				StoreAPf += WhatPeople.APfMax;
+
+				// Give AP
+				WhatPeople.APf = StoreAPf;
+				WhatPeople.CurrentStartAPf = StoreAPf;
 				// Set Use Tile function on
-			//	WhatPeople.bSetTiles = true;	//@NOTUSING
 
 				// Update his Replication
 				MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
 
-			//	SendVictoryOrLossMessage();
-			//	GetTilesAndPaths(TurnPlayer);
-		//		SetTilePathClient(TurnPlayer, MCPlayer);
-		//		MeClient(TurnPlayer, MCPlayer);
+				// Send information to add Tiles
+				WhatPeople.PC.SendToGetTilesServer(WhatPeople.APf);
+
+				// Send Turnbased Message
+				SendTurnMessageToClient("Your Turn");
 			}else
 			{
 				// Otherwise do something to Player 2
+				// Send Turnbased Message
+				SendTurnMessageToClient("Enemy Turn");
 			}
 		}
 		return;
@@ -695,70 +593,57 @@ reliable server function TurnBased(int TurnPlayer)
 	// We set him in the right State
 ////////////////////////////////////////////////////////////////////////////
 
+
+
 	// If it's Player 1 or 2's turn then give one fo them 6 AP and the other one 0 AP
 	if (TurnPlayer == 2 || TurnPlayer == 1)
 	{
-		/*
-		foreach WorldInfo.AllControllers(class'PlayerController', PC)
-		{
-			cMCPC = MCPlayerController(PC);
-
-			if (cMCPC.MCPlayer.PlayerUniqueID == TurnPlayer)
-			{
-				// Give person AP
-				// Make a function that checks current statuses, and add that to APfMax and update the information.
-			//	WhatPeople.APf = float CalculateNewAP(WhatPeople.APf)	
-				cMCPC.MCPlayer.APf = cMCPC.MCPlayer.APfMax;
-				// Set Use Tile function on
-			//	cMCPC.MCPlayer.bSetTiles = true;	//@NOTUSING
-		//		`log("You" @ WhatPeople @ "got" @ WhatPeople.APf @ "new AP, congratulations");
-			}else
-			{
-				// Otherwise Reset AP
-				cMCPC.MCPlayer.APf = 0.0;
-		//		`log("MR" @ WhatPeople.PawnName @ "" @ WhatPeople.PlayerUniqueID @ "Got resetted");
-
-				// Update his Replication
-				MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
-			}
-		}
-		*/
-
-
-
-
-
-
-
-
-
 		// Search for replications
 		foreach DynamicActors(Class'MCPawn', WhatPeople)
 		{
 			// If we find a Player 1 then give him some AP
 			if (WhatPeople.PlayerUniqueID == TurnPlayer)
 			{
-				// Give person AP
-				// Make a function that checks current statuses, and add that to APfMax and update the information.
-			//	WhatPeople.APf = float CalculateNewAP(WhatPeople.APf)	
-				WhatPeople.APf = WhatPeople.APfMax;
+				// Initializing PlayerReplication
+				MCPRep = MCPlayerReplication(WhatPeople.PlayerReplicationInfo);
+
+				// Give him his Max AP at start
+				StoreAPf += WhatPeople.APfMax;
+
+				// Do the Buffs
+				if (MCPRep !=none)
+					StoreAPf += MCPRep.DoBuffCalculation(WhatPeople, StoreAPf);
+
+				// Store the New AP and assign it
+				WhatPeople.APf = StoreAPf;
+				WhatPeople.CurrentStartAPf = StoreAPf;
+
+				// Send information to add Tiles
+				WhatPeople.PC.SendToGetTilesServer(WhatPeople.APf);
+
+				// Do Damage to Tiles if we have Fire Fountain
+				DoTileDamage();
+
+				// Remove Spell if we have
+				if (WhatPeople.PC.bIsSpellActive)
+					WhatPeople.PC.bIsSpellActive = false;
 
 				`log("You" @ WhatPeople @ "got" @ WhatPeople.APf @ "new AP, congratulations");
 
-				// Update his Replication
-			//	MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
-
-			
-
-			//	SetTilePathClient(TurnPlayer);
+				// Send Turnbased Message
+				WhatPeople.PC.SendTurnMessageToClient("Your Turn");
 			}else
 			{
 				// Otherwise Reset AP
-				WhatPeople.APf = 0.0;
+
+				WhatPeople.APf = 0.0f;
 				`log("MR" @ WhatPeople.PawnName @ "" @ WhatPeople.PlayerUniqueID @ "Got resetted");
 
 				// Update his Replication
 				MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
+
+				// Send Turnbased Message
+				WhatPeople.PC.SendTurnMessageToClient("Enemy Turn");
 			}
 		}
 
@@ -768,214 +653,69 @@ reliable server function TurnBased(int TurnPlayer)
 
 
 	// All Characters goes to WaitForTurn state
-	GoToWaiting();
+//	GoToWaiting();
 }
 
+reliable client function SendTurnMessageToClient(string Message)
+{
+	local MCHud MCHud;
+
+	MCHud = MCHud(myHUD);
+
+	if (MCHud != none && MCHud.GFxBattleUI != none)
+	{
+		MCHud.GFxBattleUI.ShowPlayerTurnMessage(Message);
+		SetTimer(1.5f,false,'ResetSentMessage');
+	}
+}
+
+reliable client function ResetSentMessage()
+{
+	local MCHud MCHud;
+
+	MCHud = MCHud(myHUD);
+
+	if (MCHud != none && MCHud.GFxBattleUI != none)
+	{
+		MCHud.GFxBattleUI.HidePlayerTurnMessage();
+	}
+}
+
+
+
+
+
 /*
-// Function That makes Pawns go to WaitingForTurn State
+// Function That makes Pawns go to WaitingForTurn State @FIX not being used
 */
 reliable client function GoToWaiting()
 {
 	GotoState('WaitingForTurn');
 }
 
-simulated function Craps2(int ID)
+/*
+// Sends new AP client to Server so that we can setup Tiles
+// @param 		SendAP		What APf value we send from Turnbased()
+*/
+reliable server function SendToGetTilesServer(float SendAP)
 {
-	`log("2 = INSIDE CRAPS!!" @ ID @ "PC.ID=" @PlayerUniqueID @ "MCPlayer.APf=" @ MCPlayer.APf);
-	`log("2 = INSIDE CRAPS!!" @ ID @ "PC.ID=" @PlayerUniqueID @ "MCPlayer.APf=" @ MCPlayer.APf);
-	`log("2 = INSIDE CRAPS!!" @ ID @ "PC.ID=" @PlayerUniqueID @ "MCPlayer.APf=" @ MCPlayer.APf);
-	`log("2 = INSIDE CRAPS!!" @ ID @ "PC.ID=" @PlayerUniqueID @ "MCPlayer.APf=" @ MCPlayer.APf);
-	Craps2Server(ID, MCPlayer);
-	GetTilesAndPaths(ID, MCPlayer);
-}
-
-reliable server Function Craps2Server(int ID, MCPawn ServerPawn)
-{
-	`log("2 Server = INSIDE CRAPS!!" @ ID @ "PC.ID=" @PlayerUniqueID @ "MCPlayer.APf=" @ MCPlayer.APf);
-	`log("2 Server = INSIDE CRAPS!!" @ ID @ "PC.ID=" @PlayerUniqueID @ "MCPlayer.APf=" @ MCPlayer.APf);
-	`log("2 Server = INSIDE CRAPS!!" @ ID @ "PC.ID=" @PlayerUniqueID @ "MCPlayer.APf=" @ MCPlayer.APf);
-	`log("2 Server = INSIDE CRAPS!!" @ ID @ "PC.ID=" @PlayerUniqueID @ "MCPlayer.APf=" @ MCPlayer.APf);
-	`log("SentPawn =" @ ServerPawn);
-	`log("MCPlayer =" @ MCPlayer);
-	GetTilesAndPaths(ID, ServerPawn);
-}
-
-simulated function Craps()
-{
-	local MCPlayerController cMCPC;
-	local PlayerController PC;
-
-	`log("INSIDE CRAPS!!");
-	`log("INSIDE CRAPS!!");
-	`log("INSIDE CRAPS!!");
-	foreach WorldInfo.AllControllers(class'PlayerController', PC)
-	{
-		cMCPC = MCPlayerController(PC);
-
-		cMCPC.SetTilePathClient(1, cMCPC.Pawn);
-	}
-}
-
-simulated function SetTilePathClient(int TurnPlayer, Pawn MyPawn)
-{
-	// In server
-	`log("WHERE ARE WE NOW!!!!!!!!" @ TurnPlayer @ MyPawn);
-	`log("WHERE ARE WE NOW!!!!!!!!" @ TurnPlayer @ MyPawn);
-	`log("WHERE ARE WE NOW!!!!!!!!" @ TurnPlayer @ MyPawn);
-	MeClient(TurnPlayer, MyPawn);
-	MeServer(TurnPlayer, MyPawn);
-//	GetTilesAndPaths(TurnPlayer, MyPawn);
-
-//	GetTilesAndPaths(TurnPlayer);
-}
-
-reliable client function MeClient(int TurnPlayer, Pawn MyPawn)
-{
-	// On client. Both?
-	`log("This is being displayed where? Client" @ TurnPlayer @ MyPawn);
-	`log("This is being displayed where? Client" @ TurnPlayer @ MyPawn);
-	`log("This is being displayed where? Client" @ TurnPlayer @ MyPawn);
-	GetTilesAndPaths(TurnPlayer, MyPawn);
-}
-
-reliable server function MeServer(int TurnPlayer, Pawn MyPawn)
-{
-	// On client. Both?
-	`log("This is being displayed where? Server" @ TurnPlayer @ MyPawn);
-	`log("This is being displayed where? Server" @ TurnPlayer @ MyPawn);
-	`log("This is being displayed where? Server" @ TurnPlayer @ MyPawn);
-	GetTilesAndPaths(TurnPlayer, MyPawn);
+	SendToGetTilesClient(SendAP);
+	AddTilesToArray(MCPlayer.PlayerUniqueID, MCPlayer, SendAP);
 }
 
 /*
-// Just a function to check to see if pawn is spawned in the game, and then sets him to Mystras Champion Pawn
-// Only on Client
+// Sends new AP back from server to client
+// @param 		SendAP		What APf value we send from Turnbased()
 */
-simulated function AcknowledgePossession( Pawn P )
+reliable client function SendToGetTilesClient(float SendAP)
 {
-	// If we have any form of Pawn then set him to MCPawn
-
-    `log("AcknowledgePossession:"@ P);
-    super.AcknowledgePossession(P);
+	AddTilesToArray(MCPlayer.PlayerUniqueID, MCPlayer, SendAP);
 }
-
-
-simulated event Destroyed()
-{
-	Local MCHud MyMCHud;
-	local MouseInterfaceHUD MouseInterfaceHUD;
-
-	MyMCHud = MCHud(myHUD);
-	// Type cast to get our HUD
-	MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
-
-
-	if (MyMCHud.GFxBattleUI != none)
-	{
-		MyMCHud.GFxBattleUI.close(true);
-	}
-
-	if (MouseInterfaceHUD != none)
-	{
-		MouseInterfaceHUD.MouseInterfaceGFx.close(true);
-	}
-
-	if (LocalPlayer(Player) != None)
-	{
-		LocalPlayer(Player).ViewportClient.bDisableWorldRendering = false;
-	}
-
-	KillMCEnemy();
-
-	MCPlayer.Destroy();
-
-	Super.Destroyed();
-}
-
-reliable server function KillMCEnemy()
-{
-	local MCPlayerController MCPC;
-	foreach DynamicActors(class'MCPlayerController', MCPC)
-	{
-		MCPC.MCEnemy = none;
-	}
-
-	SetNewMCEnemy();
-}
-
-reliable client function SetNewMCEnemy()
-{
-	local MCPawn NewMCP;
-
-	foreach DynamicActors(class'MCPawn', NewMCP)
-	{
-		if (NewMCP != MCPlayer)
-		{
-			MCEnemy = NewMCP;
-		}
-	}
-}
-
-
-
-/*
-// Function that Turns of the Tiles after lightover
-// @NOT_USING currently not being used
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /*
 // Function that check which Tiles we can go to and add them to an Array so that we can Light them Up
 */
-reliable client function FindPathsWeCanGoTo()
+reliable client function FindPathsWeCanGoTo(float PlayerAPf)
 {
 	local int index;	// Where we start to remove/insert ni the array
 	local int i;
@@ -983,7 +723,7 @@ reliable client function FindPathsWeCanGoTo()
 	// start by setting start index for adding Tiles to 0
 	index=0;
 	// remove old Tiles so that we can add new Tiles
-	CanUseTiles.Remove(index, CanUseTiles.length);
+	TilesWeCanMoveOn.Remove(index, TilesWeCanMoveOn.length);
 
 	// do we want to add tiles
 	if (bIsTileActive)
@@ -991,20 +731,28 @@ reliable client function FindPathsWeCanGoTo()
 		// Search all of our current Tiles
 		for (i = 0; i < MCA.Tiles.Length ; i++)
 		{
-			// Only search MoveTargets that are withing a certain range from the Player. This makes it less laggy when using this function after moving etc
-			if ( VSize(MCPlayer.Location - MCA.Tiles[i].Location) < (MCPlayer.APf * ((128)+16)) )
+			if (PlayerAPf == 1.0f)
 			{
-				// find the Tiles we can move towards
-				MoveTarget = FindPathToward(MCA.Tiles[i]);
-			}else
+				// If onyl 1 AP we look for a bigger Tile range, so that if the the Player is not in the middle of the tile he searches for a bigger area to get the tiles
+				if ( VSize(MCPlayer.Location - MCA.Tiles[i].Location) < (PlayerAPf * ((128)+40)) )
+					MoveTarget = FindPathToward(MCA.Tiles[i]);
+				else
+					MoveTarget = none;
+			}
+			else if(PlayerAPf > 1.0f)
 			{
-				MoveTarget = none;
+				// Only search MoveTargets that are withing a certain range from the Player. This makes it less laggy when using this function after moving etc
+				if ( VSize(MCPlayer.Location - MCA.Tiles[i].Location) < (PlayerAPf * ((128)+16)) )
+				{
+					// find the Tiles we can move towards
+					MoveTarget = FindPathToward(MCA.Tiles[i]);
+				}else
+					MoveTarget = none;
 			}
 
 			// if we have a Movetarget, AP and if that Tiles PathNode is not blocked then add them to an Array
-			//if (MoveTarget != none && getPathAPCost() <= MCPawn.APf && !MCA.Tiles[i].PathNode.bBlocked)
 			// @BUG MCEnemy Is not found at start spawn. Find solution. (Doesn't mater if they spawn far from eachother)
-			if (MoveTarget != none && getPathAPCost() <= MCPlayer.APf && !MCA.Tiles[i].PathNode.bBlocked)
+			if (MoveTarget != none && getPathAPCost() <= PlayerAPf && !MCA.Tiles[i].PathNode.bBlocked)
 			{
 		//		`log("How Far =" @VSize(MCPlayer.Location - MCA.Tiles[i].Location));
 				if (MCEnemy != none)
@@ -1012,19 +760,17 @@ reliable client function FindPathsWeCanGoTo()
 					// Temp bug fix for the bug up here
 					if (VSize(MCEnemy.Location - MCA.Tiles[i].Location) > 50.0f)
 					{
-						CanUseTiles.InsertItem(index++,MCA.Tiles[i]);
+						TilesWeCanMoveOn.InsertItem(index++,MCA.Tiles[i]);
 					}
 				}else
 				{
-					CanUseTiles.InsertItem(index++,MCA.Tiles[i]);
+					TilesWeCanMoveOn.InsertItem(index++,MCA.Tiles[i]);
 				}
-
-				
 			}
 			else
 			{
 				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
-				// If it's not spellmode the don;t use
+				// If it's not spellmode the don't use
 			//	if(!MCA.Tiles[i].bSpellTileMode)
 			//	{
 					MCA.Tiles[i].ResetTileToNormal();
@@ -1036,6 +782,7 @@ reliable client function FindPathsWeCanGoTo()
 			}
 		}
 
+/*
 		// If he Pawn has 0 AP reset adding Tiles until next round
 		if (MCPlayer.APf == 0)
 		{
@@ -1045,7 +792,7 @@ reliable client function FindPathsWeCanGoTo()
 			// Otherwise turn of using this function
 			bIsTileActive = false;
 		}
-
+*/
 		// resets Movetarget to 0 so we don't bug out
 		MoveTarget = FindPathToward(MCPlayer);
 
@@ -1062,98 +809,97 @@ simulated function TurnTilesOn()
 {
 	local int i;
 
-	for (i = 0;i < CanUseTiles.length ; i++)
+	`log("PC - TurnTilesOn - MoveableTiles=" @ TilesWeCanMoveOn.length);
+	`log("PC - TurnTilesOn - MoveableTiles=" @ TilesWeCanMoveOn.length);
+
+	for (i = 0;i < TilesWeCanMoveOn.length ; i++)
 	{
-		if(CanUseTiles[i].bSpellTileMode)
+		if(TilesWeCanMoveOn[i].bSpellTileMode)
 		{
-		//	CanUseTiles[i].SetActiveTiles();
-		//	CanUseTiles[i].SetFireFountain();
-		//	`log("TurnTilesOn NONO" @ CanUseTiles[i]);
+		//	TilesWeCanMoveOn[i].SetActiveTiles();
+		//	TilesWeCanMoveOn[i].SetFireFountain();
 		}else
 		{
-			CanUseTiles[i].SetActiveTiles();
+			TilesWeCanMoveOn[i].SetActiveTiles();
 		}
 	}
 }
 
 /*
-// Turn of Tiles, used in certain spells
+// Turn of Tiles, used in certain spells, Mainly used inside Spells
 */
 simulated function TurnOffTiles()
 {
 	local int i;
 
-	for (i = 0;i < CanUseTiles.length ; i++)
+	for (i = 0;i < TilesWeCanMoveOn.length ; i++)
 	{
-		if(CanUseTiles[i].bSpellTileMode)
+		if(TilesWeCanMoveOn[i].bSpellTileMode)
 		{
-		//	`log("TurnOffTiles NONO" @ CanUseTiles[i]);
+		//	`log("TurnOffTiles NONO" @ TilesWeCanMoveOn[i]);
 		}else
 		{
-			CanUseTiles[i].ResetTileToNormal();
+			TilesWeCanMoveOn[i].ResetTileToNormal();
 		}
-		
 	}
 }
 
 /*
+// Used to show what Spells we have, @FIX add spells to a seperate array and from that one we control the entire maps spell Tiles
+*/
+reliable client function TurnTileSpellModeOn()
+{
+	local int i;
+
+	// If we have spells here then add them to the list
+	for (i = 0;i < SpellTiles.length ; i++)
+	{
+		if(SpellTiles[i].bSpellTileMode)
+			SpellTiles[i].ShowDisplayColor();
+	}
+}
+
+
+/*
 // Function that calculates how much it cost to a certain destination and then
-// return a number equal to what AP it should cost
+// @return 			number equal to what AP it should cost to move to that area
 */
 simulated function int getPathAPCost()
 {
-	local int i,j;
+	local int i;
+//	local int j;
 	local int NewAPCost;	// What will the AP be
-
-/*
-769.1558	6 AP
-641.3865	5 AP
-513.7321	4 AP
-386.3063	3 AP
-259.4467	2 AP
-134.7612	1 AP
-*/
-
+	local MCPathnode MyPath;
 
 	// Search all Paths to get What RouteCache we have
-	for (j = 0;j < MCA.Paths.Length; j++)
+	for (i = 0; i < RouteCache.Length; i++)
 	{
+		MyPath = MCPathNode(RouteCache[i]);
 
-		for (i = 0; i < RouteCache.Length; i++)
+		NewAPCost += MyPath.APValue;
+		// If AP is equal to AP or a little bit more then stop the search
+		if (MCPlayer.APf < NewAPCost)
 		{
-			// If they are the same then add the new AP
-			if (RouteCache[i] == MCA.Paths[j])
-			{
-				NewAPCost += MCA.Paths[j].APValue;
-				// If AP is equal to AP or a little bit more then stop the search
-				if (MCPlayer.APf < NewAPCost)
-				{
-					//`warn("You're Cost is Too much"@ NewAPCost);
-				}
-			}
+			//`warn("You're Cost is Too much"@ NewAPCost);
 		}
-		
 	}
-
 	// Return our new Cost
 	return NewAPCost;
 }
 
-
 /*
-// @NOTUSING
+// Removes previous Tiles and adds the new Tiles to an array depending on cost
+// @param 		PlayerID 		What ID we have @FIX not being used
+// @param 		MyPawn			What Pawn we send it to @FIX not being used
+// @param 		RecieveAP		What AP cost we send from Turnbased after buff calc is complete
 */
-simulated function GetTilesAndPaths(int PlayerID, Pawn MyPawn)
+simulated function AddTilesToArray(int PlayerID, MCPawn MyPawn, float RecieveAP)
 {
-	local MCPathNode PathNode;
 	local MCTile Tile;
-//	FireTiles.Remove(index, FireTiles.length);
-//	FireTiles.InsertItem(index++,MCA.Tiles[i]);
 
 	// Start by removing current once
 	MCA.Tiles.Remove(0, MCA.Tiles.length);
-	MCA.Paths.Remove(0, MCA.Paths.length);
-
+/*
 	`log("-------------------------------------------");
 	`log("-------------------------------------------");
 	`log("Current MCPlayer.PlayerUniqueID" @ MCPlayer.PlayerUniqueID);
@@ -1162,61 +908,193 @@ simulated function GetTilesAndPaths(int PlayerID, Pawn MyPawn)
 	`log("Current Sent MCPlayer" @ MyPawn);
 	`log("-------------------------------------------");
 	`log("-------------------------------------------");
-	`log("Inside foreach with" @ MCPlayer @"and AP is" @MCPlayer.APf);
+	`log("Inside foreach with" @ MCPlayer @"and AP is" @RecieveAP);
+*/
+
 	// Adds Tiles and PathNode in to an array if they are close to eachother
-	if (MCPlayer.APf > 0)
+	if (RecieveAP > 0)
 	{
-		`log("We have AP to add this");
-		
 		foreach DynamicActors(Class'MCTile', Tile)
 		{
 			// takes players current ap and check around him for every AP point + 10, (+10 is to make sure we get enought space to find it)
 		//	if ( PlayerID == MCPlayer.PlayerUniqueID && VSize(MCPlayer.Location - Tile.Location) < (MCPlayer.APf * ((128)+10)) )
-			if ( VSize(MCPlayer.Location - Tile.Location) < (MCPlayer.APf * ((128)+10)) )
-			{
-				foreach WorldInfo.AllNavigationPoints(Class'MCPathNode', PathNode)
-				{
-					if ( VSize(Tile.Location - PathNode.Location) < 70.0f)
-					{
-				//		`log("Tile" @ Tile @ "PathNode" @ PathNode);
-					//	`log("Tile Location    " @ Tile.Location.X @ " " @ Tile.Location.Y );
-					//	`log("PathNode Location" @ PathNode.Location.X @ " " @ PathNode.Location.Y );
-					//	`log("Vsize bitch" @ VSize(Tile.Location - PathNode.Location) );
-					//	`log("----------------------------------------------------------");
-						MCA.Paths.AddItem(PathNode);
-						continue;
-					}
-				}
-				
+			if ( VSize(MCPlayer.Location - Tile.Location) < (RecieveAP * ((128)+5)) )	//  < (MCPlayer.APf * ((128)+10))
+			{	
 				MCA.Tiles.AddItem(Tile);
 				continue;
 			}
 		}
-		`log("Before Sending" @ MCA.Tiles.length);
-		ClearTimer('GetTilesAndPaths');
-		
-	//			TurnOffTiles();
-	//			TurnTilesOn();
-	//	TurnTileSpellModeOn();	// If Tile has damage set here
-		
+
+		`log("We Add More Tiles" @ MCA.Tiles.length);
+
+	//	bIsTileActive = true;
+		FindPathsWeCanGoTo(RecieveAP);	// Check to where we can go
+		ClearTimer('AddTilesToArray');
 	}else
 	{
-	//	SetTimer(0.3f, true, 'GetTilesAndPaths');
+	//	SetTimer(0.3f, true, 'AddTilesToArray');
 	}
 }
 
 
-reliable client function TurnTileSpellModeOn()
+function string FindDirection(vector LocVec)
 {
-	local int i;
-	for (i = 0; i < MCA.Tiles.Length ; i++)
+	local Float FloX;
+	local Float FloY;
+
+	FloX = LocVec.x;
+	FloY = LocVec.y;
+
+	// Up
+	if(FloX <= -15)
+		return "DirUp";
+	// Down
+	else if(FloX >= 15)
+		return "DirDown";
+	// Right
+	else if(FloY <= -15)
+		return "DirRight";
+	// Left
+	else if(FloY >= 15)
+		return "DirLeft";
+}
+
+simulated function SetTileImageRotation(MCPathNode WhatPath, string Direction)
+{
+	if (WhatPath == none || Direction == "")
+		return;
+
+	if (WhatPath != none)
 	{
-		if(MCA.Tiles[i].bSpellTileMode)
+		// Her Set Tile to rotate if something
+	//	`log("-----------------------------------------------------");
+		switch (Direction)
 		{
-			MCA.Tiles[i].ShowDisplayColor();
+			case "DirUp":
+			//	`log("Up Direction");
+				WhatPath.Tile.SetArrows(Direction);
+				break;
+			case "DirDown":
+			//	`log("Down Direction");
+				WhatPath.Tile.SetArrows(Direction);
+				break;
+			case "DirRight":
+			//	`log("Right Direction");
+				WhatPath.Tile.SetArrows(Direction);
+				break;
+			case "DirLeft":
+			//	`log("Left Direction");
+				WhatPath.Tile.SetArrows(Direction);
+				break;
+
+			default:
+			//	Texture2D'mystraschampionsettings.Texture.arrowTest'
 		}
 	}
 }
+
+simulated function SetWhereToGo()
+{
+	local int i;
+	local String Direction;
+	local MCPathnode MyPath;
+
+	// Check to reset information
+	for (i = 0;i < TilesWeCanMoveOn.length ; i++)
+	{
+		if(TilesWeCanMoveOn[i].bSpellTileMode)
+		{
+		//	TilesWeCanMoveOn[i].SetActiveTiles();
+		//	TilesWeCanMoveOn[i].SetFireFountain();
+		}else if(TilesWeCanMoveOn[i].bArrowActive)
+		{
+			TilesWeCanMoveOn[i].SetArrowOFF();
+		}else
+		{
+		//	TilesWeCanMoveOn[i].SetActiveTiles();
+		}
+	}
+
+	// Search all Paths to get What RouteCache we have
+	for (i = 0; i < RouteCache.Length; i++)
+	{
+		MyPath = MCPathNode(RouteCache[i]);
+
+		// 1st Tile, check where we are from Character and Set Arrow to Point That Direction
+		if (i == 0)
+		{
+			if (MCPlayer != none && MCEnemy != none)
+			{
+				if (VSize(MCEnemy.Location - RouteCache[i].Location) < 50.0f)
+				{
+					
+				}else
+				{
+					Direction = FindDirection(MCPlayer.Location - RouteCache[i].Location);
+					// DirUp , DirDown, DirRight, DirLeft
+					SetTileImageRotation(MyPath, Direction);
+				}
+			}
+		}
+
+		// After First Tile
+		if ( (i-1) >= 0)
+		{
+			if (MCPlayer != none && MCEnemy != none)
+			{
+				if (VSize(MCEnemy.Location - RouteCache[i].Location) < 50.0f)
+				{
+					
+				}else
+				{
+					// Checks Previous one and Current one and sends it to a certain Direction
+					Direction = FindDirection(RouteCache[i-1].Location - RouteCache[i].Location);
+					// DirUp , DirDown, DirRight, DirLeft
+					SetTileImageRotation(MyPath, Direction);
+				}
+			}
+		}
+	}
+}
+
+
+/*
+// Does Damage every time we have a new round.
+*/
+reliable client function DoTileDamage()
+{
+	local int i;
+
+	`log("<========================================================================================>");
+	`log("<========================================================================================>");
+
+	// If we have spells here then add them to the list
+	for (i = 0;i < SpellTiles.length ; i++)
+	{
+		`log("PC - DoTileDamage - inside loop" @ SpellTiles.length @ "-" @ SpellTiles[i]);
+
+		// Does Damage
+		if(SpellTiles[i].bSpellTileMode && SpellTiles[i].bFireFountain)
+		{
+			SendTileInfo(SpellTiles[i]);
+		}
+		// Since it won't get removed in @RemoveTileSpellAreaClient(), we remove it here.
+		else if(!SpellTiles[i].bSpellTileMode && !SpellTiles[i].bFireFountain)
+		{
+			SpellTiles.RemoveItem(SpellTiles[i]);
+		}
+	}
+
+	`log("<========================================================================================>");
+	`log("<========================================================================================>");
+}
+
+reliable server function SendTileInfo(MCTile SendTile)
+{
+	`log("PC - SendTileInfo - Sending to Tile");
+	SendTile.NewRoundDamage();
+}
+
 
 // PlayerWalking is the main state (set by mouseinterface controller).
 // Can we go to somewhere with the current AP checks, and the press to
@@ -1227,7 +1105,7 @@ auto state PlayerWalking
 
 	function BeginState(Name PreviousStateName)
 	{
-		`log( "Welcome to" @ GetStateName() );
+	//	`log( "Welcome" @ GetStateName() @ "Player =" @ MCPlayer @ "ID =" @ PlayerUniqueID);
 		Super.BeginState(PreviousStateName);
 	}
 
@@ -1240,11 +1118,11 @@ auto state PlayerWalking
 	{
 		local int i;
 		local Actor DestActor;
-		local MouseInterfaceHUD MouseInterfaceHUD;	
+		local MouseInterfaceHUD MouseInterfaceHUD;
 		local actor HitActor;			// What Tile we are looking at
 
 		// if it's not battlemap then we return, aka if it's town or select screen don't use this function
-		if (WorldInfo.GetMapName() != "movement_test16")
+		if (WorldInfo.GetMapName() != "movement_test16")		//	TestMoveAlot, 	movement_test16
 			return;
 		// If we don't have matchmode on
 		if (!CameraProperties.bSetToMatch)
@@ -1258,18 +1136,18 @@ auto state PlayerWalking
 
 			// Do this Click if it's a Projectile Spell
 			if (InstantiateSpell != none && InstantiateSpell.Type == eProjectile){	return;	}
+
 			// Do this Click if it's an Area kind of Spell
 			else if(InstantiateSpell != none && InstantiateSpell.Type == eArea)
-			{
 				PlayerTickSpellArea(HitActor);
-			}
+
 			// Do this Click if it's an Status kind of Spell
 			else if(InstantiateSpell != none && InstantiateSpell.Type == eStatus){	return;	}
 		}
-
 		// For normal draggin mouse around with movement if click
 		else if (MCPlayer != none && !bCanStartMoving && !bIsSpellActive && CameraProperties.bSetToMatch)
 		{
+			
 			// Type cast to get our HUD
 			MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
 			// What tile
@@ -1282,17 +1160,10 @@ auto state PlayerWalking
 				{
 					if (MCA.Tiles[i].name == HitActor.name)
 					{
-						//`log("Tile" @ MCA.Tiles[i] @ "  and PathNode" @ MCA.Paths[i]);
 						// sets PathNode to DestActor
 						DestActor = MCA.Tiles[i];
 					}
 				}
-			}
-
-			// If we Just got 6 AP and if You can jump in to FindPathsWeCanGoTo() then go
-			if (MCPlayer.APf == 6 && bIsTileActive)
-			{
-				FindPathsWeCanGoTo();
 			}
 
 			// For debugging Where we can go destroys it's flag
@@ -1304,6 +1175,8 @@ auto state PlayerWalking
 					continue;
 				}
 			}
+
+
 
 			// Checking if we can move to the destination by hoovering over it
 			if (DestActor != None)
@@ -1317,8 +1190,10 @@ auto state PlayerWalking
 				// If we have a Path && if we have AP
 				if (MoveTarget != None && getPathAPCost() <= MCPlayer.APf) 
 				{
+					// Set Where we can go Arrows
+					SetWhereToGo();
 					if (bDebugFlag)
-					{				
+					{		
 						// Debugging direction where we should go to
 						for (i = 0;i < RouteCache.Length; i++)
 						{
@@ -1329,7 +1204,8 @@ auto state PlayerWalking
 				}
 			}
 		}
-		global.PlayerTick(DeltaTime);
+		
+		super.PlayerTick(DeltaTime);
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1342,6 +1218,9 @@ auto state PlayerWalking
 		local MCTile NewMCTile;
 		local int i;
 
+		if (MCPlayer.APf == 0.0f)
+			return;
+
 		if (SpawnActor != none && bDebugFlag)
 		{
 			// debug For Flag to kill them off
@@ -1351,8 +1230,6 @@ auto state PlayerWalking
 				continue;
 			}
 		}
-
-	//	TurnOffTiles();
 
 		// Type cast to get our HUD
 		MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
@@ -1367,11 +1244,11 @@ auto state PlayerWalking
 			{
 				// Do this Click if it's a Projectile Spell
 				if (InstantiateSpell != none && InstantiateSpell.Type == eProjectile){	return;	}
+
 				// Do this Click if it's an Area kind of Spell
 				else if(InstantiateSpell != none && InstantiateSpell.Type == eArea)
-				{
 					StartFireSpellArea(HitActor);
-				}
+
 				// Do this Click if it's an Status kind of Spell
 				else if(InstantiateSpell != none && InstantiateSpell.Type == eStatus){	return;	}
 			}
@@ -1491,21 +1368,16 @@ auto state PlayerWalking
 
 		// ROLE_Authority is used for the server or the machine which is controlling the actor.
 		if( Role < ROLE_Authority ) // then save this move and replicate it
-		{
 			ReplicateMove(DeltaTime, NewAccel, DCLICK_None, newRotation);
-			//ReplicateMove(DeltaTime, NewAccel, DCLICK_None, OldRotation - Rotation);
-		}
 		else
-		{
 			ProcessMove(DeltaTime, NewAccel, DCLICK_None, newRotation);
-			//ProcessMove(DeltaTime, NewAccel, DCLICK_None, OldRotation - Rotation);
-		}
+
 	//	super.PlayerMove(DeltaTime);
 	}
 
 	function EndState(Name NextStateName)
 	{
-		`log( "Bye Bye" @ GetStateName() );
+	//	`log( "Bye Bye" @ GetStateName() );
 	}
 }
 
@@ -1546,6 +1418,9 @@ function PlayerTickSpellArea(Actor ClickedTileActor)
 function StartFireSpellArea(Actor ClickedTileActor)
 {
 	local int i;
+	local int j;
+	local bool bFindActor;
+//	local MCPawn WhatPeople;
 
 	// Set What Tile is clicked
 	if (ClickedTileActor.tag == 'MouseInterfaceKActor' || ClickedTileActor.tag == 'MCTile' )
@@ -1557,6 +1432,31 @@ function StartFireSpellArea(Actor ClickedTileActor)
 				ClickSpell = FireTiles[i];
 				break;
 			}
+
+			// If it's the wrong one, we do a search
+			else if(FireTiles[i].name != ClickedTileActor.name)
+			{
+				for (j = 0; j < FireTiles.Length; j++)
+				{
+					// Find if we have this actor, if true SET, if false turn off spell
+					if (FireTiles[j].name == ClickedTileActor.name)
+						bFindActor=true;
+				}
+
+				// If we didn't find an actor before (If we press outside) Turn off spell
+				if (!bFindActor)
+				{
+					InstantiateSpell.Destroy();
+					InstantiateSpell = none;
+					SpellTileTurnOff();
+					FireTiles.Remove(0, FireTiles.length);
+					CheckCurrentAPCalculation();
+					ClickSpell = none;
+					return;
+				}
+
+			}
+
 		}
 	}
 
@@ -1564,15 +1464,25 @@ function StartFireSpellArea(Actor ClickedTileActor)
 	{
 		// This is client only, remove AP
 		`log("initialized " @ InstantiateSpell.name);
-		MCPlayer.APf -= InstantiateSpell.AP;
-		MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
 
-		// Send spell to Server to activate
+		`log("PC - StartFireSpellArea -" @ ClickSpell.RandomElement);
+		if (InstantiateSpell.SpellNumber == 21)
+		{
+			`log("--------------------------------------");
+			`log("PC - StartFireSpellArea -" @ ClickSpell.RandomElement);
+			`log("--------------------------------------");
+			ClickSpell.SetRandomElementServer(ClickSpell.RandomElement);
+		}
+		// Send spell to Server to activate, and in there also set AP
 		SendSpellToServer(MCPlayer, ClickSpell, ClickSpell.PathNode);
 	//	SendSpellToClient(MCPlayer, ClickSpell, ClickSpell.PathNode);	// not needed, inside spell we also do the client
 
+		// Add Tiles to Spell
+		if (!InstantiateSpell.bAreaDestroy)
+			SendTileSpellAreaToAllClients(ClickSpell);
+	
 		// Set spell mode off && destroy it
-		bIsSpellActive = false;
+	//	bIsSpellActive = false;	// turn off this at CheckCurrentAPCalculation()
 		InstantiateSpell.Destroy();
 		InstantiateSpell = none;
 
@@ -1588,6 +1498,74 @@ function StartFireSpellArea(Actor ClickedTileActor)
 	}
 }
 
+/*
+// Send Tiles to Clients
+// @param 		SendTile		What Affected Tile we send
+*/
+reliable server function SendTileSpellAreaToAllClients(MCTile SendTile)
+{
+	local MCPawn WhatPeople;
+
+	// Send to Clients
+	foreach DynamicActors(Class'MCPawn', WhatPeople)
+		WhatPeople.PC.SendTileSpellAreaClient(SendTile);
+}
+
+/*
+// Gets a Tile and adds it to it's Own Array that will lightup Spell Tiles
+// @param 		SendTile		What Affected Tile we send
+*/
+reliable client function SendTileSpellAreaClient(MCTile SendTile)
+{
+	// Add to all Clients here
+	SpellTiles.AddItem(SendTile);
+
+	// Send to servers
+	SendTileSpellAreaServer(SendTile);
+}
+
+/*
+// Send Tile to Server so he can send the Tile to All the Clients
+// @param 		SendTile		What Affected Tile we send
+*/
+reliable server function SendTileSpellAreaServer(MCTile SendTile)
+{
+	// Add here
+	SpellTiles.AddItem(SendTile);
+}
+
+/*
+// From MCTile ActivateDissolveElement we turn off This tile and remove it from Spell Affected Tile Array
+// @FIX It does remove it but not really, so in DoTileDamage() we actually remove it
+// @param 		SendTile		What Affected Tile we send
+*/
+reliable client function RemoveTileSpellAreaClient(MCTile SendTile)
+{
+	// Removes it from array
+	SpellTiles.RemoveItem(SendTile);
+	// Since update is slow we set it off here as well
+	SendTile.bSpellTileMode = false;
+	// We reset Tile so it can't be shown anymore
+	SendTile.ResetTileToNormal();
+	// Remove on Server
+	RemoveTileSpellAreaServer(SendTile);
+}
+
+/*
+// From MCTile ActivateDissolveElement we turn off This tile and remove it from Spell Affected Tile Array
+// @FIX It does remove it but not really, so in DoTileDamage() we actually remove it
+// @param 		SendTile		What Affected Tile we send
+*/
+reliable server function RemoveTileSpellAreaServer(MCTile SendTile)
+{
+
+	// Removes it from array
+	SpellTiles.RemoveItem(SendTile);
+	// Since update is slow we set it off here as well
+	SendTile.bSpellTileMode = false;
+	// We reset Tile so it can't be shown anymore
+	SendTile.ResetTileToNormal();
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1598,14 +1576,20 @@ function StartFireSpellArea(Actor ClickedTileActor)
 */
 state WaitingForTurn
 {
-	function BeginState(Name PreviousStateName)
+	ignores SeePlayer, HearNoise, Bump;
 
+	function BeginState(Name PreviousStateName)
 	{
 		`log( "Welcome to" @ GetStateName() );
-	//	if (MCPlayer.APf == 0)
-	//	{
-			//ChangePathOn();
-	//	}
+	}
+
+	event PushedState()
+	{
+		if (Pawn != None)
+		{
+			// make sure the pawn physics are initialized
+			Pawn.SetMovementPhysics();
+		}
 	}
 
 	function PlayerTick(float DeltaTime)
@@ -1619,8 +1603,12 @@ state WaitingForTurn
 				//GotoState('AdjustCamera');
 			}
 
-			if (MCPlayer.APf == 6 && MCEnemy.APf == 0 && !IsInState('PlayerWalking'))
+			if (MCPlayer.APf > 0 && MCEnemy.APf == 0 && !IsInState('PlayerWalking'))
 			{
+				`log("Let's Go To PlayerWalking Shall we");
+				`log("Let's Go To PlayerWalking Shall we");
+				`log("Let's Go To PlayerWalking Shall we");
+				`log("Let's Go To PlayerWalking Shall we");
 				`log("Let's Go To PlayerWalking Shall we");
 				GotoState('PlayerWalking');
 			}
@@ -1631,30 +1619,19 @@ state WaitingForTurn
 	function EndState(Name NextStateName)
 	{
 		`log( "Bye Bye" @ GetStateName() );
-	//	if (MCPlayer.APf < 6)
-	//	{
-		//	ChangePathOff();
-	//	}
+
+		// Track Hero at Start
+	//	CameraProperties.IsTrackingHeroPawn = true;
+	//	SetTimer(1.0f, false, 'EndTrackingHero');
 	}
 }
 
-//
+/*
 // When in Waiting state you set the Pawns block and ExtraCost so that the enemy can't touch him
-// @NOTUSING
-reliable client function ChangePathOff()
+*/
+function EndTrackingHero()
 {
-	local int i;
-
-	for (i = 0; i < MCA.Paths.Length ; i++)
-	{
-		if ( VSize(MCPlayer.Location - MCA.Paths[i].Location) < 50.0f )
-		{
-//			`log("Where we at" @ MCA.Paths[i]);
-		//	MCA.Paths[i].bBlocked = false;
-			MCA.Paths[i].ExtraCost = 0;
-			break;
-		}
-	}
+//	CameraProperties.IsTrackingHeroPawn = false;
 }
 
 //
@@ -1662,6 +1639,12 @@ reliable client function ChangePathOff()
 //
 reliable client function CheckCurrentAPCalculation()
 {
+	// If a Spell was active, we turn it off here
+	if (bIsSpellActive)
+		bIsSpellActive = false;
+	if (InstantiateSpell != none)
+		InstantiateSpell = none;
+
 	bCanStartMoving = true;
 
 	if (MCPlayer.APf < 0.90f && MCPlayer.PlayerUniqueID == 1 && IsInState('PlayerWalking') && bCanStartMoving)
@@ -1677,7 +1660,7 @@ reliable client function CheckCurrentAPCalculation()
 
 	bIsTileActive = true;		// sets Tiles on
 	// Change so that we update the bBlocked
-	FindPathsWeCanGoTo();
+	FindPathsWeCanGoTo(MCPlayer.APf);
 	// sets movement off
 	bCanStartMoving = false;
 	ScriptedMoveTarget = none;
@@ -1692,9 +1675,7 @@ reliable client function CheckCurrentAPCalculation()
 */
 simulated function SetWhoseTurn(int WhoseTurnIsIt)
 {
-	// Track Enemy
-//	CameraProperties.IsTrackingEnemyPawn = true;
-	//AdjustCamera
+//	DoTileDamage();
 	// Sets next person
 	if (WhoseTurnIsIt == 1)
 	{
@@ -1707,11 +1688,25 @@ simulated function SetWhoseTurn(int WhoseTurnIsIt)
 }
 
 /*
+// Removes Buffs after Our Turn is done
+*/
+reliable server function RemoveBuffAtEnd()
+{
+	local MCPlayerReplication MCPRep;
+	MCPRep = MCPlayerReplication(PlayerReplicationInfo);
+
+	if (MCPRep != none)
+		MCPRep.RemoveStatus();
+}
+
+/*
 // Cooldown until next persons round will be calculated
 // @network						Client
 */
 function TurnBasedTwo()
 {
+	// Remove buff
+	RemoveBuffAtEnd();
 //	CameraProperties.IsTrackingEnemyPawn = false;
 	TurnBased(2);
 }
@@ -1722,58 +1717,11 @@ function TurnBasedTwo()
 */
 function TurnBasedOne()
 {
+	// Remove buff
+	RemoveBuffAtEnd();
 //	CameraProperties.IsTrackingEnemyPawn = false;
 	TurnBased(1);
 }
-
-
-
-
-//
-// When in Waiting state you set the Pawns block and ExtraCost so that the enemy can't touch him
-//
-reliable server function ChangePathOn()
-{
-	local int i;
-//	local MCRock rock;
-
-	for (i = 0; i < MCA.Paths.Length ; i++)
-	{
-		if ( VSize(MCPlayer.Location - MCA.Paths[i].Location) < 50.0f)
-		{
-//			`log("Where we at" @ MCA.Paths[i]);
-			MCA.Paths[i].bBlocked = true;
-			//MCA.Paths[i].ShutDown();
-			MCA.Paths[i].ExtraCost = 500;
-		//	`log("PawnBlock =" @ MCA.Paths[i]);
-
-			//break;
-		}
-		/*else if (VSize(MCEnemy.Location - MCA.Paths[i].Location) < 50.0f)
-		{
-			MCA.Paths[i].bBlocked = true;
-			
-			MCA.Paths[i].ExtraCost = 500;
-
-		//	`log("EnemyBlock =" @ MCA.Paths[i]);
-		}
-		*/
-		else
-		{
-			MCA.Paths[i].bBlocked = false;
-			//MCA.Paths[i].ShutDown();
-			MCA.Paths[i].ExtraCost = 0;
-		//	`log("NoBlock =" @ MCA.Paths[i]);
-		}
-	}
-}
-
-
-
-
-
-
-
 
 
 
@@ -1796,9 +1744,11 @@ reliable server function ChangeAPWithMove(int RouteLength, int PlayerID)
 		if (WhatPeople.PlayerUniqueID == PlayerID)
 		{
 			`log("AP" @ WhatPeople.APf @ "-" @ RouteLength);
+
 			WhatPeople.APf -= RouteLength;
-			`log("AP is now=" @ WhatPeople.APf);
 			MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
+
+			`log("AP is now=" @ WhatPeople.APf);
 		}
 	}
 }
@@ -1818,23 +1768,23 @@ reliable client function OnAIMoveToActor()
 	// if we found a valid destination
 	if (DestActor != None)
 	{
-
-		`log("AP" @ MCPlayer.APf @ "-" @ getPathAPCost());
+	//	`log("AP" @ MCPlayer.APf @ "-" @ getPathAPCost());
 		// Calculate AP Cost
 		MCPlayer.APf -= getPathAPCost();
 		SendAPCost = getPathAPCost();
-		//MCPawn.APf = MCPlayerReplication(PlayerReplicationInfo).APf;
-		`log("AP is now=" @ MCPlayer.APf);
-		`log("SendAPCost =" @ SendAPCost);
+
 		// Enemy can also see AP reduction
-		ChangeAPWithMove(SendAPCost, MCPlayer.PlayerUniqueID);
+		// If Listen don't Enter this call @BUG gets replicated somewhere else???
+		if ( (WorldInfo.NetMode == NM_ListenServer) ){}
+		// If Client then Enter here
+		else if( (WorldInfo.NetMode == NM_Client) )
+			ChangeAPWithMove(SendAPCost, MCPlayer.PlayerUniqueID);
+		
+	//	ChangeAPWithMove(SendAPCost, MCPlayer.PlayerUniqueID);
 		
 		// Set so that we will be Walking
 		if (!IsInState('PlayerWalking'))
-		{
-			//PushState('PlayerWalking');
 			GotoState('PlayerWalking');
-		}
 
 		// Sets new actor as the Move target in PlayerMove
 		ScriptedMoveTarget = DestActor;
@@ -1884,7 +1834,7 @@ simulated function SpellTileTurnOn()
 						FireTiles[i].bDissolveElement = true;
 				}
 				// we can target it here
-				FireTiles[i].SpellMarkTileMain();
+				FireTiles[i].SpellMarkTileCurrentlySelected();
 			}
 			/*
 			// Indicate an area we are using allready, special for Dissolve Element
@@ -1902,6 +1852,14 @@ simulated function SpellTileTurnOn()
 			// Indicates LightBlue to show surrounding
 			else
 			{
+				
+				if (InstantiateSpell != none)
+				{
+					// If Spell is Dissolved Element, show a Yellow color to stop it, prob change to an X mark or something later on
+					if (InstantiateSpell.spellNumber == 25)
+						FireTiles[i].bDissolveElement = true;
+				}
+
 				FireTiles[i].SpellMarkTileArea();
 			}
 		}
@@ -2002,41 +1960,31 @@ reliable client function CheckDistanceNearPlayer()
 		// Search all of our current Tiles
 		for (i = 0; i < MCA.Tiles.Length ; i++)
 		{
-			/*
-			// find the Tiles we can move towards
-			if (bIsSelectingFireFountain && VSize(MCPlayer.Location - MCA.Tiles[i].Location) < 230.0f &&
-				VSize(MCPlayer.Location - MCA.Tiles[i].Location) > 70.0f)
-			{
-				FireTiles.InsertItem(index++,MCA.Tiles[i]);
-			}else
-			{
-				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
-				MCA.Tiles[i].ResetTileToNormal();
-			}
-			// find the Tiles we can move towards
-			if (bIsSelectingStoneWall && VSize(MCPlayer.Location - MCA.Tiles[i].Location) < 230.0f &&
-				VSize(MCPlayer.Location - MCA.Tiles[i].Location) > 70.0f &&
-				VSize(MCEnemy.Location - MCA.Tiles[i].Location) > 70.0f)
-			{
-				FireTiles.InsertItem(index++,MCA.Tiles[i]);
-			}else
-			{
-				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
-				MCA.Tiles[i].ResetTileToNormal();
-			}
-			*/
-
 			// new 2014-06-14
 			// find the Tiles we can spawn something
 			if (InstantiateSpell != none &&
 				VSize(MCPlayer.Location - MCA.Tiles[i].Location) < InstantiateSpell.fMaxSpellDistance &&
 				VSize(MCPlayer.Location - MCA.Tiles[i].Location) > InstantiateSpell.fCharacterDistance &&
-				VSize(MCEnemy.Location - MCA.Tiles[i].Location) > InstantiateSpell.fCharacterDistance)
+				VSize(MCEnemy.Location - MCA.Tiles[i].Location) > InstantiateSpell.fCharacterDistance
+				)
 			{
 				//  We Set What Tiles we can't use in here @FIX
 			//	if(!MCA.Tiles[i].PathNode.bBlocked)
 				if(InstantiateSpell.Type == eArea)
+				{
+				//	`log("PC - CheckDistanceNearPlayer -" @ InstantiateSpell.spellNumber);
+					// If UnearthMaterial
+					if (InstantiateSpell.spellNumber == 21)
+					{
+						// Turns on Special Lightup Tile
+						MCA.Tiles[i].bUnearthMaterialActive = true;
+						// Set Random Number in here
+						TestSetThings(MCA.Tiles[i], MCA.Tiles[i].SetRandomElement() );
+					//	MCA.Tiles[i].SetRandomElementServer(3);
+						`log("PC - CheckdistanceNearPlayer -" @ MCA.Tiles[i].RandomElement);
+					}
 					FireTiles.InsertItem(index++,MCA.Tiles[i]);
+				}
 			}else
 			{
 				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
@@ -2054,6 +2002,75 @@ reliable client function CheckDistanceNearPlayer()
 	}
 }
 
+reliable server function TestSetThings(MCTile WhatTile, int RandomInt)
+{
+	`log("We do things here where" @ WhatTile @ RandomInt);
+	WhatTile.SetRandomElementServer(RandomInt);
+}
+
+reliable client function CheckTeleportArea(int APValue)
+{
+	local int index;	// Where we start to remove/insert ni the array
+	local int i;
+
+	// start by setting start index for adding Tiles to 0
+	index=0;
+	// remove old Tiles so that we can add new Tiles
+	FireTiles.Remove(index, FireTiles.length);
+
+	// do we want to add tiles
+	if (bIsSpellActive)
+	{
+		// Search all of our current Tiles
+		for (i = 0; i < MCA.Tiles.Length ; i++)
+		{
+			// Only search MoveTargets that are withing a certain range from the Player. This makes it less laggy when using this function after moving etc
+			if ( VSize(MCPlayer.Location - MCA.Tiles[i].Location) < (APValue * ((128)+16)) )
+			{
+				// find the Tiles we can move towards
+				MoveTarget = FindPathToward(MCA.Tiles[i]);
+			}else
+				MoveTarget = none;
+			
+
+			// if we have a Movetarget, AP and if that Tiles PathNode is not blocked then add them to an Array
+			// @BUG MCEnemy Is not found at start spawn. Find solution. (Doesn't mater if they spawn far from eachother)
+			if (MoveTarget != none && getPathAPCost() <= APValue && !MCA.Tiles[i].PathNode.bBlocked)
+		//	if (MoveTarget != none && !MCA.Tiles[i].PathNode.bBlocked)
+			{
+		//		`log("How Far =" @VSize(MCPlayer.Location - MCA.Tiles[i].Location));
+				if (MCEnemy != none)
+				{
+					// Temp bug fix for the bug up here
+					if (VSize(MCEnemy.Location - MCA.Tiles[i].Location) > 50.0f)
+					{
+						FireTiles.InsertItem(index++,MCA.Tiles[i]);
+					}
+				}else
+				{
+					FireTiles.InsertItem(index++,MCA.Tiles[i]);
+				}
+			}
+			else
+			{
+				// Otherwise turn of other Tiles, if this is not used then it will keep all Tiles Lit up
+				if(!MCA.Tiles[i].bSpellTileMode)
+					MCA.Tiles[i].ResetTileToNormal();
+			}
+		}
+	}
+
+	// turn on the added Tiles in the Array
+	SpellTileTurnOn();
+}
+
+
+
+
+
+
+
+
 //01
 exec function MySpell(byte SpellIndex)
 {
@@ -2065,9 +2082,13 @@ exec function MySpell(byte SpellIndex)
 		return;
 	}
 
+	// If we happend to have a Spell active
+	if (bIsSpellActive)
+		bIsSpellActive = false;
+
 	// check if we have enought AP to use the spell
-	if (MyArchetypeSpells[SpellIndex].AP <= MCPlayer.APf)
-	{
+//	if (MyArchetypeSpells[SpellIndex].AP <= MCPlayer.APf)
+//	{
 		// If this is on the client, then sync with the server
 		if (Role < Role_Authority)
 		{
@@ -2077,12 +2098,12 @@ exec function MySpell(byte SpellIndex)
 
 		// Begin casting the spell
 		BeginActivatingSpell(SpellIndex);
-	}
+//	}
 	// Show message that says we don&t have enought AP
-	else
-	{
-		`log("Not enought AP, missing" @ MyArchetypeSpells[SpellIndex].AP - MCPlayer.APf);
-	}
+//	else
+//	{
+//		`log("Not enought AP, missing" @ MyArchetypeSpells[SpellIndex].AP - MCPlayer.APf);
+//	}
 }
 
 //02
@@ -2130,6 +2151,11 @@ protected simulated function BeginActivatingSpell(byte SpellIndex)
 	InstantiateSpell.Activate(MCPlayer, MCEnemy);
 }
 
+simulated function ActivateOnEnemy()
+{
+	
+}
+
 /*
 // Takes the Information from ClickButton and sends it in to the spell so it can Spawn on server & client
 */
@@ -2137,12 +2163,30 @@ protected reliable server function SendSpellToServer(MCPawn Caster, MCTile WhatT
 {
 	if(Role == Role_Authority)
 	{
-		// Start by Reducing AP on server
-		MCPlayer.APf -= InstantiateSpell.AP;
-		MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
+		// check if We have AP to cast spell
+		if (InstantiateSpell.APCost <= MCPlayer.APf)
+		{
+			// Start by Reducing AP on server
+			MCPlayer.APf -= InstantiateSpell.APCost;
+			MCPlayerReplication(PlayerReplicationInfo).APf = MCPlayer.APf;
 
-		`log("We Are sending Spell to Server" @InstantiateSpell);
-		InstantiateSpell.CastClickSpellServer(Caster, WhatTile, PathNode);
+			`log("PC - SendSpellToServer -" @ WhatTile.RandomElement);
+
+			`log("We Are sending Spell to Server" @InstantiateSpell);
+			InstantiateSpell.CastClickSpellServer(Caster, WhatTile, PathNode);
+		}
+
+		else
+		{
+			// We don't have AP, Reset all
+			InstantiateSpell.Destroy();
+			InstantiateSpell = none;
+			SpellTileTurnOff();
+			FireTiles.Remove(0, FireTiles.length);
+			CheckCurrentAPCalculation();
+			ClickSpell = none;
+		}
+
 
 	//	InstantiateSpell.MeSpawn(WhatTile);
 	}else
@@ -2193,6 +2237,7 @@ reliable client function SendLossMessage()
 	if (cMCHud != none)
 	{
 		cMCHud.GFxBattleUI.ShowLoseMessage(MCPlayerReplication(PlayerReplicationInfo).PawnName);
+		SetTimer(10.0f,false,'ShowOptionTimer');
 	}
 }
 
@@ -2205,8 +2250,261 @@ reliable client function SendWinMessage()
 	if (cMCHud != none)
 	{
 		cMCHud.GFxBattleUI.ShowWinMessage(MCPlayerReplication(PlayerReplicationInfo).PawnName);
+		SetTimer(10.0f,false,'ShowOptionTimer');
 	}
 }
+
+simulated function ShowOptionTimer()
+{
+	local MCHud cMCHud;
+
+	cMCHud = MCHud(myHUD);
+	if (cMCHud != none)
+	{
+		cMCHud.GFxBattleUI.ShowOptionsAfterWinOrLose();
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//	Are we using ??? ??? ??? ???
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+// When this class is destroyed, remove movieclip + Pawn
+*/
+simulated event Destroyed()
+{
+	Local MCHud MyMCHud;
+	local MouseInterfaceHUD MouseInterfaceHUD;
+
+	MyMCHud = MCHud(myHUD);
+	// Type cast to get our HUD
+	MouseInterfaceHUD = MouseInterfaceHUD(myHUD);
+
+
+	if (MyMCHud.GFxBattleUI != none)
+	{
+		MyMCHud.GFxBattleUI.close(true);
+	}
+
+	if (MouseInterfaceHUD != none)
+	{
+		MouseInterfaceHUD.MouseInterfaceGFx.close(true);
+	}
+
+	if (LocalPlayer(Player) != None)
+	{
+		LocalPlayer(Player).ViewportClient.bDisableWorldRendering = false;
+	}
+
+	KillMCEnemy();
+
+	MCPlayer.Destroy();
+
+	Super.Destroyed();
+}
+
+// ??????????????????????????
+reliable server function KillMCEnemy()
+{
+	local MCPlayerController MCPC;
+	foreach DynamicActors(class'MCPlayerController', MCPC)
+	{
+		MCPC.MCEnemy = none;
+	}
+
+	SetNewMCEnemy();
+}
+reliable client function SetNewMCEnemy()
+{
+	local MCPawn NewMCP;
+
+	foreach DynamicActors(class'MCPawn', NewMCP)
+	{
+		if (NewMCP != MCPlayer)
+		{
+			MCEnemy = NewMCP;
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Things for Lan, When we select exit, it resets the online Game so that we can rehost, and when a player is forced out the same thing occurs.
+// Does'nt work with doing a 'open map' command in console. Must be exited properly
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------
+*/
+
+// NOTE: This never gets called, 'NotifyDisconnect' handles this instead
+exec function Disconnect()
+{
+	QuitToMainMenu();
+}
+
+/**
+ * Triggered when the 'disconnect' console command is called, to allow cleanup before disconnecting (e.g. for the online subsystem)
+ * NOTE: If you block disconnect, store the 'Command' parameter, and trigger ConsoleCommand(Command) when done; be careful to avoid recursion
+ *
+ * @param Command	The command which triggered disconnection, e.g. "disconnect" or "disconnect local" (can parse additional parameters here)
+ * @return		Return True to block the disconnect command from going through, if cleanup can't be completed immediately
+ */
+event bool NotifyDisconnect(string Command)
+{
+	// "disconnect force" forces a disconnect, without cleanup
+	if (Right(Command, 6) ~= " force" || InStr(Command, " force ", true, true) != INDEX_None)
+		return false;
+
+
+	// Call QuitToMainMenu to start the cleanup process
+	if (!bCleanupInProgress)
+	{
+		DisconnectCommand = Command;
+		QuitToMainMenu();
+	}
+
+	// Only block the disconnect command, if a cleanup is in progress, and it has not yet completed
+	return bCleanupInProgress && !bCleanupComplete;
+}
+
+/** Called when returning to the main menu. */
+function QuitToMainMenu()
+{
+	bCleanupInProgress = true;
+	bQuittingToMainMenu = true;
+
+	if(CleanupOnlineSubsystemSession(true)==false)
+	{
+		`Log("UTPlayerController::QuitToMainMenu() - Online cleanup failed, finishing quit.");
+		FinishQuitToMainMenu();
+	}
+}
+
+/** Called after onlinesubsystem game cleanup has completed. */
+function FinishQuitToMainMenu()
+{
+	// stop any movies currently playing before we quit out
+	class'Engine'.static.StopMovie(true);
+
+	bCleanupComplete = true;
+
+	// Call disconnect to force us back to the menu level
+	if (DisconnectCommand != "")
+	{
+		ConsoleCommand(DisconnectCommand);
+		DisconnectCommand = "";
+	}
+	else
+	{
+		ConsoleCommand("Disconnect");
+	}
+
+	`Log("------ QUIT TO MAIN MENU --------");
+}
+
+
+/** Cleans up online subsystem game sessions and posts stats if the match is arbitrated. */
+function bool CleanupOnlineSubsystemSession(bool bWasFromMenu)
+{
+	local OnlineGameSettings CurGameSettings;
+	local bool bSuccess;
+
+	if (WorldInfo.NetMode != NM_Standalone && OnlineSub != none && OnlineSub.GameInterface != none)
+	{
+		CurGameSettings = OnlineSub.GameInterface.GetGameSettings('Game');
+	}
+
+	if (CurGameSettings != none)
+	{
+		// If StartOnlineGame has not been called, destroy the online session immediately
+		if (CurGameSettings.GameState != OGS_InProgress)
+		{
+			OnlineSub.GameInterface.AddDestroyOnlineGameCompleteDelegate(OnDestroyOnlineGameComplete);
+			OnlineSub.GameInterface.DestroyOnlineGame('Game');
+		}
+		else
+		{
+			// Set the end delegate so we can know when that is complete and call destroy
+			OnlineSub.GameInterface.AddEndOnlineGameCompleteDelegate(OnEndOnlineGameComplete);
+			OnlineSub.GameInterface.EndOnlineGame('Game');
+		}
+
+		bSuccess = true;
+	}
+
+	return bSuccess;
+}
+
+
+/**
+ * Called when the online game has finished ending.
+ */
+function OnEndOnlineGameComplete(name SessionName, bool bWasSuccessful)
+{
+	OnlineSub.GameInterface.ClearEndOnlineGameCompleteDelegate(OnEndOnlineGameComplete);
+
+	if (bQuittingToMainMenu)
+	{
+		// Now we can destroy the game (NOTE: If DestroyOnlineGame returns false, it will still trigger the delegate)
+		OnlineSub.GameInterface.AddDestroyOnlineGameCompleteDelegate(OnDestroyOnlineGameComplete);
+		OnlineSub.GameInterface.DestroyOnlineGame('Game');
+	}
+}
+
+/**
+ * Called when the destroy online game has completed. At this point it is safe
+ * to travel back to the menus
+ *
+ * @param SessionName the name of the session the event is for
+ * @param bWasSuccessful whether it worked ok or not
+ */
+function OnDestroyOnlineGameComplete(name SessionName, bool bWasSuccessful)
+{
+	OnlineSub.GameInterface.ClearDestroyOnlineGameCompleteDelegate(OnDestroyOnlineGameComplete);
+	FinishQuitToMainMenu();
+}
+
+
+
+
+
 
 
 

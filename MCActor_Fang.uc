@@ -19,7 +19,7 @@ Replication
 simulated function PostBeginPlay()
 {
 	super.PostBeginPlay();
-	if (Role != ROLE_Authority)
+	if (Role != ROLE_Authority || (WorldInfo.NetMode == NM_ListenServer) )
 		WorldInfo.MyEmitterPool.SpawnEmitter(smoke, Location);
 	//`log(""@Components.FangMesh);
 }
