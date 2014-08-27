@@ -12,13 +12,6 @@ Simulated function PostBeginPlay()
 	super.PostBeginPlay();
 }
 
-simulated event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
-{
-	super.Touch(Other, OtherComp, HitLocation, HitNormal);
-//	`log(self @"Touched" @ Other);
-	///
-}
-
 defaultproperties
 {
 	// The particle system used to visually represents the projectile.
@@ -33,11 +26,11 @@ defaultproperties
 	AccelRate=2000
 
 	Damage=30
-	DamageRadius=16
+	DamageRadius=50
 	MomentumTransfer=0
 	CheckRadius=36.0
 	//0.19
-	LifeSpan=0.19
+	LifeSpan=0.50
 	NetCullDistanceSquared=+144000000.0
 	MaxEffectDistance=7000.0
 	bCollideWorld=true
@@ -53,6 +46,7 @@ defaultproperties
 	// Static Mesh
 	Begin object class=StaticMeshComponent Name=BaseMesh
 		StaticMesh(0)=StaticMesh'MystrasChampionSpells.StaticMesh.SpearOfIce'
+	//	StaticMesh(0)=StaticMesh'MystrasChampionSpells.StaticMesh.IceSpikeMesh'
 	//	Scale3D=(X=1,Y=1,Z=1)
 		Scale=1
 	//	BlockActors = false

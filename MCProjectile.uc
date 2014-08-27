@@ -15,12 +15,108 @@ var ParticleSystem MCProjFlightTemplate;
 var ParticleSystem MCProjExplosionTemplate;
 // Status we can give to the Enemy
 var MCStatus Status;
+// Set Spell ID in here so we can send it to MCStatus
+var int spellNumber;
 
 replication
 {
   // Replicate only if the values are dirty and from server to client
   if (bNetDirty)
-    MCProjFlightTemplate, MCProjExplosionTemplate, Status;
+    MCProjFlightTemplate, MCProjExplosionTemplate, Status, spellNumber;
+}
+
+simulated event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
+{
+	local MCPawn Target;
+	local MCStatus AddStatus;
+
+	// who, cylinder compnent, loc, 
+
+	// If we have a Status that we are using
+	if (Status != none)
+	{
+		// Find Attacked Person
+		foreach DynamicActors(Class'MCPawn', Target)
+		{
+			if (Other == Target)
+			{
+			//	`log("This Person is the same" @ Other @ Target);
+				break;
+			}
+		}
+
+		if (Target != none)
+		{
+			// Initialize it, the certain class of the Status.
+			AddStatus = Spawn(Status.class);
+
+			// Add the archetype inside here
+			AddStatus.StatusName = Status.StatusName;
+			AddStatus.StatusDamage = Status.StatusDamage;
+			AddStatus.StatusDuration = Status.StatusDuration;
+			// If we have a Specific Spell Number than add that
+			if (spellNumber != 0)
+			{
+				AddStatus.spellNumber = spellNumber;
+				AddStatus.SetDifferentSpellDamageAndAP();
+			}
+
+			// In here set the Status link, only on Server
+			if ((WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_ListenServer) )
+			{
+				// Server
+				AddSpellServer(Target,AddStatus);
+			}
+		}
+		AddStatus.Destroy();
+	}
+
+	super.Touch(Other, OtherComp, HitLocation, HitNormal);
+}
+/*
+`log("---------------------------------------------");
+`log("Find PlayerReplication=" @ Target.PlayerReplicationInfo);
+`log("Find PlayerController =" @ Target.PC);
+`log("Find AP =" @ Target.APf);
+`log("---------------------------------------------");
+`log("Do we have a MCStatus" @ Status);
+`log("StatusName =" @ Status.StatusName);
+`log("StatusDamage.AP =" @ Status.StatusDamage.AP);
+`log("StatusDamage.DamagePercent =" @ Status.StatusDamage.DamagePercent);
+`log("StatusDamage.Damage =" @ Status.StatusDamage.Damage);
+`log("StatusDurration =" @ Status.StatusDuration);
+`log("---------------------------------------------");
+*/
+
+/*
+// Adding a certain status on inpact to both Server && Client
+// @param 	TargetChar		Who we target
+// @param 	MCStatus		What Status we are using
+*/
+reliable server function AddSpellServer(MCPawn TargetChar, MCStatus WhatStatus)
+{
+	local int i;	
+	local MCPlayerReplication MCPrep;
+
+	MCPrep = MCPlayerReplication(TargetChar.PlayerReplicationInfo);
+
+	// Add it
+	for (i = 0;i < ArrayCount(MCPrep.MyStatus) ; i++)
+	{
+		// If we have a Playerreplication
+		if (MCPrep != none)
+		{
+			if (MCPrep.MyStatus[i].StatusName == "")
+			{
+				MCPrep.AddStatus(WhatStatus,i);
+				break;
+			}
+			else
+			{
+			//	`log(i @ "- WTF SOMETHING HERE in" @ name @ "This=" @ Target.MyStatus[i]);
+			}
+		}
+	}
 }
 
 /*
@@ -32,15 +128,15 @@ simulated function Destroyed()
 	if(PawnThatShoots != none)
 	{
 
-		// Runs on both client and server
+		// Only run this on Server
 		if (Role > Role_Authority)
 		{
 			//
 		}else
 		{
-			`log("We do this on Server" @ PawnThatShoots);
-	//		PawnThatShoots.PC.bIsSpellActive = false;
-	//		PawnThatShoots.PC.CheckCurrentAPCalculation();
+		//	`log("We do this on Server" @ PawnThatShoots);
+			PawnThatShoots.PC.bIsSpellActive = false;
+			PawnThatShoots.PC.CheckCurrentAPCalculation();
 		}
 		PawnThatShoots = none;
 	}

@@ -12,8 +12,6 @@ function Cast(MCPawn caster, MCPawn enemy)
 	local MCProjectile cAlchemistBullet;	//	local UDKProjectile cAlchemistBullet;
 	local Vector modifiedStart;
 
-	`log(name @ "- Activate Cast");
-
 	if (Role == Role_Authority)
 	{
 		modifiedStart = caster.Location;
@@ -22,11 +20,26 @@ function Cast(MCPawn caster, MCPawn enemy)
 		cAlchemistBullet = Spawn(class'MCProjectileAlchemistBullet', caster, , modifiedStart);
 		// Set Caster in MCProjectile so we can when Destroyed set movement back ON
 		cAlchemistBullet.PawnThatShoots = caster;
-		// Add the damage
-		cAlchemistBullet.Damage = (damage - damage) + 5;
-		// Fire the Spell
 
-		cAlchemistBullet.Status = Status;
+		// Resistance Check
+		if (CheckResistance(caster, enemy))
+		{
+			// Add the damage
+		//	`log(self @ " - SUCCESSFUL HIT!");
+			SendAWorldMessage(spellName[spellNumber], true);
+			cAlchemistBullet.Damage = damage;
+			// Set Status
+			cAlchemistBullet.Status = Status;
+		}else
+		{
+		//	`log(self @ " - RESISTED!");
+			SendAWorldMessage(spellName[spellNumber], false);
+			cAlchemistBullet.Damage = 0;
+		}
+
+		// Add SpellNumber
+		cAlchemistBullet.spellNumber = spellNumber;
+		// Fire the Spell
 		cAlchemistBullet.Init(enemy.Location - modifiedStart);
 		// Remove this Class from server
 		Destroy();
@@ -43,6 +56,16 @@ function Cast(MCPawn caster, MCPawn enemy)
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
 	local MCPlayerReplication MCPRep;
+	
+	// This does AP Check first so we can check if we can do the spell 
+	super.Activate(Caster, Enemy, PathNode, Tile);
+
+	if (Caster == none || Enemy == none)
+	{
+		`log(self @ " - Failed so Destroy() && return;");
+		Destroy();
+		return;
+	}
 
 	`log(name @ "- Activate Spell");
 	// Update Casters AP Cost
@@ -50,16 +73,16 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 	{
 		if (Caster.PlayerUniqueID == MCPRep.PlayerUniqueID)
 		{
-			Caster.APf -= AP;
+			Caster.APf -= APCost;
 			MCPRep.APf = Caster.APf;
 		}
 	}
 	`log(name @ "- Activate Function");
 
 	// Spell mode active
-	Caster.PC.bIsSpellActive = true;
+//	Caster.PC.bIsSpellActive = true;
 	// Turn of Tiles
-	Caster.PC.TurnOffTiles();
+//	Caster.PC.TurnOffTiles();
 
 	// Shoot Spell, Make sure it's only on the server
 	if ( (WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_ListenServer) )
@@ -72,8 +95,8 @@ simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode Pat
 	}
 
 	// Reset Everything and check if we still have AP
-	caster.PC.bIsSpellActive = false;
-	caster.PC.CheckCurrentAPCalculation();
+//	caster.PC.bIsSpellActive = false;
+//	caster.PC.CheckCurrentAPCalculation();
 }
 
 DefaultProperties

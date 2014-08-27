@@ -21,7 +21,7 @@ simulated function PostBeginPlay()
 	local Vector newLocation;
 	super.PostBeginPlay();
 	newLocation = Location + vect(0,0,60);
-	if (Role != ROLE_Authority)
+	if (Role != ROLE_Authority || (WorldInfo.NetMode == NM_ListenServer) )
 		WorldInfo.MyEmitterPool.SpawnEmitter(smoke, newLocation);	
 }
 
@@ -62,7 +62,7 @@ simulated event Destroyed()
 	local Vector newLocation;
 
 	newLocation = Location + vect(0,0,60);
-	if (Role != ROLE_Authority)
+	if (Role != ROLE_Authority || (WorldInfo.NetMode == NM_ListenServer) )
 		WorldInfo.MyEmitterPool.SpawnEmitter(smoke, newLocation);	
 
 	super.Destroyed();
@@ -74,7 +74,7 @@ DefaultProperties
 	bOnlyDirtyReplication 	= false
 	bAlwaysRelevant			= true
 
-	smoke = ParticleSystem'Envy_Effects.VH_Deaths.P_VH_Death_Dust_Secondary';
+	smoke = ParticleSystem'MystrasChampionSpells.Particles.WhiteSmokeParticle'
 
 
 	Begin Object class=StaticMeshComponent name=RockMesh
