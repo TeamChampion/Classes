@@ -129,22 +129,30 @@ event UpdateMousePosition(float X, float Y)
 /*
 // Show Win Message
 */
-function ShowWinMessage(string PlayerName)
+simulated function ShowWinMessage(string PlayerName)
 {
+	// Turn of Turn base Message
+	HidePlayerTurnMessage();
+
 	if (GameWinMessageMC != none)
 	{
-		GameWinMessageMC.SetString("text", PlayerName @ "Wins!");
+		GameWinMessageMC.GotoAndStop("WinName");
+	//	GameWinMessageMC.SetString("text", PlayerName @ "Wins!");
 	}
 }
 
 /*
 // Show Lose Message
 */
-function ShowLoseMessage(string PlayerName)
+simulated function ShowLoseMessage(string PlayerName)
 {
+	// Turn of Turn base Message
+	HidePlayerTurnMessage();
+
 	if (GameWinMessageMC != none)
 	{
-		GameWinMessageMC.SetString("text", PlayerName @ "Lost!");
+		GameWinMessageMC.GotoAndStop("LoseName");
+	//	GameWinMessageMC.SetString("text", PlayerName @ "Lost!");
 	}
 }
 
@@ -160,15 +168,26 @@ function ShowPlayerTurnMessage(string Message)
 {
 	if (TurnMessageMC != none)
 	{
-		TurnMessageMC.SetString("text", Message);
+		if (Message == "Your Turn")
+		{
+			TurnMessageMC.GotoAndStop("YourName");
+		}
+		else if(Message == "Enemy Turn")
+		{
+			TurnMessageMC.GotoAndStop("EnemyName");
+		}
+		
+		
+	//	TurnMessageMC.SetString("text", Message);
 	}
 }
 
-function HidePlayerTurnMessage()
+simulated function HidePlayerTurnMessage()
 {
 	if (TurnMessageMC != none)
 	{
-		TurnMessageMC.SetString("text", "");
+		TurnMessageMC.GotoAndStop("Normal");
+	//	TurnMessageMC.SetString("text", "");
 	}
 }
 
@@ -325,7 +344,7 @@ function ConfigOptionButton()
 */
 function ConfigMessages()
 {
-	GameWinMessageMC = RootMC.GetObject("winmessageIns");
+	GameWinMessageMC = RootMC.GetObject("WinMessageIns");
 	TurnMessageMC = RootMC.GetObject("TurnMessageINS");
 }
 
@@ -442,9 +461,9 @@ function ConfigSpells()
 		{
 			// Set information for Information Field, Spell Name, AP Cost & Description
 			InformationMC.SetVisible(false);
-			InformationMC.GetObject("SpellNameIns").SetString("text", SpellName.spellName[SpellName.spellNumber]);
+			InformationMC.GetObject("SpellNameIns").SetString("text", SpellName.spellName);	// SpellName.spellName[SpellName.spellNumber]
 			InformationMC.GetObject("APNameIns").SetInt("text", SpellName.AP);
-			InformationMC.GetObject("DescNameIns").SetString("text", SpellName.Description[SpellName.spellNumber]);
+			InformationMC.GetObject("DescNameIns").SetString("text", SpellName.Description);	// SpellName.Description[SpellName.spellNumber]
 		}
 
 		// Set button placement
@@ -638,7 +657,7 @@ function OptionButton(GFxClikWidget.EventData ev)
 	OptionButtonFunction();
 }
 
-function OptionButtonFunction()
+simulated function OptionButtonFunction()
 {
 	local MCPlayerController PC;
 	if (OptionBtn != None)
@@ -918,10 +937,12 @@ function GetPlayerInformation()
 				// AP Text
 				if (P01APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPC.PlayerUniqueID)
 				{
-					P01APTextTF.SetString("text", "AP");
+				//	P01APTextTF.SetString("text", "AP");
+					P01APTextTF.SetVisible(true);
 				}else
 				{
-					P01APTextTF.SetString("text", "");
+				//	P01APTextTF.SetString("text", "");
+					P01APTextTF.SetVisible(false);
 				}
 			}
 		}
@@ -963,10 +984,12 @@ function GetPlayerInformation()
 				// AP Text
 				if (P02APTextTF != none && MCGRep.MCPRIArray[i].PlayerUniqueID == MyPC.PlayerUniqueID)
 				{
-					P02APTextTF.SetString("text", "AP");
+					P02APTextTF.SetVisible(true);
+				//	P02APTextTF.SetString("text", "AP");
 				}else
 				{
-					P02APTextTF.SetString("text", "");
+					P02APTextTF.SetVisible(false);
+				//	P02APTextTF.SetString("text", "");
 				}
 			}
 		}

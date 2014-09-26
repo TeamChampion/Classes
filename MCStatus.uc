@@ -29,7 +29,7 @@ var int spellNumber;
 // If we want it to Start the next turn and not the turn it was activated on yourself, set this to true
 var(MCStatus) bool bStartNextTurn;
 // Status Archetype we later add when a Pawn has been Touched for Buffing or Debuffing
-var archetype MCStatus StatusArchetype;
+var(MCStatus) archetype MCStatus StatusArchetype;
 
 
 // Replication block
@@ -87,16 +87,27 @@ simulated event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocat
 	// If we have a Target, and a Archetype
 	if (Target == Other && StatusArchetype != none)
 	{
-		`log(Target.PlayerUniqueID @ Target @ "found inside" @ self @ "We can do this");
-		`log(Target.PlayerUniqueID @ Target @ "found inside" @ self @ "We can do this");
-		`log(Target.PlayerUniqueID @ Target @ "found inside" @ self @ "We can do this");
-		`log(Target.PlayerUniqueID @ Target @ "found inside" @ self @ "We can do this");
-
 		// Add the archetype inside here
-		StatusName = StatusArchetype.StatusName;
-		StatusDamage = StatusArchetype.StatusDamage;
-		StatusDuration = StatusArchetype.StatusDuration;
-		bStartNextTurn = StatusArchetype.bStartNextTurn;
+		if (StatusArchetype != none)
+		{
+			StatusName = StatusArchetype.StatusName;
+			StatusDamage = StatusArchetype.StatusDamage;
+			StatusDuration = StatusArchetype.StatusDuration;
+			bStartNextTurn = StatusArchetype.bStartNextTurn;
+
+			/*
+			`log("=====================================================");
+			`log("=====================================================");
+			`log("=====================================================");
+			`log("StatusName=	" @ StatusName);
+			`log("StatusDamage=	" @ StatusDamage.Damage);
+			`log("StatusDuration=	" @ StatusDuration);
+			`log("bStartNextTurn=	" @ bStartNextTurn);
+			`log("=====================================================");
+			`log("=====================================================");
+			`log("=====================================================");
+			*/
+		}
 
 		// In here set the Status link, only on Server
 		if ((WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_ListenServer) )
@@ -118,10 +129,6 @@ simulated event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocat
 
 simulated function DestroyALL()
 {
-	`log("DESTROYED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	`log("DESTROYED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	`log("DESTROYED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	`log("DESTROYED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	Destroy();
 }
 

@@ -9,6 +9,7 @@ class GFxBattleUI_PreLoad extends GFxMoviePlayer;
 
 var GFxObject RootMC;
 var GFxObject BackgroundMC;	// Option Background
+var GFxObject ClientTextMC;	// Client TextMC
 
 // Widget for Option Buttons
 var GFxCLIKWidget OptionBtn;
@@ -39,6 +40,13 @@ function bool Start(optional bool StartPaused = false)
 */
 function ConfigHUD()
 {
+	local MCPlayerController MCPC;
+
+	// Set Message to Click to Spawn if you are a Client
+	MCPC = MCPlayerController(GetPC());
+	ClientTextMC = RootMC.GetObject("clienttextIns");
+	ClientTextMC.SetString("text", MCPC.GetBattleUIPreLoadMessage());
+
 	// Background
 	BackgroundMC = RootMC.GetObject("backgroundINS");
 	BackgroundMC.SetVisible(false);

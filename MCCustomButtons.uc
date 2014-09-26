@@ -18,6 +18,8 @@ var const MCCameraProperties CameraProperties;
 // Rotating buttons
 var bool bCanRotateLeft;
 var bool bCanRotateRight;
+// Moving Camera
+var bool bCanTurnUp, bCanTurnDown, bCanTurnLeft, bCanTurnRight;
 // Rotatino Speed
 var float velRotation;
 
@@ -79,17 +81,50 @@ event PlayerInput( float DeltaTime )
 	// If We have a button, Player && PlayerDecal
 	if (bMyButton && MCPlayer != none && MCPlayer.MyDecal != none)
 	{
-		// Set rotation to Yaw only
-		newRotation = MCPlayer.MyDecal.Rotation;
-		deltaRotation = velRotation * DeltaTime; 
-		newRotation.Yaw  += deltaRotation;
-		MCPlayer.MyDecal.SetRotation(newRotation);
+		if (bCanRotateLeft || bCanRotateRight)
+		{
+			// Set rotation to Yaw only
+			/*
+			newRotation = MCPlayer.MyDecal.Rotation;
+			deltaRotation = velRotation * DeltaTime; 
+			newRotation.Yaw  += deltaRotation;
+
+			MCPlayer.MyDecal.SetRotation(newRotation);
+			*/
+
+
+		}
+
+		else if (bCanTurnUp || bCanTurnDown)
+		{
+			newRotation = MCPlayer.MyDecal.Rotation;
+			deltaRotation = velRotation * DeltaTime; 
+			newRotation.Pitch  += deltaRotation;
+
+			MCPlayer.MyDecal.SetRotation(newRotation);
+
+		}
+
+		else if (bCanTurnLeft || bCanTurnRight)
+		{
+			// Set rotation to Yaw only
+			newRotation = MCPlayer.MyDecal.Rotation;
+			deltaRotation = velRotation * DeltaTime; 
+			newRotation.Yaw  += deltaRotation;
+
+			MCPlayer.MyDecal.SetRotation(newRotation);
+		}
+
 	}
+
+
+
 
 	Super.PlayerInput(DeltaTime);
 
 	// handle my custom button
-	MyButtonActions();
+	RotateCamera();
+//	MyButtonActions();
 }
 
 /*
@@ -97,19 +132,45 @@ event PlayerInput( float DeltaTime )
 */
 function RotateCamera()
 {
-	if(bCanRotateLeft)
+
+	if (bMyButton)
 	{
-		velRotation = -CameraProperties.RoationSpeed;
-	}else if(bCanRotateRight)
-	{
-		velRotation = CameraProperties.RoationSpeed;
+		if(bCanRotateLeft)
+		{
+			velRotation = -CameraProperties.RoationSpeed;
+		}
+		else if(bCanRotateRight)
+		{
+			velRotation = CameraProperties.RoationSpeed;
+		}
+
+
+		else if(bCanTurnUp)
+		{
+			velRotation = CameraProperties.RoationSpeed;
+		}
+
+		else if(bCanTurnDown)
+		{
+			velRotation = -CameraProperties.RoationSpeed;
+		}
+		else if(bCanTurnLeft)
+		{
+			velRotation = -CameraProperties.RoationSpeed;
+		}
+		else if(bCanTurnRight)
+		{
+			velRotation = CameraProperties.RoationSpeed;
+		}
 	}
+
 }
 
 // .Bindings=(Name="ThumbMouseButton",Command="MCRotateLeftON | onrelease MCRotateLeftOff")
 // Press to Start to turn Left Rotation ON
 exec function MCRotateLeftON()
 {
+	`log("Find MCRotateLeftON");
 	bMyButton = true;
 	bCanRotateLeft = true;
 }
@@ -135,6 +196,74 @@ exec function MCRotateRightOff()
 	bCanRotateRight = false;
 	velRotation = 0;
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+exec function MCTurnUpOn()
+{
+	`log("Find MCTurnUpOn");
+	bMyButton = true;
+	bCanTurnUp = true;
+}
+
+exec function MCTurnUpOff()
+{
+	bMyButton = false;
+	bCanTurnUp = false;
+	velRotation = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+exec function MCTurnDownOn()
+{
+	`log("Find MCTurnDownOn");
+	bMyButton = true;
+	bCanTurnDown = true;
+}
+
+exec function MCTurnDownOff()
+{
+	bMyButton = false;
+	bCanTurnDown = false;
+	velRotation = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+exec function MCTurnLeftOn()
+{
+	`log("Find MCTurnLeftOn");
+	bMyButton = true;
+	bCanTurnLeft = true;
+}
+
+exec function MCTurnLeftOff()
+{
+	bMyButton = false;
+	bCanTurnLeft = false;
+	velRotation = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+exec function MCTurnRightOn()
+{
+	`log("Find MCTurnRightOn");
+	bMyButton = true;
+	bCanTurnRight = true;
+}
+
+exec function MCTurnRightOff()
+{
+	bMyButton = false;
+	bCanTurnRight = false;
+	velRotation = 0;
+}
+
+
 
 defaultproperties
 {

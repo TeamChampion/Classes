@@ -59,24 +59,28 @@ function SetUpInventory(array<MCItem> MyThings, string FlashArrayName)	// old
 /*
 // Sends the Config File int array to Flash
 */
-function SetUpInventoryINTArray(array<int> MyThings, string FlashArrayName)
+function SetUpInventoryINTArray(array<int> MyItemNR, array<int> MyIsActive, string FlashArrayName)
 {
 	local byte i;
 	local GFxObject DataProvider;
 	local GFxObject TempObj;
 
+//	`log("------------------------------------------------------------------------------------");
 	DataProvider = CreateArray();
-	for (i = 0; i < MyThings.Length; i++)
+	for (i = 0; i < MyItemNR.Length; i++)
 	{       
 		// Creates and returns a new GFxObject of a specific ActionScript class.
 		// We send The ID of the item so we know where to set it
 		TempObj = CreateObject("Object");
-		TempObj.SetInt("UCID", MyThings[i]);
+		TempObj.SetInt("UCID", MyItemNR[i]);
+		TempObj.SetInt("EQID", MyIsActive[i]);
+	//	`log(i @ "Adding to AC Array" @ MyThings[i]);
 		DataProvider.SetElementObject(i, TempObj);
 	}
 
 	RootMC.SetObject(FlashArrayName, DataProvider);     
 	ShowInventory(FlashArrayName);
+//	`log("------------------------------------------------------------------------------------");
 }
 
 /**
@@ -89,8 +93,9 @@ function SetUpWeaponShop(MCShop WShop, array<MCItem> MyThings, string FlashArray
 	local GFxObject TempObj;
 	
 	// Links shop from GameInfo
-//	WeaponShop = WShop;
 
+//	if (FlashArrayName == "WeaponShopUC")
+//		`log("------------------------------------------------------------------------------------");
 	DataProvider = CreateArray();
 	for (i = 0; i < MyThings.Length; i++)
 	{       
@@ -100,12 +105,16 @@ function SetUpWeaponShop(MCShop WShop, array<MCItem> MyThings, string FlashArray
 		TempObj.SetInt("UCCost", MyThings[i].Cost);
 		TempObj.SetString("UCDescription", MyThings[i].sDescription);
 		TempObj.SetInt("UCID", MyThings[i].ID);
+//		if (FlashArrayName == "WeaponShopUC")
+//			`log(i @ "- Item ID Send=" @ MyThings[i].ID);
 		DataProvider.SetElementObject(i, TempObj);
 	}
 
 	// sets to flash array
 	RootMC.SetObject(FlashArrayName, DataProvider);     
 	ShowWeaponShop(FlashArrayName);
+//	if (FlashArrayName == "WeaponShopUC")
+//		`log("------------------------------------------------------------------------------------");
 
 //	`log("------------------------------WeaponShop Inventory");
 	// Log debug UDK

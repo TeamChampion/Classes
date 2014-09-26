@@ -15,14 +15,26 @@ var GFxSelectScreen GFxSelectScreen;
 var GFxCreateScreen GFxCreateScreen;
 var GFxTownMain cGFxTownMain;
 var GFxTownShop cGFxTownShop;
+var GFxWTPlayerItems cGFxWTPlayerItems;
+var GFxWTPlayerInfo cGFxWTPlayerInfo;
 //var GFxMultiplayer cGFxMultiplayer;
-
+var MCCamera MyCamera;
 
 // When create button is pushed it set's this Character as the one we will create
 var MCPawn CreateThisCharacter;
 
 simulated event PostBeginPlay()
 {
+	local MCCamera FindCamera;
+	foreach DynamicActors(Class'MCCamera', FindCamera)
+	{
+		`log("----------------------------------------------------------");
+		`log("MCHud - PostBeginPlay - Foreach search");
+		`log("MyCamera =" @ FindCamera);
+		MyCamera = FindCamera;
+		`log("----------------------------------------------------------");
+	}
+
 	Super.PostBeginPlay();
 
 	// Start by closing the MouseInterface Movie
@@ -62,88 +74,16 @@ event PostRender()
 {
 	local MCPlayerController PC;
 	local MCGameReplication MCPR;
-
-	local MouseInterfaceInteractionInterface MouseInteractionInterface;
-	local Vector HitLocation, HitNormal;
+//	local Vector HitLocation, HitNormal;
 
 	MCPR = MCGameReplication(WorldInfo.GRI);
 	PC = MCPlayerController(PlayerOwner);
 
 	super.DrawHUD();
 	Super.PostRender();
-
-	// Get the current mouse interaction interface
-	MouseInteractionInterface = GetMouseActor(HitLocation, HitNormal);
 	
-	HitLocation2 = HitLocation;
-	HitNormal2 = HitNormal;
-
-// Did we previously had a mouse interaction interface?
-	if (LastMouseInteractionInterface != None)
-	{
-	//	`log("We have nothing, NOTHING!!!!!");
-//
-//		`log("What does it" @ GetMouseActor(HitLocation, HitNormal) );
-		// If the last mouse interaction interface differs to the current mouse interaction
-		if (LastMouseInteractionInterface != MouseInteractionInterface)
-		{
-			`log("MouseInteractionInterface!!!");
-			// Call the mouse out function
-			LastMouseInteractionInterface.MouseOut(CachedMouseWorldOrigin, CachedMouseWorldDirection);
-			// Assign the new mouse interaction interface
-			LastMouseInteractionInterface = MouseInteractionInterface; 
-
-			// If the last mouse interaction interface is not none
-			if (LastMouseInteractionInterface != None)
-			{
-				// Call the mouse over function
-				LastMouseInteractionInterface.MouseOver(CachedMouseWorldOrigin, CachedMouseWorldDirection); // Call mouse over
-				`log("MouseOver MouseOver");
-			}
-		}
-	}
-	else if (MouseInteractionInterface != None)
-	{
-		// Assign the new mouse interaction interface
-		LastMouseInteractionInterface = MouseInteractionInterface; 
-		// Call the mouse over function
-		LastMouseInteractionInterface.MouseOver(CachedMouseWorldOrigin, CachedMouseWorldDirection);
-		`log("Mouse Out!");
-	}
-	if (LastMouseInteractionInterface != None)
-	{
-		// Handle left mouse button
-		if (PendingLeftPressed)
-		{
-			if (PendingLeftReleased)
-			{
-				// This is a left click, so discard
-				PendingLeftPressed = false;
-				PendingLeftReleased = false;
-			}
-			else
-			{
-				// Left is pressed
-				PendingLeftPressed = false;
-				LastMouseInteractionInterface.MouseLeftPressed(CachedMouseWorldOrigin, CachedMouseWorldDirection, HitLocation, HitNormal);
-				`log("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss");
-				/*
-				`log("CachedMouseWorldOrigin" @ CachedMouseWorldOrigin);
-				`log("CachedMouseWorldDirection" @ CachedMouseWorldDirection);
-				`log("HitLocation" @ HitLocation);
-				`log("HitLocation2" @ HitLocation2);
-				`log("HitNormal" @ HitNormal);
-				*/
-			}
-		}
-		else if (PendingLeftReleased)
-		{
-			// Left is released
-			PendingLeftReleased = false;
-			LastMouseInteractionInterface.MouseLeftReleased(CachedMouseWorldOrigin, CachedMouseWorldDirection);
-		}
-	}
-
+//	HitLocation2 = HitLocation;
+//	HitNormal2 = HitNormal;
 
 
 
@@ -211,12 +151,21 @@ event PostRender()
 		GFxSelectScreen.Tick(RenderDelta);
 	}
 
+	// Render PlayerInfo
+	if (cGFxWTPlayerInfo != none && cGFxWTPlayerInfo.bMovieIsOpen)
+	{
+		cGFxWTPlayerInfo.Tick(RenderDelta);
+	}
+
 	// Debug Area
 	// -----------------------
 	// Debug Multiplayer
 //	TrackHeroes();
 	TrackStatuses();
+//	TrackCameraLocation();
 }
+
+
 
 /*
 // Function that checks what map we are on so we can start the correct map with the correct Scaleform Video
@@ -343,6 +292,88 @@ exec function CloseMovieTownShops()
 		`log("CLOSE CloseMovieTownShops");
 	}
 }
+/*
+// Play Town Wizards Tower - Player Items
+*/
+exec function StartMovieWTPlayerItems()
+{
+	if (cGFxWTPlayerItems == none)
+	{
+		// create new class
+		cGFxWTPlayerItems = new class'GFxWTPlayerItems';
+		if (cGFxWTPlayerItems != none)
+		{
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			cGFxWTPlayerItems.SetTimingMode(TM_Real);
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			cGFxWTPlayerItems.bAllowFocus = true;
+
+			/** TRUE after Start() is called, FALSE after Close() is called. */
+			if (!cGFxWTPlayerItems.bMovieIsOpen)
+			{
+				cGFxWTPlayerItems.Start();
+			}
+		}
+	}
+}
+exec function CloseMovieWTPlayerItems()
+{
+	if (cGFxWTPlayerItems != None)
+	{
+		// Closes down movie
+		cGFxWTPlayerItems.Close(true);
+		// Sets the movie to none so it doesn't fail
+		cGFxWTPlayerItems = none;
+		`log("CLOSE CloseMovieTownShops");
+	}
+}
+/*
+// Play Town Wizards Tower - Player Info
+*/
+exec function StartMovieWTPlayerInfo()
+{
+	if (cGFxWTPlayerInfo == none)
+	{
+		// create new class
+		cGFxWTPlayerInfo = new class'GFxWTPlayerInfo';
+		if (cGFxWTPlayerInfo != none)
+		{
+			/** Sets the timing mode of the movie to either advance with game time (respecting game pause and time dilation), or real time (disregards game pause and time dilation) */
+			cGFxWTPlayerInfo.SetTimingMode(TM_Real);
+			/** If TRUE, this movie player will be allowed to accept focus events.  Defaults to TRUE */
+			cGFxWTPlayerInfo.bAllowFocus = true;
+
+			/** TRUE after Start() is called, FALSE after Close() is called. */
+			if (!cGFxWTPlayerInfo.bMovieIsOpen)
+			{
+				cGFxWTPlayerInfo.Start();
+			}
+		}
+	}
+}
+exec function CloseMovieWTPlayerInfo()
+{
+	if (cGFxWTPlayerInfo != None)
+	{
+		// Closes down movie
+		cGFxWTPlayerInfo.Close(true);
+		// Sets the movie to none so it doesn't fail
+		cGFxWTPlayerInfo = none;
+		`log("CLOSE CloseMovieTownShops");
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Change These to open from each script instead from kismet
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -708,15 +739,15 @@ function TrackStatuses()
 				Canvas.Font = class'Engine'.Static.GetSmallFont();
 
 
-				Canvas.SetPos(5, 200);
-				Canvas.DrawText("MCStatus Left");
+				Canvas.SetPos(5, 230);
+				Canvas.DrawText("");
 				
 				for (bu = 0; bu < 10 ; bu++)
 				{
 					if (MCPR.MCPRIArray[i].MyStatus[bu].StatusName != "")
 					{
 						Canvas.DrawText((bu+1)@"- StatusDur = " @ MCPR.MCPRIArray[i].MyStatus[bu].StatusDuration @ "-" @ MCPR.MCPRIArray[i].MyStatus[bu].StatusName );
-						Canvas.SetPos(5, 230 + (15 * bu) );
+						Canvas.SetPos(5, 260 + (15 * bu) );
 					}
 				}
 			}
@@ -726,19 +757,64 @@ function TrackStatuses()
 				Canvas.DrawColor = WhiteColor;
 				Canvas.Font = class'Engine'.Static.GetSmallFont();
 
-				Canvas.SetPos(1000, 200);
-				Canvas.DrawText("MCStatus Right");
+				Canvas.SetPos(1000, 230);
+				Canvas.DrawText("");
 				
 				for (bu = 0; bu < 10 ; bu++)
 				{
 					if (MCPR.MCPRIArray[i].MyStatus[bu].StatusName != "")
 					{
 						Canvas.DrawText((bu+1)@"- StatusDur = " @ MCPR.MCPRIArray[i].MyStatus[bu].StatusDuration @ "-" @ MCPR.MCPRIArray[i].MyStatus[bu].StatusName );
-						Canvas.SetPos(1000, 230 + (15 * bu) );
+						Canvas.SetPos(1000, 260 + (15 * bu) );
 					}	
 				}
 			}
 		}
+	}
+}
+
+function TrackCameraLocation()
+{
+	/*
+
+	*/
+	local MCPawn MyPawn;
+
+	MyPawn = MCPawn(PlayerOwner.Pawn);
+
+
+//	`log("Track My Camera " @ MyCamera);
+	if (MyCamera != none)
+	{
+		Canvas.DrawColor = WhiteColor;
+		Canvas.Font = class'Engine'.Static.GetSmallFont();
+
+		// Name
+		Canvas.SetPos(5, 350);
+		Canvas.DrawText("Camera Location X:" @ MyCamera.Location.x);
+		Canvas.SetPos(5, 365);
+		Canvas.DrawText("Camera Location Y:" @ MyCamera.Location.y);
+		Canvas.SetPos(5, 380);
+		Canvas.DrawText("Camera Location Z:" @ MyCamera.Location.z);
+
+if (MyPawn.MyDecal != none)
+{
+	
+
+		Canvas.SetPos(5, 395);
+		Canvas.DrawText("Decal Rotation  Roll:" @ MyPawn.MyDecal.Rotation.Roll);
+		Canvas.SetPos(5, 410);
+		Canvas.DrawText("Camera Rotation   Yaw:" @ MyPawn.MyDecal.Rotation.Yaw);
+		Canvas.SetPos(5, 425);
+		Canvas.DrawText("Camera Rotation Pitch:" @ MyPawn.MyDecal.Rotation.Pitch);
+}
+
+		Canvas.SetPos(5, 455);
+		Canvas.DrawText("Camera DesiredCameraLocation:" @ MyCamera.DesiredCameraLocation);
+		Canvas.SetPos(5, 470);
+		Canvas.DrawText("Camera Camera.POV.Location:" @ MyCamera.PovLoc);
+		Canvas.SetPos(5, 485);
+		Canvas.DrawText("Camera CameraProperties.IsTrackingHeroPawn:" @ MyCamera.CameraProperties.IsTrackingHeroPawn);
 	}
 }
 

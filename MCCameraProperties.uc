@@ -69,5 +69,5 @@ defaultproperties
 	bSetToMatch = true
 	bStartPosition = true
 	bSetMouseMovement = false		// mouse use
-	bSetKeyboardMovement = false
+	bSetKeyboardMovement = true
 }

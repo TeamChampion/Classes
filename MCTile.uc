@@ -28,18 +28,26 @@ var Texture2D Tex2DBorderWhite;
 // ------------------------------ //
 // Is any spell active on this Tile
 var bool bSpellTileMode;
+// Spell - 05 - 
+var bool bWormHole;
 // Spell - 07 - FireFountain
-var bool bFireFountain;
+var repnotify bool bFireFountain;
 // Spell - 11 - Wall Of Ice
 var bool bWallOfIce;
 // Spell - 15 - GlassFloor
-var bool bGlassFloor;
+var repnotify bool bGlassFloor;
+// Spell - 18 - MakeMud
+var repnotify bool bMakeMud;
 // Spell - 20 - StoneWall
 var bool bStoneWall;
 // Spell - 21 - UnearthMaterial
-var bool bUnearthMaterial;
+var repnotify bool bUnearthMaterial;
+// Spell - 23 - Taint Water
+var repnotify bool bTaintWater;
 // Spell - 25 - DissolveElement
 var bool bDissolveElement;
+// Dissolve is scouring
+var repnotify bool bDissolveElementScourge;
 // Assign Damage to a Tile
 var int damage;
 // Other Testing
@@ -53,6 +61,7 @@ struct TileStruct
 	var float b;
 	var float a;
 	var Texture2D Tex;
+	var MaterialInstanceConstant MatInistConst;
 };
 
 // What Different Elements we can use
@@ -60,7 +69,7 @@ enum Elements
 {
 	e_Lava,
 	e_Water,
-	e_Crystal,
+//	e_Crystal,
 	e_Metal,
 	e_Acid
 };
@@ -72,19 +81,25 @@ var TileStruct AP3;
 var TileStruct SpellTileMarkRed;
 var TileStruct SpellTileMarkYellow;
 var TileStruct SpellTileSurroundMain;
+var TileStruct TileWormHole;
 var TileStruct TileFireFountain;
 var TileStruct TileGlassFloor;
+var TileStruct TileMakeMud;
+var TileStruct TileTaintWater;
+var TileStruct TileDissolve;
 
 // What Elements color settings
-var TileStruct Lava;
 var TileStruct Water;
-var TileStruct Crystal;
 var TileStruct Metal;
-var TileStruct Acid;
+
+var bool bCanPlaceCloud;
 
 var bool bUnearthMaterialActive;
 var int RandomElement;
 
+// Certain Spells inside here
+var archetype MCSpell FireFountainArchetype;
+var archetype MCStatus AcidBurnArchetype;	// MCStatus_AcidBurn'MystrasChampionSpells.Status.Acid_TaintWater'
 
 
 // @NOTUSING
@@ -102,16 +117,79 @@ replication
 
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
-		PathNode, MatInst, damage, RandomElement;
+		PathNode, MatInst, damage, RandomElement, bCanPlaceCloud;
 
 	// What Spells
 	if (bNetDirty)
-		bFireFountain, bWallOfIce, bGlassFloor, bStoneWall, bUnearthMaterial, bDissolveElement;
+		bWormHole, bFireFountain, bWallOfIce, bGlassFloor, bMakeMud, bStoneWall, bUnearthMaterial, bTaintWater, bDissolveElement, bDissolveElementScourge;
+	
+	// What Structs
+	if (bNetDirty)
+		Water, Metal, TileTaintWater, TileFireFountain, TileGlassFloor, TileMakeMud, TileDissolve;
 
 	if(bNetOwner)
 		bArrowActive;
 }
 
+simulated event ReplicatedEvent(name VarName)
+{	
+	super.ReplicatedEvent( VarName ); 
+
+	// Updates client side replications
+	if (varname == 'bFireFountain')
+	{
+		if (bFireFountain)
+		{
+			ResetTileForAllClient(self);
+			ShowDisplayColor();
+		}
+	}
+	if (varname == 'bGlassFloor')
+	{
+		if (bGlassFloor)
+		{
+			ResetTileForAllClient(self);
+			ShowDisplayColor();
+		}
+	}
+
+	if (varname == 'bMakeMud')
+	{
+		if (bMakeMud)
+		{
+			ResetTileForAllClient(self);
+			ShowDisplayColor();
+		}
+	}
+	if (varname == 'bUnearthMaterial')
+	{
+		if (bUnearthMaterial)
+		{
+			ResetTileForAllClient(self);
+			ShowDisplayColor();
+		}
+	}
+
+	if (varname == 'bTaintWater')
+	{
+		if (bTaintWater)
+		{
+			ResetTileForAllClient(self);
+			ShowDisplayColor();
+		}
+	}
+
+	if (varname == 'bDissolveElementScourge')
+	{
+		if (bDissolveElementScourge)
+		{
+		//	ResetTileForAllClient(self);
+			ShowDisplayColor();
+		}
+	}
+
+
+}
 
 simulated event PostBeginPlay()
 {
@@ -131,42 +209,45 @@ simulated function int SetRandomElement()
 {
 	local int TempRandom;
 
-	TempRandom = Rand(5);
+	TempRandom = Rand(4);
+//	TempRandom = 1;			// for debug
+
 	// Set Random Element Number here
 	if (!bSpellTileMode)
 	{
 		RandomElement = TempRandom;
 		return TempRandom;
 	}
-
 }
 
-
-
+/*
+// PC.CheckDistanceNearPlayer, send number to server here
+// @param	Number		What number we recieve
+*/
 reliable server function SetRandomElementServer(int Number)
 {
 	if (!bSpellTileMode)
 		RandomElement = Number;
 }
 
+/*
+// What Color we show the Tiles as
+*/
 simulated function SetElements()
 {
 	switch (RandomElement)
 	{
 		case e_Lava:
-			SetTile(Lava);
+		
 			break;
 		case e_Water:
 			SetTile(Water);
-			break;
-		case e_Crystal:
-			SetTile(Crystal);
 			break;
 		case e_Metal:
 			SetTile(Metal);
 			break;
 		case e_Acid:
-			SetTile(Acid);
+			SetTile(TileTaintWater);
 			break;
 		default:
 		//
@@ -175,26 +256,14 @@ simulated function SetElements()
 
 
 
-simulated function ActivateUnearthMaterial()
-{
-	// Reset Previous Tile Lightup if we had one
-	ResetTileToNormal();
 
-	bSpellTileMode = true;
-	bUnearthMaterial = true;
-
-	if (bUnearthMaterial)
-	{
-		SetElements();
-	}
-}
 
 
 simulated function SetArrows(string Direction)
 {
 	local LinearColor MatColor;
 	
-	if (!bSpellTileMode && !bArrowActive)
+	if (!bSpellTileMode && !bArrowActive && !bDissolveElementScourge)
 	{
 		MatInst = new class'MaterialInstanceConstant';
 		MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
@@ -276,8 +345,12 @@ simulated function SetActiveTiles()
 */
 simulated function SpellMarkTileCurrentlySelected()
 {
+	if (bDissolveElementScourge)
+	{
+		SetTile(TileDissolve);
+	}
 	// Show Red Color	
-	if (!bSpellTileMode)
+	else if(!bSpellTileMode)
 	{
 		SetTile(SpellTileMarkRed);
 	}
@@ -293,19 +366,21 @@ simulated function SpellMarkTileCurrentlySelected()
 */
 simulated function SpellMarkTileArea()
 {	
-	// If nothing special just Light Up Light blue
-	if (!bSpellTileMode)
+	// We can not place spell lightup
+	if (bDissolveElementScourge)
 	{
-		if (bUnearthMaterialActive)
-		{
-			// Do Unearth function that ahs all elements
-			SetElements();
-		}
-		else
-		{
-			// Show Other Spells
-			SetTile(SpellTileSurroundMain);
-		}
+		SetTile(TileDissolve);
+	}
+	// If nothing special just Light Up Light blue
+	else if (!bSpellTileMode)
+	{
+		// Show Other Spells
+		SetTile(SpellTileSurroundMain);
+
+	}
+	else if (bSpellTileMode && bWormHole)
+	{
+		
 	}
 	// If fire fountain
 	else if (bSpellTileMode && bFireFountain)
@@ -317,9 +392,20 @@ simulated function SpellMarkTileArea()
 	{
 		SetTile(TileGlassFloor);
 	}
-	else if (bUnearthMaterial)
+	// If Make Mud
+	else if (bSpellTileMode && bMakeMud)
+	{
+		SetTile(TileMakeMud);
+	}
+	// If Unearth Material
+	else if (bSpellTileMode && bUnearthMaterial)
 	{
 		SetElements();
+	}
+	// If Taint Water
+	else if (bSpellTileMode && bTaintWater)
+	{
+		SetTile(TileTaintWater);
 	}
 	// If Dissolve Area is being lit up for certain spells
 	else if (bSpellTileMode && bDissolveElement)
@@ -354,7 +440,7 @@ simulated function SpellMarkDissolveArea()
 */
 simulated function ResetTileToNormal()
 {	
-	if (!bSpellTileMode)
+	if (!bSpellTileMode || !bDissolveElementScourge)
 	{	
 		MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);
 	}
@@ -365,10 +451,39 @@ simulated function ResetTileToNormal()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
+// Set WormHole Spell active for use
+*/
+simulated function ActivateWormHole(int SetDamage)
+{
+	if (bDissolveElementScourge)
+		return;
+
+	// Reset Previous Tile Lightup if we had one
+	ResetTileToNormal();
+
+	bSpellTileMode = true;
+	bWormHole = true;
+
+	if (bWormHole)
+	{
+		SetTile(TileWormHole);
+
+		if (Role == Role_Authority)
+		{
+			// Set Damage
+			damage = SetDamage;
+		}
+	}
+}
+
+/*
 // Set FireFountain Spell active for use
 */
 simulated function ActivateFireFountain(int SetDamage)
 {
+	if (bDissolveElementScourge)
+		return;
+
 	// Reset Previous Tile Lightup if we had one
 	ResetTileToNormal();
 
@@ -377,21 +492,73 @@ simulated function ActivateFireFountain(int SetDamage)
 
 	if (bFireFountain)
 	{
-		SetTile(TileFireFountain);
-
+		// Set Element here
+		RandomElement = e_Lava;
+		// Set Damage
 		damage = SetDamage;
+		// Do Damage if on the Tile
 		if (Role == Role_Authority)
-		{
 			NewRoundDamage();
-		}
 	}
 }
+
+/*
+// We Taint Water
+*/
+simulated function ActivateTaintWater(int SetDamage)
+{
+	if (bDissolveElementScourge)
+		return;
+
+	bSpellTileMode = true;
+	bTaintWater = true;
+	bUnearthMaterial = false;
+
+	if (bTaintWater)
+	{
+		// Set Element here
+		RandomElement = e_Acid;
+		// Set Damage
+		damage = SetDamage;
+		// Do Damage if on the Tile
+		if (Role == Role_Authority)
+			NewRoundDamage();
+	}
+}
+
+/*
+// Send To all PC Clients so that we can remove it from the Spell Affected Tile Array
+*/
+simulated function ResetTileForAllClient(MCTile MyTile)
+{	
+
+	MyTile.MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);
+	/*
+	local MCPawn WhatPeople;
+	local int i;
+
+	foreach DynamicActors(Class'MCPawn', WhatPeople)
+	{
+		for (i = 0; i < WhatPeople.PC.SpellTiles.length ; i++)
+		{
+			if (WhatPeople.PC.SpellTiles[i] == MyTile)
+			{
+				WhatPeople.PC.SpellTiles[i].MyKActorComponent.SetMaterial(1,MyKActorComponent.default.Materials[1]);
+			}
+		}
+	}
+	*/
+}
+
 
 /*
 // Set Wall Of Ice Spell active for use
 */
 simulated function ActivateWallOfIce()
 {
+	if (bDissolveElementScourge)
+		return;
+
 	// Reset Previous Tile Lightup if we had one
 	ResetTileToNormal();
 
@@ -403,12 +570,18 @@ simulated function ActivateWallOfIce()
 }
 
 /*
-// Set Glass Florr Spell active for use
+// Set Glass Floor Spell active for use
 */
 simulated function ActivateGlassFloor()
 {
+	if (bDissolveElementScourge)
+		return;
+
 	// Reset Previous Tile Lightup if we had one
 	ResetTileToNormal();
+
+	if (bWormHole || bFireFountain || bWallOfIce || bGlassFloor || bStoneWall || bTaintWater || RandomElement == e_Metal)
+		return;
 
 	bSpellTileMode = true;
 	bGlassFloor = true;
@@ -423,10 +596,45 @@ simulated function ActivateGlassFloor()
 }
 
 /*
+// Set Make Mud Spell active for use
+*/
+simulated function ActivateMakeMud()
+{
+	if (bDissolveElementScourge)
+		return;
+
+	// Reset Previous Tile Lightup if we had one
+	ResetTileToNormal();
+
+	if (bWormHole || bFireFountain || bWallOfIce || bGlassFloor || bStoneWall || bTaintWater || RandomElement == e_Metal)
+		return;
+
+	// Reset Previous Tile Lightup if we had one
+	ResetTileToNormal();
+
+	bSpellTileMode = true;
+	bMakeMud = true;
+
+	bUnearthMaterial = false;
+	RandomElement = 0;
+
+	if (bMakeMud)
+	{
+		SetTile(TileMakeMud);
+
+		// Change AP Cost
+		PathNode.APValue = 3;
+	}
+}
+
+/*
 // Set StoneWall Spell active for use
 */
 simulated function ActivateStoneWall()
 {
+	if (bDissolveElementScourge)
+		return;
+
 	// Reset Previous Tile Lightup if we had one
 	ResetTileToNormal();
 
@@ -440,7 +648,7 @@ simulated function ActivateStoneWall()
 /*
 // Set Dissolve Element Spell active for use
 */
-simulated function ActivateDissolveElement()
+simulated function ActivateDissolveElement(bool bShouldWeScourge, bool bShouldWeRemoveTile)
 {
 	local MCActor FindActor;
 
@@ -468,12 +676,31 @@ simulated function ActivateDissolveElement()
 			bDissolveElement = false;
 		}
 
+		if (bShouldWeScourge)
+		{
+			bDissolveElementScourge = true;
+			SetTile(TileDissolve);
+			// We Can never use Tile again
+		}
+
 		// If server we remove the certain tile in PC
-		if (Role == ROLE_Authority)
-			DissolveAllPc();
+		if (bShouldWeRemoveTile)
+		{
+			if (Role == ROLE_Authority && !bDissolveElementScourge)
+			{
+				DissolveAllPc();
+			}
+			
+
+//			`log("REMOVE!!!!!");
+		}else
+		{
+//			`log("we good :D!!!!!");
+		}
+		
 	}else
 	{
-		`log("Nothing to dissolve");
+//		`log("Nothing to dissolve");
 	}
 }
 
@@ -487,18 +714,67 @@ reliable server function DissolveAllPc()
 	foreach DynamicActors(Class'MCPawn', WhatPeople)
 		WhatPeople.PC.RemoveTileSpellAreaClient(self);
 }
+
+
+/*
+// Set Unearth Material things
+*/
+simulated function ActivateUnearthMaterial()
+{
+	if (bDissolveElementScourge)
+		return;
+	
+	// Reset Previous Tile Lightup if we had one
+	ResetTileToNormal();
+
+	bSpellTileMode = true;
+
+	switch (RandomElement)
+	{
+		case e_Lava:
+			ActivateFireFountain(FireFountainArchetype.damage);
+			break;
+
+		case e_Water:
+			bUnearthMaterial = true;
+			if (bUnearthMaterial)
+				SetElements();
+			break;
+
+		case e_Metal:
+			bUnearthMaterial = true;
+			if (bUnearthMaterial)
+				SetElements();
+			break;
+
+		case e_Acid:
+			ActivateTaintWater(FireFountainArchetype.damage);	// Has same damage as FireFountain, luckely
+			if (bUnearthMaterial)
+				SetElements();
+			break;
+
+		default:
+		//
+	}
+}
+
+
 /*
 // Turn of All Spells
 */
 simulated function TurnOfSpellBools()
 {
+	bWormHole = false;
 	bFireFountain = false;
 	bWallOfIce = false;
 	bGlassFloor = false;
+	bMakeMud = false;
 	bStoneWall = false;
 	bUnearthMaterial = false;
+	bTaintWater = false;
 	// reset damage
 	damage = 0;
+	RandomElement = 0;
 }
 
 /*
@@ -508,10 +784,14 @@ simulated function ShowDisplayColor()
 {
 	if (bSpellTileMode)
 	{
-		// FireFountain Spell
-		if (bFireFountain)
+		if (bWormHole)
 		{
-			SetTile(TileFireFountain);
+			
+		}
+		// FireFountain Spell
+		else if (bFireFountain)
+		{
+		//	SetTile(TileFireFountain);
 		}
 		// Wall Of Ice Spell
 		else if(bWallOfIce)
@@ -523,6 +803,11 @@ simulated function ShowDisplayColor()
 		{
 			SetTile(TileGlassFloor);
 		}
+		// Make Mud Spell
+		else if(bMakeMud)
+		{
+			SetTile(TileMakeMud);
+		}
 		// StoneWall Spell
 		else if(bStoneWall)
 		{
@@ -533,6 +818,14 @@ simulated function ShowDisplayColor()
 		{
 			SetElements();
 		}
+		// Taint Water Spell
+		else if (bTaintWater)
+		{
+		//	SetTile(Acid);
+		}
+	}else if (!bSpellTileMode && bDissolveElementScourge)
+	{
+		SetTile(TileDissolve);
 	}
 }
 
@@ -552,32 +845,94 @@ simulated event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLoca
 		{
 			// Do Damage
 			TileTouchDamage(Other);
+			// Add Status if we have
+			TileTouchStatus(Other);
 		}
 	}
 	super.Touch(Other,OtherComp,HitLocation,HitNormal);
 }
 
+/*
+// Do Damage when Touching a Tile
+// @param 		Other 	What Character is touching
+*/
 simulated function TileTouchDamage(Actor Other)
 {
 	local MCPawn MCPlayer;
 	local vector empty;
 	MCPlayer = MCPawn(Other);
 
-	if (bFireFountain)
+	if (MCPlayer != none)
 	{
-		MCPlayer.TakeDamage(damage, none, MCPlayer.Location, empty, class'DamageType');
+		if (bWormHole)
+		{
+			MCPlayer.TakeDamage(damage, none, MCPlayer.Location, empty, class'DamageType');
+		}
+		else if (bFireFountain)
+		{
+			MCPlayer.TakeDamage(damage, none, MCPlayer.Location, empty, class'DamageType');
+		}
+		else if(bTaintWater)
+		{
+			MCPlayer.TakeDamage(damage, none, MCPlayer.Location, empty, class'DamageType');
+		}
+	}
+}
+
+/*
+// Add Status when Touching a Tile
+// @param 		Other 	What Character is touching
+*/
+simulated function TileTouchStatus(Actor Other)
+{
+	local MCPawn Target;
+	local MCPlayerReplication MCPRep;
+	Local MCStatus MyStatusClass;
+	local vector SpawnLocation;
+
+	Target = MCPawn(Other);
+
+	if (Target != none)
+	{
+		MCPRep = MCPlayerReplication(Target.PC.PlayerReplicationInfo);
+		if (MCPRep != none)
+		{
+			if (bWormHole)
+			{
+				SpawnLocation = Target.Location;
+				SpawnLocation.Z = -1024;
+
+				if (Role == Role_Authority)
+				{
+					MyStatusClass = Spawn(class'MCStatus_WormsMouth',,, SpawnLocation,,);
+					MyStatusClass.SetLocation(Target.Location);
+					ActivateDissolveElement(false, true);
+				}
+			}
+			else if (bTaintWater)
+			{
+				SpawnLocation = Target.Location;
+				SpawnLocation.Z = -1024;
+
+				if (Role == Role_Authority)
+				{
+					MyStatusClass = Spawn(AcidBurnArchetype.class,,, SpawnLocation,,);
+					// Add Status
+					MyStatusClass.StatusArchetype	= AcidBurnArchetype;
+					MyStatusClass.SetLocation(Target.Location);
+				}
+			}
+		}
 	}
 }
 
 /*
 // When a new Round is on, check if we do damage if FireFountain is active
 */
-simulated function NewRoundDamage()
+simulated function NewRoundDamage(optional int ID)
 {
 	local MCPawn MCPlayers;
 	local vector empty;
-
-	`log("MCTile = NewRoundDamage() - We Are actually in here to see how many times we can find someone else cooming in here which isn't easy I would say but it has to be done");
 
 	if (bSpellTileMode && bFireFountain)
 	{
@@ -586,14 +941,25 @@ simulated function NewRoundDamage()
 			// Send to Clients
 			foreach DynamicActors(Class'MCPawn', MCPlayers)
 			{
-				`log("-----------------------------");
-				`log("-----------------------------");
-				`log(MCPlayers);
-				`log("-----------------------------");
-				`log("-----------------------------");
-				if (VSize(MCPlayers.Location - Location) < 64)
+				if (VSize(MCPlayers.Location - Location) < 64 && ID == MCPlayers.PlayerUniqueID)
 				{
 					MCPlayers.TakeDamage(damage, none, MCPlayers.Location, empty, class'DamageType');
+				}
+			}
+		}
+	}
+	if (bSpellTileMode && bTaintWater)
+	{
+		if (Role == ROLE_Authority)
+		{
+			// Send to Clients
+			foreach DynamicActors(Class'MCPawn', MCPlayers)
+			{
+				if (VSize(MCPlayers.Location - Location) < 64 && ID == MCPlayers.PlayerUniqueID)
+				{
+					MCPlayers.TakeDamage(damage, none, MCPlayers.Location, empty, class'DamageType');
+					// Add status
+					TileTouchStatus(MCPlayers);
 				}
 			}
 		}
@@ -633,7 +999,8 @@ simulated function SetTile(TileStruct MyTileInfo)
 	local LinearColor MatColor;
 
 	MatInst = new class'MaterialInstanceConstant';
-	MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
+	MatInst.SetParent(MyTileInfo.MatInistConst);
+//	MatInst.SetParent(MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST');
 	MyKActorComponent.SetMaterial(1, MatInst);
 
 	MatColor = MakeLinearColor(MyTileInfo.r, MyTileInfo.g, MyTileInfo.b, MyTileInfo.a);
@@ -685,45 +1052,42 @@ simulated function ChangeAlphaUp()
 defaultproperties
 {
 	// Normal Lightup
-	AP1=( r=0.0f, g=0.0f, b=0.0f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
-	AP2=( r=1.0f, g=1.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
-	AP3=( r=1.0f, g=0.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
+	AP1=( r=0.0f, g=0.0f, b=0.0f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+	AP2=( r=1.0f, g=1.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+	AP3=( r=1.0f, g=0.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
 
 	// Spell Area Marker
-	SpellTileMarkRed=	( r=1.0f, g=0.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
-	SpellTileMarkYellow=( r=1.0f, g=1.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
+	SpellTileMarkRed=	( r=1.0f, g=0.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+	SpellTileMarkYellow=( r=1.0f, g=1.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
 
 	// Spell Area Other Tiles
-	SpellTileSurroundMain=( r=0.0f, g=0.3f, b=1.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
+	SpellTileSurroundMain=( r=0.0f, g=0.3f, b=1.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
 
 	// Spell Colors
-	TileFireFountain=( r=1.0f, g=0.0f, b=0.0f, a=1.0f, Tex=Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG' )
-	TileGlassFloor=  ( r=0.0f, g=0.0f, b=1.0f, a=1.0f, Tex=Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG' )
+	TileWormHole=		( r=0.6f, g=0.4f, b=0.0f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+	TileFireFountain=	( r=1.0f, g=0.0f, b=0.0f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+	TileGlassFloor=		( r=0.0f, g=0.0f, b=1.0f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG', MatInistConst=MaterialInstanceConstant'MystrasChampionSpells.Materials.window_Glassbroken_Mat_INST' )
+	TileMakeMud=		( r=0.0f, g=0.0f, b=0.0f, a=1.0f, Tex=Texture2D'UN_Terrain.Dirt.T_UN_Terrain_Dirt_Muddy_01_D', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+	TileTaintWater=	( r=0.6f, g=0.0f, b=0.8f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+	TileDissolve=	( r=0.0f, g=0.0f, b=0.0f, a=1.0f, Tex=Texture2D'VH_All.Materials.T_VH_All_Necris_Burn_D', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
 
 	// Unearth Material Settings
-	Lava=	( r=1.0f, g=0.0f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
-	Water=	( r=0.0f, g=0.0f, b=1.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
-	Crystal=( r=1.0f, g=0.6f, b=0.0f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
-	Metal=	( r=0.8f, g=0.8f, b=0.8f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
-	Acid=	( r=0.6f, g=0.0f, b=0.8f, a=0.5f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner' )
+//	Lava=	( r=1.0f, g=0.0f, b=0.0f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+	Water=	( r=0.0f, g=0.0f, b=1.0f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.WhiteCorner', MatInistConst=MaterialInstanceConstant'MystrasChampionSpells.Materials.RipplingWater_INST' )
+	Metal=	( r=0.8f, g=0.8f, b=0.8f, a=0.0f, Tex=Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG', MatInistConst=MaterialInstanceConstant'mystraschampionsettings.Materials.Green_INST' )
+
+	// Spells & Status
+	FireFountainArchetype=MCSpell_FireFountain'MystrasChampionSpells.Spells.FireFountain'
+	AcidBurnArchetype=MCStatus_AcidBurn'MystrasChampionSpells.Status.Acid_TaintWater'
 
 
-/*
-AP 1
-AP 2
-AP 3
-SpellTileMark Red 						1.0f, 0.0f, 0.0f, 0.5f, Tex2DBorderWhite
-SpellTileMark Yellow 					1.0f, 1.0f, 0.0f, 0.5f, Tex2DBorderWhite
-SpellTileSurround LightBlue 			0.0f, 0.3f, 1.0f, 0.5f, Tex2DBorderWhite
-SpellTileSurround Red FireFountain 		1.0f, 0.0f, 0.0f, 1.0f, Tex2DNoBorder
-SpellTileSurround Blue GlassFloor 		0.0f, 0.0f, 1.0f, 1.0f, Tex2DNoBorder
 
-ActivateSpell Red FireFountain 			1.0f, 0.0f, 0.0f, 1.0f, Tex2DNoBorder
-ActivateSpell Blue GlassFloor 			0.0f, 0.0f, 1.0f, 1.0f, Tex2DNoBorder
 
-ShowDisplayColor Red bFireFountain 		1.0f, 0.0f, 0.0f, 1.0f, Tex2DNoBorder
-ShowDisplayColor Blue GlassFloor 		0.0f, 0.0f, 1.0f, 1.0f, Tex2DNoBorder
-*/
+
+
+
+
+
 
 	Begin Object Class=StaticMeshComponent Name=tile01
 		StaticMesh=StaticMesh'mystraschampionsettings.StaticMesh.TileMesh'
@@ -741,6 +1105,8 @@ ShowDisplayColor Blue GlassFloor 		0.0f, 0.0f, 1.0f, 1.0f, Tex2DNoBorder
 		bNotifyRigidBodyCollision=true
 		//ScriptRigidBodyCollisionThreshold=0.001 
 		//LightingChannels=(Dynamic=TRUE)
+		bAcceptsStaticDecals=false
+		bAcceptsDecals=false
 	End Object 
 
 	MyKActorComponent = tile01
@@ -761,4 +1127,7 @@ ShowDisplayColor Blue GlassFloor 		0.0f, 0.0f, 1.0f, 1.0f, Tex2DNoBorder
 
 	Tex2DNoBorder = Texture2D'mystraschampionsettings.Texture.BlackCornerNoBG'
 	Tex2DBorderWhite = Texture2D'mystraschampionsettings.Texture.WhiteCorner'
+
+//	AcceptStaticDecals = false
+//	AcceptsDynamicDecals = false
 }

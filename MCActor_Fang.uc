@@ -7,23 +7,6 @@
 //----------------------------------------------------------------------------
 class MCActor_Fang extends MCActor;
 
-var() float MovementSpeed;
-var() ParticleSystem smoke;
-
-Replication
-{
-	if (bNetDirty)
-		smoke;
-}
-
-simulated function PostBeginPlay()
-{
-	super.PostBeginPlay();
-	if (Role != ROLE_Authority || (WorldInfo.NetMode == NM_ListenServer) )
-		WorldInfo.MyEmitterPool.SpawnEmitter(smoke, Location);
-	//`log(""@Components.FangMesh);
-}
-
 simulated event Tick(float DeltaTime)
 {
     local float delta_distance;
@@ -34,41 +17,46 @@ simulated event Tick(float DeltaTime)
     Move(d);
 }
 
-auto simulated state Moving
-{
-Begin:
-    Sleep(5.0);
-    GotoState('Idle');
-}
-
 simulated state Idle
 {
     ignores Tick;
+	
+	function BeginState(Name PreviousStateName)
+	{
+		if(Caster != none)
+			Caster.PC.CheckCurrentAPCalculation();
+		Super.BeginState(PreviousStateName);
+	}
 Begin:
     self.Destroy();
 }
 
+// When We Destroy This Element It set's off an Explosion
+simulated event Destroyed()
+{
+
+}
+
 DefaultProperties
 {
+	SleepTimer=5.0f
+	MovementSpeed=20
+	smoke = ParticleSystem'Envy_Effects.VH_Deaths.P_VH_Death_Dust_Secondary'
+
 	RemoteRole=ROLE_SimulatedProxy
 	bOnlyDirtyReplication 	= false
 	bAlwaysRelevant			= true
 
-	smoke = ParticleSystem'Envy_Effects.VH_Deaths.P_VH_Death_Dust_Secondary'
 	Begin Object class=DynamicLightEnvironmentComponent name=myLightEnvironment
 		bEnabled=true
 	End Object
 	Begin Object class=StaticMeshComponent name=FangMesh
-		StaticMesh=StaticMesh'MystrasChampionSpells.StaticMesh.RockFang'
+		StaticMesh=StaticMesh'UN_Rock.SM.Mesh.S_UN_Rock_SM_Blackspire01'
+	//	StaticMesh=StaticMesh'MystrasChampionSpells.StaticMesh.RockFang'
 		Scale=0.5
 
 	End Object
 
 	Components.Add(myLightEnvironment)
 	Components.Add(FangMesh)
-	//CollisionComponent=RockMesh
-	//bCollideActors=true 
-	//bBlockActors=true
-
-	MovementSpeed=20
 }

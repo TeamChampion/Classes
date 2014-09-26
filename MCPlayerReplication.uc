@@ -236,7 +236,7 @@ simulated function SetTilesInsidePC(int WhatID)
 }
 
 
-function SendWinAndLoseMessage()
+simulated function SendWinAndLoseMessage(bool bOptions)
 {
 	local PlayerController PC;
 	local MCPlayerController cMCPC;
@@ -245,16 +245,26 @@ function SendWinAndLoseMessage()
 	{
 		cMCPC = MCPlayerController(PC);
 
-		// If we have no Pawn, because it's dead
-		if (cMCPC.Pawn == none)
+		// Shows Win loss message
+		if (!bOptions)
 		{
-			// Lose
-			cMCPC.SendLossMessage();
-		}else
-		{
-			// Win
-			cMCPC.SendWinMessage();
+			// If we have no Pawn, because it's dead
+			if (cMCPC.Pawn == none)
+			{
+				// Lose
+				cMCPC.SendLossMessage();
+			}else
+			{
+				// Win
+				cMCPC.SendWinMessage();
+			}
 		}
+		// Shows Option
+		else
+		{
+			cMCPC.ShowOptionTimer();
+		}
+
 	}
 }
 
@@ -427,6 +437,8 @@ simulated function float DoBuffCalculation(MCPawn Player, float StartAP)
 			// Spawn a class for it depending on Status, @ADD maybe do a for loop with a list of archetype instead.
 			if (MyStatus[i].StatusName == "Acid Burn")
 				newStatus = Spawn(class'MCStatus_AcidBurn');
+			else if (MyStatus[i].StatusName == "Frostbite")
+				newStatus = Spawn(class'MCStatus_AcidBurn');
 			else if (MyStatus[i].StatusName == "Acid Mist")
 				newStatus = Spawn(class'MCStatus_AcidMist');
 			else if (MyStatus[i].StatusName == "Frost")
@@ -442,9 +454,16 @@ simulated function float DoBuffCalculation(MCPawn Player, float StartAP)
 			else if (MyStatus[i].StatusName == "In the worm's mouth")
 				newStatus = Spawn(class'MCStatus_WormsMouth');
 
+
+				`log("We Found a Status???" @ newStatus);
+				`log("We Found a Status???" @ newStatus);
+				`log("We Found a Status???" @ newStatus);
+				`log("We Found a Status???" @ newStatus);
+				`log("We Found a Status???" @ newStatus);
+				`log("We Found a Status???" @ newStatus);
 			if (newStatus != none)
 			{
-				`log("New Status Dound" @ newStatus);
+				`log("New Status Found" @ newStatus);
 
 				// Add stats to it
 				newStatus.StatusDamage.AP			=	MyStatus[i].AP;

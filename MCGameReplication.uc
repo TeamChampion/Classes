@@ -17,12 +17,18 @@ var	array<MCPlayerReplication> MCPRIArray;
 /** This list mirrors the GameInfo's list of inactive PRI objects */
 var	array<MCPlayerReplication> MCInactivePRIArray;
 
+struct SpellTile
+{
+	var MCTile Tile;
+};
+var SpellTile SpellTiles[150];
+
 // Replication block
 replication
 {
 	// Replicate only if the values are dirty and from server to client
 	if (bNetDirty)
-		 GameRound;
+		 GameRound, SpellTiles;
 }
 
 simulated event PostBeginPlay()
@@ -32,6 +38,55 @@ simulated event PostBeginPlay()
 	super.PostBeginPlay();
 	SetTimer(1.0f, true, 'AddPRIToMC');
 
+}
+
+simulated function SetTile(MCTile SendTile)
+{
+	local int i;
+	// Send to Clients
+	
+	for (i = 0; i < ArrayCount(SpellTiles) ; i++)
+	{
+		if (SpellTiles[i].Tile == none)
+		{
+		//	`log("Adding=" @ i);
+			SpellTiles[i].Tile = SendTile;
+			break;
+		}else
+		{
+		//	`log(i @ "Filled with=" @ SpellTiles[i].Tile);
+		}
+	}
+
+}
+
+simulated function RemoveTile(MCTile SendTile)
+{
+	local int i;
+	local SpellTile ResetTile;
+
+	// Remove Tiles
+	for (i = 0; i < ArrayCount(SpellTiles) ; i++)
+	{
+		if (SpellTiles[i].Tile == SendTile)
+		{
+			SpellTiles[i].Tile = none;
+			SpellTiles[i] = ResetTile;
+		}
+	}
+
+	// Sort Tiles If needed
+	for (i = 0; i < ArrayCount(SpellTiles) ; i++)
+	{
+		if (i > 0)
+		{
+			if (SpellTiles[i-1].Tile == none && SpellTiles[i].Tile != none)
+			{
+				SpellTiles[i-1] = SpellTiles[i];
+				SpellTiles[i].Tile = none;
+			}
+		}
+	}
 }
 
 simulated function RecieveMessage(int PlayerNumber)

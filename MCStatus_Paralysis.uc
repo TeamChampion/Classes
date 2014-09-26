@@ -23,11 +23,6 @@ reliable server function float StatusCalculationAPCost(optional float PcCurrentA
 		PcCurrentAPf = -PcCurrentAPf;
 	}
 	
-	`log("This happend =" @ PcCurrentAPf);
-	`log("This happend =" @ PcCurrentAPf);
-	`log("This happend =" @ PcCurrentAPf);
-	`log("This happend =" @ PcCurrentAPf);
-	`log("This happend =" @ PcCurrentAPf);
 	return PcCurrentAPf;
 }
 

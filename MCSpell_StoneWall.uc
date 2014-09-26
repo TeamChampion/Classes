@@ -7,12 +7,7 @@
 //----------------------------------------------------------------------------
 class MCSpell_StoneWall extends MCSpell;
 
-function CastArea(MCPawn caster, Vector target)
-{
-	Spawn(class'MCActor_Rock', caster, ,target);
-}
-
-/*&
+/*
 // The Activator for all spells
 // @param	Caster			Who Casts the Spell
 // @param	Enemy			Who the Caster is Aiming for
@@ -21,32 +16,21 @@ function CastArea(MCPawn caster, Vector target)
 */
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
-	local int i;
-	local MCPlayerController PC;
-	
 	// This does AP Check first so we can check if we can do the spell 
 	super.Activate(Caster, Enemy, PathNode, Tile);
 
-	if (Caster == none || Enemy == none)
-	{
-		`log(self @ " - Failed so Destroy() && return;");
-		Destroy();
-		return;
-	}
+	ActivateArea(Caster, Enemy, PathNode, Tile);
+}
 
-	`log(name @ "- Activate Spell");
-	// Cast nesscesary Classes
-	PC = Caster.PC;
-
-	// Turn Off All active tiles
-	for (i = 0;i < PC.TilesWeCanMoveOn.length ; i++)
-		PC.TilesWeCanMoveOn[i].ResetTileToNormal();
-
-	// Spell mode active
-	PC.bIsSpellActive = true;
-
-	// Check where we shoudl light up the selecting spell Tiles
-	PC.CheckDistanceNearPlayer();
+/*
+// Starts Casting a ActivateArea spell that will Spawn an Actor, not Tile changing
+// @param	caster			Who Casts the Spell
+// @param	target			Where we do it
+// @param	Opt_WhatTile	If we need a Tile to perform something specific
+*/
+function CastArea(MCPawn caster, Vector target, optional MCTile WhatTile)
+{
+	super.CastArea(caster, target);
 }
 
 /*
@@ -78,4 +62,5 @@ reliable client function CastClickSpellClient(optional MCPawn Caster, optional M
 
 DefaultProperties
 {
+	ActorClass = class'MCActor_Rock'
 }

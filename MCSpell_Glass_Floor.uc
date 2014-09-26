@@ -16,31 +16,16 @@ class MCSpell_Glass_Floor extends MCSpell;
 */
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
-	local int i;
-	local MCPlayerController PC;
-	
 	// This does AP Check first so we can check if we can do the spell 
 	super.Activate(Caster, Enemy, PathNode, Tile);
 
-	if (Caster == none || Enemy == none)
-	{
-		`log(self @ " - Failed so Destroy() && return;");
-		Destroy();
-		return;
-	}
+	// Sets from where we search AP distanec from
+	TargetLocation = Caster.Location;
 
-	// Cast nesscesary Classes
-	PC = Caster.PC;
+	ActivateAreaCloud(Caster, Enemy, PathNode, Tile);
 
-	// Turn Off All active tiles
-	for (i = 0;i < PC.TilesWeCanMoveOn.length ; i++)
-		PC.TilesWeCanMoveOn[i].ResetTileToNormal();
 
-	// Spell mode active
-	PC.bIsSpellActive = true;
-
-	// Check where we should light up the selecting spell Tiles
-	PC.CheckDistanceNearPlayer();
+//	ActivateArea(Caster, Enemy, PathNode, Tile);
 }
 
 /*
@@ -55,14 +40,10 @@ reliable server function CastClickSpellServer(optional MCPawn Caster, optional M
 	{
 		// Activate server
 		WhatTile.ActivateGlassFloor();
-		// Activate on clients
-//		CastClickSpellClient(,WhatTile,);
+		// Check AP Calculation because we spawn this like this
+		Caster.PC.CheckAPTimer(1.0f);
+	//	Destroy();
 	}
-}
-
-reliable client function CastClickSpellClient(optional MCPawn Caster, optional MCTile WhatTile, optional MCPathNode PathNode)
-{
-	WhatTile.ActivateGlassFloor();
 }
 
 DefaultProperties

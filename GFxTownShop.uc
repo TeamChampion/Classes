@@ -40,30 +40,7 @@ function ConfigHUD()
 	SetInventory();
 	// Set Money
 	SetMoney();
-//	PrintInventory();
 	bInitialized = true;
-}
-
-/*
-// Updates the The Hud the entire time
-// @network                 Client
-*/
-function Tick(float DeltaTime)
-{
-	// Menu buttons
-/*
-	var emptyText01:String = "武器";
-	var emptyText02:String = "アクセサリー";
-	var emptyText03:String = "エンチャント管理";
-	var emptyText04:String = "研究材料";
-
-	weaponBtn.   textFields.text = emptyText01;
-	accessoryBtn.textFields.text = emptyText02;
-	enchantBtn.  textFields.text = emptyText03;
-	researchBtn. textFields.text = emptyText04;
-*/
-
-
 }
 
 function SetMoney()
@@ -72,15 +49,6 @@ function SetMoney()
 	local int moneyGrab;
 
 	MCPC = MCPlayerController(GetPC());
-
-	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
-	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
-	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
-	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
-//	RootMC.SetInt("MoneyUC", 999);
-	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
-	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
-	`log("Found This money prob" @ RootMC.GetInt("MoneyUC"));
 
 	if (MCPC != none)
 	{
@@ -176,56 +144,56 @@ function SetShops()
 function SetInventory()
 {
 	// Send Config Saved dynamic array int
-	SetUpInventoryINTArray(MCP.MyInventory.MyOwnedWeapons, 			"WeaponInvUC");
-	SetUpInventoryINTArray(MCP.MyInventory.MyOwnedAccessories,		"AccessoryInvUC");
-	SetUpInventoryINTArray(MCP.MyInventory.MyOwnedEnchantments,		"EnchantInvUC");
-	SetUpInventoryINTArray(MCP.MyInventory.MyOwnedResearchMaterial,	"ResearchMaterialInvUC");
-
-	// Send to Flash MCITEM
-	/*
-	SetUpInventory(MCP.MyInventory.OwnedWeapons, 			"WeaponInvUC");
-	SetUpInventory(MCP.MyInventory.OwnedAccessories,		"AccessoryInvUC");
-	SetUpInventory(MCP.MyInventory.OwnedEnchantments,		"EnchantInvUC");
-	SetUpInventory(MCP.MyInventory.OwnedResearchMaterial,	"ResearchMaterialInvUC");
-	*/
+	SetUpInventoryINTArray(MCP.MyInventory.ConfigWeapons.ItemNumber, 			MCP.MyInventory.ConfigWeapons.Active,			"WeaponInvUC");
+	SetUpInventoryINTArray(MCP.MyInventory.ConfigAccessories.ItemNumber,		MCP.MyInventory.ConfigAccessories.Active,		"AccessoryInvUC");
+	SetUpInventoryINTArray(MCP.MyInventory.ConfigEnchantments.ItemNumber,		MCP.MyInventory.ConfigEnchantments.Active,		"EnchantInvUC");
+	SetUpInventoryINTArray(MCP.MyInventory.ConfigResearchMaterial.ItemNumber,	MCP.MyInventory.ConfigResearchMaterial.Active,	"ResearchMaterialInvUC");
 }
+
+
+
+
+
+
+
 /*
-// Reset Item Array so that we can ReSave the files later on
+// From Actionscript, Reset Item Array so that we can ReSave the files later on
 */
 function ResetItem(String WhatInv)
 {
+	`log("We Reset stuff in here");
 	// From the menu we remove text
 	switch (WhatInv)
 	{
 		case "Weapon":
-			MCP.MyInventory.MyOwnedWeapons.Remove(0, MCP.MyInventory.MyOwnedWeapons.Length);
+			MCP.MyInventory.ConfigWeapons.ItemNumber.Remove(0, MCP.MyInventory.ConfigWeapons.ItemNumber.Length);
+			MCP.MyInventory.ConfigWeapons.Active.Remove(0, MCP.MyInventory.ConfigWeapons.Active.Length);
 			MCP.MyInventory.SaveConfig();
-			`log("Inventory cleared Weapon" @ MCP.MyInventory.MyOwnedWeapons.Length);
 			break;
 			
 		case "Accessory":
-			MCP.MyInventory.MyOwnedAccessories.Remove(0, MCP.MyInventory.MyOwnedAccessories.Length);
+			MCP.MyInventory.ConfigAccessories.ItemNumber.Remove(0, MCP.MyInventory.ConfigAccessories.ItemNumber.Length);
+			MCP.MyInventory.ConfigAccessories.Active.Remove(0, MCP.MyInventory.ConfigAccessories.Active.Length);
 			MCP.MyInventory.SaveConfig();
-			`log("Inventory cleared Accessory" @ MCP.MyInventory.MyOwnedAccessories.Length);
 			break;
 			
 		case "Enchant":
-			MCP.MyInventory.MyOwnedEnchantments.Remove(0, MCP.MyInventory.MyOwnedEnchantments.Length);
+			MCP.MyInventory.ConfigEnchantments.ItemNumber.Remove(0, MCP.MyInventory.ConfigEnchantments.ItemNumber.Length);
+			MCP.MyInventory.ConfigEnchantments.Active.Remove(0, MCP.MyInventory.ConfigEnchantments.Active.Length);
 			MCP.MyInventory.SaveConfig();
-			`log("Inventory cleared Enchant" @ MCP.MyInventory.MyOwnedEnchantments.Length);
 			break;
 			
 		case "ResearchMaterial":
-			MCP.MyInventory.MyOwnedResearchMaterial.Remove(0, MCP.MyInventory.MyOwnedResearchMaterial.Length);
+			MCP.MyInventory.ConfigResearchMaterial.ItemNumber.Remove(0, MCP.MyInventory.ConfigResearchMaterial.ItemNumber.Length);
+			MCP.MyInventory.ConfigResearchMaterial.Active.Remove(0, MCP.MyInventory.ConfigResearchMaterial.Active.Length);
 			MCP.MyInventory.SaveConfig();
-			`log("Inventory cleared ResearchMaterial" @ MCP.MyInventory.MyOwnedResearchMaterial.Length);
 			break;
 
 		default:
 	}
 }
 /*
-// Save Item one by one in Unrealscript from Flash Actionscript
+// From Actionscript, Save Item one by one in Unrealscript from Flash Actionscript
 // @TODO find out we we can send array instead
 */
 function SaveItem(String WhatInv, int WhatID)
@@ -234,45 +202,115 @@ function SaveItem(String WhatInv, int WhatID)
 	switch (WhatInv)
 	{
 		case "Weapon":
-			MCP.MyInventory.MyOwnedWeapons.AddItem(WhatID);
+			MCP.MyInventory.ConfigWeapons.ItemNumber.AddItem(WhatID);
+			MCP.MyInventory.ConfigWeapons.Active.AddItem(0);
 			MCP.MyInventory.SaveConfig();
-			`log("Added to Inventory Weapon" @ WhatID);
 			break;
 
 		case "Accessory":
-			MCP.MyInventory.MyOwnedAccessories.AddItem(WhatID);
+			MCP.MyInventory.ConfigAccessories.ItemNumber.AddItem(WhatID);
+			MCP.MyInventory.ConfigAccessories.Active.AddItem(0);
 			MCP.MyInventory.SaveConfig();
-			`log("Added to Inventory Accessory" @ WhatID);
 			break;
 
 		case "Enchant":
-			MCP.MyInventory.MyOwnedEnchantments.AddItem(WhatID);
+			MCP.MyInventory.ConfigEnchantments.ItemNumber.AddItem(WhatID);
+			MCP.MyInventory.ConfigEnchantments.Active.AddItem(0);
 			MCP.MyInventory.SaveConfig();
-			`log("Added to Inventory Enchant" @ WhatID);
 			break;
 
 		case "ResearchMaterial":
-			MCP.MyInventory.MyOwnedResearchMaterial.AddItem(WhatID);
+			MCP.MyInventory.ConfigResearchMaterial.ItemNumber.AddItem(WhatID);
+			MCP.MyInventory.ConfigResearchMaterial.Active.AddItem(0);
 			MCP.MyInventory.SaveConfig();
-			`log("Added to Inventory ResearchMaterial" @ WhatID);
 			break;
 		default:
 	}
-
 }
 
-function PrintInventory()
+
+/*
+// From Actionscript, @NEW
+// @param		WhatCase		What weapon, accessory shop etc we are currently using
+// @param		WhatIndex		Where we are removing it
+*/
+function RemoveItem(int WhatCase, int WhatIndex)
 {
-	local int i;
-
-	`log("Item ===================================");
-	for (i = 0; i < MCP.MyInventory.MyOwnedAccessories.Length ; i++)
+	// From the menu we save here
+	switch (WhatCase)
 	{
-		`log("Item -" @ i @ "-" @ MCP.MyInventory.MyOwnedAccessories[i]);
+		// Weapon
+		case 0:
+			MCP.MyInventory.ConfigWeapons.ItemNumber.Remove(WhatIndex,1);
+			MCP.MyInventory.ConfigWeapons.Active.Remove(WhatIndex,1);
+			MCP.MyInventory.SaveConfig();
+			break;
+
+		// Accessory
+		case 1:
+			MCP.MyInventory.ConfigAccessories.ItemNumber.Remove(WhatIndex,1);
+			MCP.MyInventory.ConfigAccessories.Active.Remove(WhatIndex,1);
+			MCP.MyInventory.SaveConfig();
+			break;
+
+		// Enchant
+		case 2:
+			MCP.MyInventory.ConfigEnchantments.ItemNumber.Remove(WhatIndex,1);
+			MCP.MyInventory.ConfigEnchantments.Active.Remove(WhatIndex,1);
+			MCP.MyInventory.SaveConfig();
+			break;
+
+		// ResearchMaterial
+		case 3:
+			MCP.MyInventory.ConfigResearchMaterial.ItemNumber.Remove(WhatIndex,1);
+			MCP.MyInventory.ConfigResearchMaterial.Active.Remove(WhatIndex,1);
+			MCP.MyInventory.SaveConfig();
+			break;
+		default:
 	}
-	`log("Item ===================================");
-	
 }
+
+/*
+// From Actionscript, @NEW
+// @param		WhatInv			What weapon, accessory shop etc we are currently using
+// @param		WhatIndex		Where we are removing it
+*/
+function AddItem(int WhatCase, int WhatIndex, int ItemNumber, int IsActive)
+{
+	// From the menu we save here
+	switch (WhatCase)
+	{
+		// Weapon
+		case 0:
+			MCP.MyInventory.ConfigWeapons.ItemNumber.AddItem(ItemNumber);
+			MCP.MyInventory.ConfigWeapons.Active.AddItem(IsActive);
+			MCP.MyInventory.SaveConfig();
+			break;
+
+		// Accessory
+		case 1:
+			MCP.MyInventory.ConfigAccessories.ItemNumber.AddItem(ItemNumber);
+			MCP.MyInventory.ConfigAccessories.Active.AddItem(IsActive);
+			MCP.MyInventory.SaveConfig();
+			break;
+
+		// Enchant
+		case 2:
+			MCP.MyInventory.ConfigEnchantments.ItemNumber.AddItem(ItemNumber);
+			MCP.MyInventory.ConfigEnchantments.Active.AddItem(IsActive);
+			MCP.MyInventory.SaveConfig();
+			break;
+
+		// ResearchMaterial
+		case 3:
+			MCP.MyInventory.ConfigResearchMaterial.ItemNumber.AddItem(ItemNumber);
+			MCP.MyInventory.ConfigResearchMaterial.Active.AddItem(IsActive);
+			MCP.MyInventory.SaveConfig();
+			break;
+		default:
+	}
+}
+
 
 // Callback automatically called for each object in the movie with enableInitCallback enabled
 event bool WidgetInitialized(name WidgetName, name WidgetPath, GFxObject Widget)
@@ -300,6 +338,26 @@ function ReturnButton(EventData data)
 // debug
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+function DebugSetWeaponInvUC(int i)
+{
+	`log("AS - SetWeaponInvUC - pushing Inv spot =" @ i); 
+}
+function DebugTextThis(int i, int ID, string whatArray)
+{
+	`log(i @ "- AS - SetWeaponInvUC -" @ whatArray @ "- ID=" @ ID); 
+}
+function DebugTextThisLine()
+{
+	`log("------------------------------------------------------------------------------");
+}
+function DebugTextThisLineTitle(string ThisIs)
+{
+	`log("-" @ ThisIs);
+}
+
+
+
 function RecieveCheckItem(String Names, int Cost, String Desc)
 {
 	`log("----------------------------------------");
@@ -316,20 +374,17 @@ function weaponLength(int Length)
 	`log("----------------------------------------");
 }
 
-
-function FoundShop()
-{
-	`log("Found Shop");
-	`log("Found Shop");
-	`log("Found Shop");
-	`log("Found Shop");
-}
 function FoundInventory()
 {
 	`log("Found Inventory");
 	`log("Found Inventory");
 	`log("Found Inventory");
 	`log("Found Inventory");
+}
+
+function SaveFound(int where, int MyID)
+{
+	`log(where @ " - Saving item ID =" @ MyID);
 }
 
 defaultproperties

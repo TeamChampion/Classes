@@ -86,29 +86,6 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 		}
 	}
 
-
-	if ( (WorldInfo.NetMode == NM_ListenServer) )
-	{
-		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Listen - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-	}else if ( (WorldInfo.NetMode == NM_DedicatedServer) )
-	{
-		`log("Dedica - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Dedica - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Dedica - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Dedica - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-	}else if ( (WorldInfo.NetMode == NM_Client) )
-	{
-		`log("Client - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Client - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Client - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-		`log("Client - SpawnDefaultPawnFor("@ NewPlayer$","@StartSpot$") - In here !!!!!!!!!!!!!!" );
-	}
-	
-
 	// Go threw the Start Spawn positions and see if we have can spawn a character
 	foreach AllActors(Class'NavigationPoint', FindStartNavi)
 	{
@@ -133,12 +110,6 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 					else
 				//	if (WorldInfo.GetMapName() == "town01")
 					{
-						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
-						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
-						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
-						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
-						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
-						`log("WE CAN SPAWN THIS GUY!!!!!!!!!!!!!!!!!!!!!!!");
 
 						if (MyPC.setCharacterSelect == 1)
 						{
@@ -157,20 +128,6 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 							return Spawn(MyPC.WizardArche04.Class,,, FindStartNavi.Location,,MyPC.WizardArche04);
 						}
 					}
-					
-				/*
-				// Find the character selected in selection scren and spawn him, default archetype 1
-				if(MySelectScreen.setCharacterSelect == 1)
-					return Spawn(WizardArche01.Class,,, FindStartNavi.Location,, WizardArche01);
-				else if(MySelectScreen.setCharacterSelect == 2)
-					return Spawn(WizardArche02.Class,,, FindStartNavi.Location,, WizardArche02);
-				else if(MySelectScreen.setCharacterSelect == 3)
-					return Spawn(WizardArche03.Class,,, FindStartNavi.Location,, WizardArche03);
-				else if(MySelectScreen.setCharacterSelect == 4)
-					return Spawn(WizardArche04.Class,,, FindStartNavi.Location,, WizardArche04);
-				else
-					return Spawn(WizardArche01.Class,,, FindStartNavi.Location,, WizardArche01);
-				*/
 				}
 			}
 		}

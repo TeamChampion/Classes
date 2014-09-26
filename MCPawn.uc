@@ -191,7 +191,7 @@ simulated function SpawnDecal()
 	newRotation.Pitch = -16384;
 
 	// Spawn decal for 10 mins = 600.0f
-	MyDecal = WorldInfo.MyDecalManager.SpawnDecal(MyDecalColor,newPlace,newRotation,200.0f, 200.0f,500.0f,false,,,,,,,,600.0f);
+	MyDecal = WorldInfo.MyDecalManager.SpawnDecal(MyDecalColor,newPlace,newRotation,200.0f, 200.0f,500.0f,false,,,,,,,,3600.0f);
 	MyDecal.bMovableDecal = true;
 
 	MyDecalColor = MaterialInstanceConstant'mystraschampionsettings.Decals.CharacterDecal_INST';
@@ -291,7 +291,7 @@ simulated event TakeDamage(int Damage, Controller EventInstigator, vector HitLoc
 			MCPlayerReplication(PC.PlayerReplicationInfo).Health = 0;
 			MCPlayerReplication(PlayerReplicationInfo).Health = 0;
 			Health = 0;
-			PC.SendWinLoseToReplication();
+			PC.SendWinLoseToReplication(false);
 		}
 	}
 }
@@ -300,6 +300,9 @@ simulated event TakeDamage(int Damage, Controller EventInstigator, vector HitLoc
 // Server only
 simulated event Destroyed()
 {
+	`log("=============================");
+	`log("Not here Fucker");
+	`log("=============================");
 	/*
 	// Because this guy in here dies before it replicates the health. Inside of PC update his health so it says 0
 	MCPlayerReplication(PC.PlayerReplicationInfo).Health = 0;
@@ -307,11 +310,28 @@ simulated event Destroyed()
 	Health = 0;
 	*/
 	// Send Message
-	PC.SendWinLoseToReplication();
+	PC.SendWinLoseToReplication(false);
 
 	super.Destroyed();
 	///
 }
+
+simulated event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
+{
+	super.Touch(Other, OtherComp, HitLocation, HitNormal);
+	//
+	if(MCActor_CloudBase(Other) != none)
+	{
+
+		`log("-----------------------------------------------");
+		`log("-" @ "We Touched" @ Other);
+		`log("-" @ "We Touched" @ Other);
+		`log("-" @ "We Touched" @ Other);
+		`log("-----------------------------------------------");
+
+	}
+}
+
 
 DefaultProperties
 {

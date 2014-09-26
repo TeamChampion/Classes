@@ -200,10 +200,18 @@ function WhatCharToDelete(MCPawn WhatPawn, int PawnNumber)
 	if (PawnNumber == 4){		cMCP.PlayerStruct04 = cMCP.RemovePlayerStats;	cMCP.SaveConfig();	}
 
 	// remove inventory
+	WhatPawn.MyInventory.ConfigWeapons = WhatPawn.MyInventory.ResetInventory;
+	WhatPawn.MyInventory.ConfigAccessories = WhatPawn.MyInventory.ResetInventory;
+	WhatPawn.MyInventory.ConfigEnchantments = WhatPawn.MyInventory.ResetInventory;
+	WhatPawn.MyInventory.ConfigResearchMaterial = WhatPawn.MyInventory.ResetInventory;
+
+
+/*
 	WhatPawn.MyInventory.MyOwnedWeapons.Remove(0,WhatPawn.MyInventory.MyOwnedWeapons.length);
 	WhatPawn.MyInventory.MyOwnedAccessories.Remove(0,WhatPawn.MyInventory.MyOwnedWeapons.length);
 	WhatPawn.MyInventory.MyOwnedEnchantments.Remove(0,WhatPawn.MyInventory.MyOwnedEnchantments.length);
 	WhatPawn.MyInventory.MyOwnedResearchMaterial.Remove(0,WhatPawn.MyInventory.MyOwnedResearchMaterial.length);
+*/
 	WhatPawn.MyInventory.SaveConfig();
 }
 

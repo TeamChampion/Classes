@@ -17,7 +17,7 @@ reliable server function float StatusCalculationAPCost(optional float PcCurrentA
 	local float APf;
 
 	// Set Different Spell Number for Different Spell
-	SetDifferentSpellDamageAndAP();
+//	SetDifferentSpellDamageAndAP();
 
 	// If AP is not set to 0 as base
 	if (StatusDamage.AP != 0)
@@ -34,32 +34,9 @@ reliable server function StatusCalculationDamage(MCPawn Target)
 {
 	local vector empty;
 
-	// If resistance, we need to add a link and do the calculation, atm we get an error because MCSpell is @Abstract
-	/*
-	local MCSpell cSpell;
-	local MCPawn Enemy;
-	
-	// Initialize a spell class
-	cSpell = Spawn(class'MCSpell');
-
-	// Get Enemy Pawn
-	foreach DynamicActors(Class'MCPawn', Enemy)
-	{
-		if(Target != Enemy)
-			break;
-	}
-
-	// Add Resistance In here or not
-	if (cSpell.CheckResistance(Target, Enemy))
-	{	
-		`log("SUCCESSFUL HIT!");
-		StatusDamage.Damage = 7;
-	}else
-	{
-		`log("WE RESISTED OH CRAPZ!");
-		StatusDamage.Damage = 0;
-	}
-	*/
+	`log("MCStatus - StatusCalculationDamage -" @ spellNumber @ "- damage=" @ StatusDamage.Damage);
+	`log("MCStatus - StatusCalculationDamage -" @ spellNumber @ "- damage=" @ StatusDamage.Damage);
+	`log("MCStatus - StatusCalculationDamage -" @ spellNumber @ "- damage=" @ StatusDamage.Damage);
 	// Do damage
 	Target.TakeDamage(StatusDamage.Damage, none, Target.Location, empty, class'DamageType');
 
@@ -70,8 +47,14 @@ reliable server function StatusCalculationDamage(MCPawn Target)
 /*
 // Set Spell Damage for Certain Acid spells
 */
-function SetDifferentSpellDamageAndAP()
+simulated function SetDifferentSpellDamageAndAP()
 {
+	`log("MCStatus - SetDifferentSpellDamageAndAP = " @ spellNumber);
+	`log("MCStatus - SetDifferentSpellDamageAndAP = " @ StatusName);
+	`log("MCStatus - SetDifferentSpellDamageAndAP = " @ StatusName);
+	`log("MCStatus - SetDifferentSpellDamageAndAP = " @ StatusName);
+
+	
 	switch (spellNumber)
 	{
 		case 2:
@@ -86,7 +69,7 @@ function SetDifferentSpellDamageAndAP()
 			break;
 		case 30:
 			// Acid Rain
-			StatusDamage.Damage = 10;
+			StatusDamage.Damage = 1;
 			StatusDamage.AP = 0;
 			break;
 		case 23:
@@ -103,4 +86,24 @@ function SetDifferentSpellDamageAndAP()
 DefaultProperties
 {
 	//defaults
+
+	// What Spell we assign after we Touched a Character
+//	StatusArchetype = MCStatus_AcidBurn'MystrasChampionSpells.Status.AcidBurn'
+
+	// Basic Settings for simulation
+	bCollideActors = true
+	CollisionType=COLLIDE_TouchAll
+
+	// Add a Invisible Cyllinder
+    Begin Object Class=CylinderComponent NAME=CollisionCylinder
+		CollisionRadius=+0040.000000
+		CollisionHeight=+0040.000000
+		bAlwaysRenderIfSelected=true
+		CollideActors=true
+		BlockActors = true
+		BlockZeroExtent = true
+		BlockNonZeroExtent = false
+	End Object
+	CollisionComponent=CollisionCylinder
+	Components.Add(CollisionCylinder)
 }

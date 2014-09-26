@@ -15,6 +15,8 @@ function bool Start(optional bool StartPaused = false)
 
 	RootMC = GetVariableObject("root");
 
+	MCP = MCPawn(GetPC().Pawn);
+	
 	if (!bInitialized)
 	{
 		ConfigHUD();

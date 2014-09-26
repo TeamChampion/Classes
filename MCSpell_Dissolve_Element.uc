@@ -17,37 +17,18 @@ class MCSpell_Dissolve_Element extends MCSpell;
 */
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
-	local int i;
-	local MCPlayerController PC;
-	
+
 	// This does AP Check first so we can check if we can do the spell 
 	super.Activate(Caster, Enemy, PathNode, Tile);
 
-	if (Caster == none || Enemy == none)
-	{
-		`log(self @ " - Failed so Destroy() && return;");
-		Destroy();
-		return;
-	}
-
-	// Cast nesscesary Classes
-	PC = Caster.PC;
-
-	// Turn Off All active tiles
-	for (i = 0;i < PC.TilesWeCanMoveOn.length ; i++)
-		PC.TilesWeCanMoveOn[i].ResetTileToNormal();
-
-	// Spell mode active
-	PC.bIsSpellActive = true;
-
-	// Check where we should light up the selecting spell Tiles
-	PC.CheckDistanceNearPlayer();
+	ActivateArea(Caster, Enemy, PathNode, Tile);
 }
 
 /*
 * Function we use for click spells
-*	WhatTile	Selected Tile we use
-*	PathNode
+// @param	Opt_Caster			Who Casts the Spell
+// @param	Opt_WhatTile			Who the Caster is Aiming for
+// @param	Opt_PathNode	What PathNode we would like to change
 */
 reliable server function CastClickSpellServer(optional MCPawn Caster, optional MCTile WhatTile, optional MCPathNode PathNode)
 {
@@ -55,15 +36,10 @@ reliable server function CastClickSpellServer(optional MCPawn Caster, optional M
 	if (Role == Role_Authority)
 	{
 		// Activate server
-		WhatTile.ActivateDissolveElement();
-		// Activate on clients
-		CastClickSpellClient(,WhatTile,);
+		WhatTile.ActivateDissolveElement(true, true);
+		// Check AP Calculation
+		Caster.PC.CheckAPTimer(1.0f);
 	}
-}
-
-reliable client function CastClickSpellClient(optional MCPawn Caster, optional MCTile WhatTile, optional MCPathNode PathNode)
-{
-	WhatTile.ActivateDissolveElement();
 }
 
 DefaultProperties

@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------------
-// MCActor_WallOfIce
+// MCActor_MetalWire
 //
-// For MCSpell_Wall_Of_Ice, spawn this actor and do the simulation
+// For MCSpell_UnearthMaterial, spawn this actor and do the simulation
 //
-// Gustav Knutsson 2014-07-17
+// Gustav 2014-08-29
 //----------------------------------------------------------------------------
-class MCActor_WallOfIce extends MCActor;
+class MCActor_MetalWire extends MCActor;
 
 simulated event Tick(float DeltaTime)
 {
@@ -21,17 +21,18 @@ simulated event Tick(float DeltaTime)
 DefaultProperties
 {
 	SleepTimer=2.5f
-	MovementSpeed=30
-	smoke = ParticleSystem'MystrasChampionSpells.Particles.WhiteSmokeParticle'
+	MovementSpeed=45
+	smoke = ParticleSystem'Envy_Effects.VH_Deaths.P_VH_Death_Dust_Secondary';
 
 	RemoteRole=ROLE_SimulatedProxy
 	bOnlyDirtyReplication 	= false
 	bAlwaysRelevant			= true
 
 	Begin Object class=StaticMeshComponent name=RockMesh
-		StaticMesh=StaticMesh'MystrasChampionSpells.StaticMesh.IceWall'
-		Scale=1.0
-		BlockActors = true	// Make so that it blocks shots
+		StaticMesh=StaticMesh'NEC_Wires.SM.Mesh.S_NEC_Wires_SM_Thinwire13'
+	//	Materials(0)=Material'MystrasChampionSpells.Materials.FireFountain_02'
+		Scale3D=(X=1.5,Y=1.0,Z=1)
+
 	End Object
 
 	Begin Object class=DynamicLightEnvironmentComponent name=myLightEnvironment

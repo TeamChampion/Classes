@@ -8,6 +8,15 @@
 class MCSpell_Ride_The_Lightning extends MCSpell;
 
 var ParticleSystem LightningParticle;
+var MCPawn MyCastLoc;
+
+// Replication block
+replication
+{
+	// Replicate only if the values are dirty and from server to client
+	if (bNetDirty)
+		LightningParticle;
+}
 
 /*
 // The Activator for all spells
@@ -18,31 +27,18 @@ var ParticleSystem LightningParticle;
 */
 simulated function Activate(MCPawn Caster, MCPawn Enemy, optional MCPathNode PathNode, optional MCTile Tile)
 {
-	local int i;
-	local MCPlayerController PC;
-	
 	// This does AP Check first so we can check if we can do the spell 
 	super.Activate(Caster, Enemy, PathNode, Tile);
 
-	if (Caster == none || Enemy == none)
-	{
-		`log(self @ " - Failed so Destroy() && return;");
-		Destroy();
-		return;
-	}
+	// AP Distanec value
+	APDistanceValue = 4.0f;
+	// Sets from where we search AP distanec from
+	TargetLocation = Caster.Location;
 
-	// Cast nesscesary Classes
-	PC = Caster.PC;
+	ActivateArea(Caster, Enemy, PathNode, Tile);
 
-	// Turn Off All active tiles
-	for (i = 0;i < PC.TilesWeCanMoveOn.length ; i++)
-		PC.TilesWeCanMoveOn[i].ResetTileToNormal();
-
-	// Spell mode active
-	PC.bIsSpellActive = true;
-
-	// Check where we should light up the selecting spell Tiles
-	PC.CheckTeleportArea(5.0f);
+	// Teleport Location
+	MyCastLoc = Caster;
 }
 
 /*
@@ -56,13 +52,23 @@ reliable server function CastClickSpellServer(optional MCPawn Caster, optional M
 	// Do only on server
 	if (Role == Role_Authority)
 	{
-		//
-	//	if (Role != ROLE_Authority || (WorldInfo.NetMode == NM_ListenServer) )
-			WorldInfo.MyEmitterPool.SpawnEmitter(LightningParticle, WhatTile.PathNode.Location);
+		// Spawn Particle
+		WorldInfo.MyEmitterPool.SpawnEmitter(LightningParticle, WhatTile.PathNode.Location);
 
 		// Teleports to a certain Tile
 		Caster.SetLocation(WhatTile.PathNode.Location);
+		// Check AP Calculation
+		Caster.PC.CheckAPTimer(1.0f);
+
+		// Turn off spell here so that we can replicate teleport
+		if (Caster.PC.bIsSpellActive)
+			Caster.PC.bIsSpellActive = false;
 	}
+}
+
+reliable client function CastClickSpellClient(optional MCPawn Caster, optional MCTile WhatTile, optional MCPathNode PathNode)
+{
+	WorldInfo.MyEmitterPool.SpawnEmitter(LightningParticle, WhatTile.PathNode.Location);
 }
 
 DefaultProperties
